@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "utilities.hpp"
 
 int convert_to_utf16(const char* utf8, uint16_t* utf16, uint32_t available) {
   int count = 0;

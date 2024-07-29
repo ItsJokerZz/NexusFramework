@@ -6,7 +6,7 @@ ODIR	:= build
 SDIR	:= source
 IDIRS	:= -I$(LIBPS4)/include -Iinclude
 LDIRS	:= -L$(LIBPS4)
-MAPFILE := OCAPI.map
+MAPFILE := OrbisControl.map
 CFLAGS	:= $(IDIRS) -Os -std=c11 -ffunction-sections -fdata-sections -fno-builtin -nostartfiles -nostdlib -Wall -Wextra -masm=intel -march=btver2 -mtune=btver2 -m64 -mabi=sysv -mcmodel=small -fpie -fPIC
 LFLAGS	:= $(LDIRS) -Xlinker -T $(LIBPS4)/linker.x -Xlinker -Map="$(MAPFILE)" -Wl,--build-id=none -Wl,--gc-sections
 CFILES	:= $(wildcard $(SDIR)/*.c)
@@ -15,7 +15,7 @@ OBJS	:= $(patsubst $(SDIR)/%.c, $(ODIR)/%.o, $(CFILES)) $(patsubst $(SDIR)/%.s, 
 
 LIBS	:= -lPS4
 
-TARGET = OCAPI.bin
+TARGET = OrbisControl.bin
 
 $(TARGET): $(ODIR) $(OBJS)
 	$(CC) $(LIBPS4)/crt0.s $(ODIR)/*.o -o temp.t $(CFLAGS) $(LFLAGS) $(LIBS)

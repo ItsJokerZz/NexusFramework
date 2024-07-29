@@ -1,11 +1,11 @@
 # Library metadata.
-TARGET := OCAPI.sprx
+TARGET := OrbisControl.prx
 
 # Libraries linked into the ELF.
-LIBS 		 := -lSceLibcInternal -lc -lc++ -lkernel -ljbc \
-				-lSceSystemService -lSceUserService -lSceImeDialog \
-			    -lSceSysmodule -lSceIme -lSceLncUtil -lSceNet \
-				-lSceSysUtil
+LIBS := -lSceLibcInternal -lc -lc++ -lkernel -ljbc \
+        -lSceSystemService -lSceUserService -lSceImeDialog \
+        -lSceSysmodule -lSceIme -lSceLncUtil -lSceNet \
+        -lSceSysUtil
 
 # Additional compile flags.
 #EXTRAFLAGS  :=
@@ -13,39 +13,44 @@ LIBS 		 := -lSceLibcInternal -lc -lc++ -lkernel -ljbc \
 # You likely won't need to touch anything below this point.
 
 # Root vars
-TOOLCHAIN 	:= $(OO_PS4_TOOLCHAIN)
-PROJDIR   	:= source
-INTDIR    	:= $(PROJDIR)/x64/Debug
+TOOLCHAIN := $(OO_PS4_TOOLCHAIN)
+PROJDIR   := source
+COMMONDIR := common
+INTDIR    := $(PROJDIR)/x64/Debug
 
 # Define objects to build
 CFILES      := $(wildcard $(PROJDIR)/*.c)
 CPPFILES    := $(wildcard $(PROJDIR)/*.cpp)
 COMMONFILES := $(wildcard $(COMMONDIR)/*.cpp)
-OBJS        := $(patsubst $(PROJDIR)/%.c, $(INTDIR)/%.o, $(CFILES)) $(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES)) $(patsubst $(COMMONDIR)/%.cpp, $(INTDIR)/%.o, $(COMMONFILES))
-STUBOBJS    := $(patsubst $(PROJDIR)/%.c, $(INTDIR)/%.o, $(CFILES)) $(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o.stub, $(CPPFILES)) $(patsubst $(COMMONDIR)/%.cpp, $(INTDIR)/%.o.stub, $(COMMONFILES))
+OBJS        := $(patsubst $(PROJDIR)/%.c, $(INTDIR)/%.o, $(CFILES)) \
+                $(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES)) \
+                $(patsubst $(COMMONDIR)/%.cpp, $(INTDIR)/%.o, $(COMMONFILES))
+STUBOBJS    := $(patsubst $(PROJDIR)/%.c, $(INTDIR)/%.o, $(CFILES)) \
+                $(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o.stub, $(CPPFILES)) \
+                $(patsubst $(COMMONDIR)/%.cpp, $(INTDIR)/%.o.stub, $(COMMONFILES))
 
 # Define final C/C++ flags
-CFLAGS      := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c $(EXTRAFLAGS) -isysroot $(TOOLCHAIN) -isystem $(TOOLCHAIN)/include
-CXXFLAGS    := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1
-LDFLAGS     := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o
+CFLAGS   := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c $(EXTRAFLAGS) -isysroot $(TOOLCHAIN) -isystem $(TOOLCHAIN)/include
+CXXFLAGS := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1
+LDFLAGS  := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o
 
 # Create the intermediate directory incase it doesn't already exist.
-_unused     := $(shell mkdir -p $(INTDIR))
+_unused := $(shell mkdir -p $(INTDIR))
 
 # Check for linux vs macOS and account for clang/ld path
-UNAME_S     := $(shell uname -s)
+UNAME_S := $(shell uname -s)
 
 ifeq ($(UNAME_S),Linux)
-		CC      := clang
-		CCX     := clang++
-		LD      := ld.lld
-		CDIR    := linux
+	CC  := clang
+	CCX := clang++
+	LD  := ld.lld
+	CDIR := linux
 endif
 ifeq ($(UNAME_S),Darwin)
-		CC      := /usr/local/opt/llvm/bin/clang
-		CCX     := /usr/local/opt/llvm/bin/clang++
-		LD      := /usr/local/opt/llvm/bin/ld.lld
-		CDIR    := macos
+	CC  := /usr/local/opt/llvm/bin/clang
+	CCX := /usr/local/opt/llvm/bin/clang++
+	LD  := /usr/local/opt/llvm/bin/ld.lld
+	CDIR := macos
 endif
 
 $(TARGET): $(INTDIR) $(OBJS)
@@ -61,10 +66,16 @@ $(INTDIR)/%.o: $(PROJDIR)/%.c
 $(INTDIR)/%.o: $(PROJDIR)/%.cpp
 	$(CCX) $(CXXFLAGS) -o $@ $<
 
+$(INTDIR)/%.o: $(COMMONDIR)/%.cpp
+	$(CCX) $(CXXFLAGS) -o $@ $<
+
 $(INTDIR)/%.o.stub: $(PROJDIR)/%.stub.c
 	$(CC) -target x86_64-pc-linux-gnu -ffreestanding -nostdlib -fno-builtin -fPIC -c $(TOOLCHAIN)/include -o $@ $<
 
 $(INTDIR)/%.o.stub: $(PROJDIR)/%.stub.cpp
+	$(CCX) -target x86_64-pc-linux-gnu -ffreestanding -nostdlib -fno-builtin -fPIC -c $(TOOLCHAIN)/include -o $@ $<
+
+$(INTDIR)/%.o.stub: $(COMMONDIR)/%.stub.cpp
 	$(CCX) -target x86_64-pc-linux-gnu -ffreestanding -nostdlib -fno-builtin -fPIC -c $(TOOLCHAIN)/include -o $@ $<
 
 .PHONY: clean
@@ -73,5 +84,4 @@ $(INTDIR)/%.o.stub: $(PROJDIR)/%.stub.cpp
 all: $(TARGET) $(TARGETSTUB)
 
 clean:
-	rm -f $(TARGET) $(TARGETSTUB) $(INTDIR)/$(PROJDIR).elf $(INTDIR)/$(PROJDIR)/oelf $(OBJS)
-
+	rm -f $(TARGET) $(TARGETSTUB) $(INTDIR)/$(PROJDIR).elf $(INTDIR)/$(PROJDIR).oelf $(OBJS)
