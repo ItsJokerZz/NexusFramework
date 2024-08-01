@@ -4,15 +4,16 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static OrbisControlAPI.OCAPI;
 
 namespace CM
 {
     public partial class app : Form
     {
-        readonly OCAPI api = new OCAPI();
-        TreeNode selectedNode;
+        private readonly 
+            OCAPI api = new OCAPI();
 
-        string IPAddress;
+        private TreeNode selectedNode;
 
         public app()
         {
@@ -22,8 +23,11 @@ namespace CM
             details_b.Click += (s, e) => ChangePage(s, panel2);
             system_b.Click += (s, e) => ChangePage(s, panel1);
             memory_b.Click += (s, e) => ChangePage(s, panel4);
+            button2.Click += (s, e) => ChangePage(s, panel4);
 
-            radioButton4.CheckedChanged += async (s, e) => await api.Beep(OCAPI.BeepType.Stop);
+            radioButton4.CheckedChanged += async (s, e) => await api.Beep(BeepType.Stop);
+
+            label9.Text = $"API Version: {api.Version}";
         }
 
         private void toolStripButton1_Click(object sender, EventArgs e)
@@ -35,8 +39,8 @@ namespace CM
                 node.Text.Contains(text1)
                 || node.Text.Contains(text2));
 
-            if (!nodeExists)
-                consoles_tv.Nodes.Add(new TreeNode($"{text1} : {text2}"));
+            if (!nodeExists) consoles_tv.Nodes.Add(
+                new TreeNode($"{text1} : {text2}"));
         }
 
         private void consoles_tv_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
@@ -51,24 +55,16 @@ namespace CM
 
         private async void connect_Click(object sender, EventArgs e)
         {
-            if (selectedNode != null)
-            {
-                string consoleName = GetConsoleIP(selectedNode);
-                await ConnectToConsole(consoleName);
-            }
+            if (selectedNode != null) await ConnectToConsole(GetConsoleIP(selectedNode));
         }
 
-        private void consoles_tv_NodeMouseHover(object sender, TreeNodeMouseHoverEventArgs e)
-        {
-            selectedNode = e.Node;
-        }
+        private void consoles_tv_NodeMouseHover(object sender, TreeNodeMouseHoverEventArgs e) => selectedNode = e.Node;
 
-        private void remove_Click(object sender, EventArgs e)
+        private async void remove_Click(object sender, EventArgs e)
         {
             if (selectedNode != null)
             {
-                DisconnectFromConsole();
-                selectedNode.Remove();
+               await DisconnectFromConsole(); selectedNode.Remove();
             }
         }
 
@@ -82,7 +78,7 @@ namespace CM
                 if (!api.Connected)
                     await ConnectToConsole(consoleName);
                 else if (api.IPAddress == consoleName
-                    && api.Connected) DisconnectFromConsole();
+                    && api.Connected) await DisconnectFromConsole();
             }
         }
 
@@ -102,11 +98,9 @@ namespace CM
                 active_t.Text = $"Active Console: {GetConsolePrefix(selectedNode)}";
 
                 label6.Text = $"Firmware: {api.Firmware}";
-                label7.Text = $"Temperature: {api.Temperature} C";
                 label12.Text = $"Console Type: {api.SystemType}";
 
-                label10.Text = $"PS4 Version: {api.Version}";
-                label9.Text = $"API Version: {api.PS4Version}";
+                label10.Text = $"SPRX Version: {api.PS4Version}";
 
                 label11.Text = $"Status: Connected";
 
@@ -114,16 +108,16 @@ namespace CM
             }
         }
 
-        private async void DisconnectFromConsole(bool unloading = false)
+        private async Task DisconnectFromConsole(bool unloading = false)
         {
             active_t.Text = "Active Console: NONE";
 
             label6.Text = "Firmware: ?.??";
-            label7.Text = $"Temperature: ?? C";
+            label7.Text = $"CPU Temperature: ?? C";
+            label15.Text = $"SOC Temperature: ?? C";
             label12.Text = "Console Type: ???";
 
-            label10.Text = "PS4 Version: ?.??";
-            label9.Text = "API Version: ?.??";
+            label10.Text = "OCAPI PS4 Version: ?.??";
             label11.Text = "Status: Not Ready";
 
             timer1.Enabled = false;
@@ -150,11 +144,7 @@ namespace CM
                     string currentSuffix = selectedNode.Text.Substring(separatorIndex);
                     selectedNode.Text = $"{newName}{currentSuffix}";
                 }
-                else
-                {
-                    // Handle case where there is no " : " in the text, if needed
-                    selectedNode.Text = newName;
-                }
+             // else selectedNode.Text = newName;
             }
         }
 
@@ -166,17 +156,19 @@ namespace CM
             await api.Notify(int.Parse(textBox4.Text), message);
         }
 
-        private void disconnectToolStripMenuItem_Click(object sender, EventArgs e) => DisconnectFromConsole();
+        private async void disconnectToolStripMenuItem_Click(object sender, EventArgs e) => await DisconnectFromConsole();
 
         private void ChangePage(object sender, Panel panelToShow)
         {
             panel1.Dock = DockStyle.None;
             panel2.Dock = DockStyle.None;
             panel4.Dock = DockStyle.None;
+            // panel6.Dock = DockStyle.None;
 
             details_b.BackColor = Color.FromArgb(40, 40, 40);
             system_b.BackColor = Color.FromArgb(40, 40, 40);
             memory_b.BackColor = Color.FromArgb(40, 40, 40);
+            button2.BackColor = Color.FromArgb(40, 40, 40);
 
             Button clickedButton = sender as Button;
             if (clickedButton != null)
@@ -188,15 +180,19 @@ namespace CM
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (api.Connected) label7.Text = $"Temperature: {api.Temperature} C";
+            if (api.Connected)
+            {
+                label7.Text = $"CPU Temperature: {api.Temperature(Temp.CPU)} C";
+                label15.Text = $"SOC Temperature: {api.Temperature(Temp.SOC)} C";
+            }
         }
 
         private async void button6_Click(object sender, EventArgs e)
         {
-            if (radioButton1.Checked) await api.Beep(OCAPI.BeepType.Single);
-            if (radioButton2.Checked) await api.Beep(OCAPI.BeepType.Double);
-            if (radioButton3.Checked) await api.Beep(OCAPI.BeepType.Triple);
-            if (radioButton4.Checked) await api.Beep(OCAPI.BeepType.Continuous);
+            if (radioButton1.Checked) await api.Beep(BeepType.Single);
+            if (radioButton2.Checked) await api.Beep(BeepType.Double);
+            if (radioButton3.Checked) await api.Beep(BeepType.Triple);
+            if (radioButton4.Checked) await api.Beep(BeepType.Continuous);
         }
 
         private async void button7_Click(object sender, EventArgs e)
@@ -206,12 +202,23 @@ namespace CM
 
         private async void unloadToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            await api.Unload(); DisconnectFromConsole(true);
+            await api.Unload(); await DisconnectFromConsole(true);
         }
 
         private async void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
             await api.InjectPayload(GetConsoleIP(selectedNode));
+        }
+
+        private async void button9_Click(object sender, EventArgs e)
+        {
+          int procHandle = await api.LoadModule(textBox8.Text, textBox7.Text);
+        }
+
+        private async void button8_Click(object sender, EventArgs e)
+        {
+            if (int.TryParse(textBox10.Text, out int moduleId))
+                await api.UnloadModule(textBox9.Text, moduleId);
         }
     }
 }

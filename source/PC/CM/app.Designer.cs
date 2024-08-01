@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(app));
             this.consoles_tv = new System.Windows.Forms.TreeView();
             this.consoles_p = new System.Windows.Forms.Panel();
             this.consoles_t = new System.Windows.Forms.Label();
@@ -37,7 +38,16 @@
             this.memory_b = new System.Windows.Forms.Button();
             this.pages = new System.Windows.Forms.Panel();
             this.panel4 = new System.Windows.Forms.Panel();
+            this.label16 = new System.Windows.Forms.Label();
+            this.groupBox9 = new System.Windows.Forms.GroupBox();
+            this.textBox9 = new System.Windows.Forms.TextBox();
+            this.textBox10 = new System.Windows.Forms.TextBox();
+            this.button8 = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
+            this.groupBox8 = new System.Windows.Forms.GroupBox();
+            this.textBox8 = new System.Windows.Forms.TextBox();
+            this.textBox7 = new System.Windows.Forms.TextBox();
+            this.button9 = new System.Windows.Forms.Button();
             this.panel5 = new System.Windows.Forms.Panel();
             this.label5 = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
@@ -53,6 +63,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.label12 = new System.Windows.Forms.Label();
+            this.label15 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.panel3 = new System.Windows.Forms.Panel();
@@ -96,9 +107,13 @@
             this.toolStrip = new System.Windows.Forms.ToolStrip();
             this.button3 = new System.Windows.Forms.Button();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.button2 = new System.Windows.Forms.Button();
             this.consoles_p.SuspendLayout();
             this.pages.SuspendLayout();
             this.panel4.SuspendLayout();
+            this.groupBox9.SuspendLayout();
+            this.groupBox8.SuspendLayout();
             this.panel5.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -114,6 +129,7 @@
             this.bottom_p.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             this.toolStrip.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // consoles_tv
@@ -122,12 +138,12 @@
             this.consoles_tv.Font = new System.Drawing.Font("Consolas", 8.25F);
             this.consoles_tv.ForeColor = System.Drawing.Color.White;
             this.consoles_tv.LineColor = System.Drawing.Color.White;
-            this.consoles_tv.Location = new System.Drawing.Point(12, 52);
+            this.consoles_tv.Location = new System.Drawing.Point(10, 46);
             this.consoles_tv.Name = "consoles_tv";
             this.consoles_tv.ShowLines = false;
             this.consoles_tv.ShowPlusMinus = false;
             this.consoles_tv.ShowRootLines = false;
-            this.consoles_tv.Size = new System.Drawing.Size(198, 168);
+            this.consoles_tv.Size = new System.Drawing.Size(264, 437);
             this.consoles_tv.TabIndex = 1;
             this.consoles_tv.NodeMouseHover += new System.Windows.Forms.TreeNodeMouseHoverEventHandler(this.consoles_tv_NodeMouseHover);
             this.consoles_tv.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.consoles_tv_NodeMouseClick);
@@ -137,9 +153,9 @@
             // 
             this.consoles_p.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
             this.consoles_p.Controls.Add(this.consoles_t);
-            this.consoles_p.Location = new System.Drawing.Point(12, 37);
+            this.consoles_p.Location = new System.Drawing.Point(10, 30);
             this.consoles_p.Name = "consoles_p";
-            this.consoles_p.Size = new System.Drawing.Size(198, 16);
+            this.consoles_p.Size = new System.Drawing.Size(264, 16);
             this.consoles_p.TabIndex = 2;
             // 
             // consoles_t
@@ -161,7 +177,7 @@
             this.details_b.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.details_b.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.details_b.ForeColor = System.Drawing.Color.White;
-            this.details_b.Location = new System.Drawing.Point(226, 37);
+            this.details_b.Location = new System.Drawing.Point(287, 142);
             this.details_b.Name = "details_b";
             this.details_b.Size = new System.Drawing.Size(69, 23);
             this.details_b.TabIndex = 3;
@@ -175,7 +191,7 @@
             this.system_b.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.system_b.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.system_b.ForeColor = System.Drawing.Color.White;
-            this.system_b.Location = new System.Drawing.Point(295, 37);
+            this.system_b.Location = new System.Drawing.Point(356, 142);
             this.system_b.Name = "system_b";
             this.system_b.Size = new System.Drawing.Size(55, 23);
             this.system_b.TabIndex = 4;
@@ -189,7 +205,7 @@
             this.memory_b.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.memory_b.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.memory_b.ForeColor = System.Drawing.Color.White;
-            this.memory_b.Location = new System.Drawing.Point(350, 37);
+            this.memory_b.Location = new System.Drawing.Point(411, 142);
             this.memory_b.Name = "memory_b";
             this.memory_b.Size = new System.Drawing.Size(55, 23);
             this.memory_b.TabIndex = 5;
@@ -201,31 +217,140 @@
             this.pages.Controls.Add(this.panel4);
             this.pages.Controls.Add(this.panel2);
             this.pages.Controls.Add(this.panel1);
-            this.pages.Location = new System.Drawing.Point(226, 66);
+            this.pages.Location = new System.Drawing.Point(292, 171);
             this.pages.Name = "pages";
-            this.pages.Size = new System.Drawing.Size(461, 154);
+            this.pages.Size = new System.Drawing.Size(530, 307);
             this.pages.TabIndex = 6;
             // 
             // panel4
             // 
+            this.panel4.Controls.Add(this.label16);
+            this.panel4.Controls.Add(this.groupBox9);
             this.panel4.Controls.Add(this.label4);
+            this.panel4.Controls.Add(this.groupBox8);
             this.panel4.Controls.Add(this.panel5);
             this.panel4.Location = new System.Drawing.Point(999, 999);
             this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(562, 246);
+            this.panel4.Size = new System.Drawing.Size(530, 307);
             this.panel4.TabIndex = 13;
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label16.ForeColor = System.Drawing.Color.White;
+            this.label16.Location = new System.Drawing.Point(222, 192);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(98, 15);
+            this.label16.TabIndex = 21;
+            this.label16.Text = "Unload Module";
+            // 
+            // groupBox9
+            // 
+            this.groupBox9.Controls.Add(this.textBox9);
+            this.groupBox9.Controls.Add(this.textBox10);
+            this.groupBox9.Controls.Add(this.button8);
+            this.groupBox9.Location = new System.Drawing.Point(225, 204);
+            this.groupBox9.Name = "groupBox9";
+            this.groupBox9.Size = new System.Drawing.Size(300, 48);
+            this.groupBox9.TabIndex = 20;
+            this.groupBox9.TabStop = false;
+            // 
+            // textBox9
+            // 
+            this.textBox9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.textBox9.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBox9.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox9.ForeColor = System.Drawing.Color.White;
+            this.textBox9.Location = new System.Drawing.Point(6, 18);
+            this.textBox9.Name = "textBox9";
+            this.textBox9.Size = new System.Drawing.Size(55, 20);
+            this.textBox9.TabIndex = 18;
+            // 
+            // textBox10
+            // 
+            this.textBox10.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.textBox10.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBox10.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox10.ForeColor = System.Drawing.Color.White;
+            this.textBox10.Location = new System.Drawing.Point(67, 18);
+            this.textBox10.Name = "textBox10";
+            this.textBox10.Size = new System.Drawing.Size(159, 20);
+            this.textBox10.TabIndex = 1;
+            // 
+            // button8
+            // 
+            this.button8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.button8.FlatAppearance.BorderSize = 0;
+            this.button8.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button8.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button8.ForeColor = System.Drawing.Color.White;
+            this.button8.Location = new System.Drawing.Point(232, 18);
+            this.button8.Name = "button8";
+            this.button8.Size = new System.Drawing.Size(63, 20);
+            this.button8.TabIndex = 16;
+            this.button8.Text = "Unload";
+            this.button8.UseVisualStyleBackColor = false;
+            this.button8.Click += new System.EventHandler(this.button8_Click);
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Dock = System.Windows.Forms.DockStyle.Right;
             this.label4.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.White;
-            this.label4.Location = new System.Drawing.Point(513, 0);
+            this.label4.Location = new System.Drawing.Point(4, 240);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(49, 15);
-            this.label4.TabIndex = 12;
-            this.label4.Text = "MEMORY";
+            this.label4.Size = new System.Drawing.Size(84, 15);
+            this.label4.TabIndex = 19;
+            this.label4.Text = "Load Module";
+            // 
+            // groupBox8
+            // 
+            this.groupBox8.Controls.Add(this.textBox8);
+            this.groupBox8.Controls.Add(this.textBox7);
+            this.groupBox8.Controls.Add(this.button9);
+            this.groupBox8.Location = new System.Drawing.Point(6, 252);
+            this.groupBox8.Name = "groupBox8";
+            this.groupBox8.Size = new System.Drawing.Size(519, 48);
+            this.groupBox8.TabIndex = 18;
+            this.groupBox8.TabStop = false;
+            // 
+            // textBox8
+            // 
+            this.textBox8.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.textBox8.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBox8.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox8.ForeColor = System.Drawing.Color.White;
+            this.textBox8.Location = new System.Drawing.Point(6, 18);
+            this.textBox8.Name = "textBox8";
+            this.textBox8.Size = new System.Drawing.Size(159, 20);
+            this.textBox8.TabIndex = 18;
+            // 
+            // textBox7
+            // 
+            this.textBox7.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.textBox7.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBox7.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox7.ForeColor = System.Drawing.Color.White;
+            this.textBox7.Location = new System.Drawing.Point(171, 18);
+            this.textBox7.Name = "textBox7";
+            this.textBox7.Size = new System.Drawing.Size(274, 20);
+            this.textBox7.TabIndex = 1;
+            // 
+            // button9
+            // 
+            this.button9.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.button9.FlatAppearance.BorderSize = 0;
+            this.button9.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button9.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button9.ForeColor = System.Drawing.Color.White;
+            this.button9.Location = new System.Drawing.Point(451, 18);
+            this.button9.Name = "button9";
+            this.button9.Size = new System.Drawing.Size(63, 20);
+            this.button9.TabIndex = 17;
+            this.button9.Text = "Load";
+            this.button9.UseVisualStyleBackColor = false;
+            this.button9.Click += new System.EventHandler(this.button9_Click);
             // 
             // panel5
             // 
@@ -312,20 +437,20 @@
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label8.ForeColor = System.Drawing.Color.White;
-            this.label8.Location = new System.Drawing.Point(311, 3);
+            this.label8.Location = new System.Drawing.Point(327, 14);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(147, 15);
+            this.label8.Size = new System.Drawing.Size(175, 15);
             this.label8.TabIndex = 15;
-            this.label8.Text = "OrbisControl (OCAPI)";
+            this.label8.Text = "OrbisControl Information";
             // 
             // groupBox5
             // 
             this.groupBox5.Controls.Add(this.label11);
             this.groupBox5.Controls.Add(this.label9);
             this.groupBox5.Controls.Add(this.label10);
-            this.groupBox5.Location = new System.Drawing.Point(313, 15);
+            this.groupBox5.Location = new System.Drawing.Point(330, 25);
             this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Size = new System.Drawing.Size(145, 71);
+            this.groupBox5.Size = new System.Drawing.Size(188, 71);
             this.groupBox5.TabIndex = 14;
             this.groupBox5.TabStop = false;
             // 
@@ -345,7 +470,7 @@
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label9.ForeColor = System.Drawing.Color.White;
-            this.label9.Location = new System.Drawing.Point(6, 31);
+            this.label9.Location = new System.Drawing.Point(6, 16);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(126, 15);
             this.label9.TabIndex = 15;
@@ -356,18 +481,18 @@
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label10.ForeColor = System.Drawing.Color.White;
-            this.label10.Location = new System.Drawing.Point(6, 16);
+            this.label10.Location = new System.Drawing.Point(6, 31);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(126, 15);
+            this.label10.Size = new System.Drawing.Size(133, 15);
             this.label10.TabIndex = 14;
-            this.label10.Text = "PS4 Version: ?.??";
+            this.label10.Text = "SPRX Version: ?.??";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.ForeColor = System.Drawing.Color.White;
-            this.label3.Location = new System.Drawing.Point(7, 3);
+            this.label3.Location = new System.Drawing.Point(7, 6);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(133, 15);
             this.label3.TabIndex = 13;
@@ -376,44 +501,56 @@
             // groupBox4
             // 
             this.groupBox4.Controls.Add(this.label12);
+            this.groupBox4.Controls.Add(this.label15);
             this.groupBox4.Controls.Add(this.label7);
             this.groupBox4.Controls.Add(this.label6);
-            this.groupBox4.Location = new System.Drawing.Point(10, 15);
+            this.groupBox4.Location = new System.Drawing.Point(11, 18);
             this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Size = new System.Drawing.Size(151, 71);
+            this.groupBox4.Size = new System.Drawing.Size(297, 78);
             this.groupBox4.TabIndex = 12;
             this.groupBox4.TabStop = false;
             // 
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label12.ForeColor = System.Drawing.Color.White;
-            this.label12.Location = new System.Drawing.Point(6, 52);
+            this.label12.Location = new System.Drawing.Point(6, 49);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(126, 15);
+            this.label12.Size = new System.Drawing.Size(109, 13);
             this.label12.TabIndex = 16;
             this.label12.Text = "Console Type: ???";
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.ForeColor = System.Drawing.Color.White;
+            this.label15.Location = new System.Drawing.Point(145, 49);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(127, 13);
+            this.label15.TabIndex = 15;
+            this.label15.Text = "SOC Temperature ?? C";
             // 
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label7.ForeColor = System.Drawing.Color.White;
-            this.label7.Location = new System.Drawing.Point(6, 31);
+            this.label7.Location = new System.Drawing.Point(145, 16);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(126, 15);
+            this.label7.Size = new System.Drawing.Size(133, 13);
             this.label7.TabIndex = 15;
-            this.label7.Text = "Temperature: ?? C";
+            this.label7.Text = "CPU Temperature: ?? C";
             // 
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label6.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label6.ForeColor = System.Drawing.Color.White;
-            this.label6.Location = new System.Drawing.Point(6, 9);
+            this.label6.Location = new System.Drawing.Point(6, 16);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(105, 15);
+            this.label6.Size = new System.Drawing.Size(91, 13);
             this.label6.TabIndex = 14;
             this.label6.Text = "Firmware: ?.??";
             // 
@@ -494,8 +631,7 @@
             this.panel1.Controls.Add(this.groupBox6);
             this.panel1.Controls.Add(this.label2);
             this.panel1.Controls.Add(this.groupBox2);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(0, 0);
+            this.panel1.Location = new System.Drawing.Point(999, 999);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(461, 154);
             this.panel1.TabIndex = 11;
@@ -730,9 +866,9 @@
             this.bottom_p.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
             this.bottom_p.Controls.Add(this.active_t);
             this.bottom_p.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.bottom_p.Location = new System.Drawing.Point(0, 230);
+            this.bottom_p.Location = new System.Drawing.Point(0, 495);
             this.bottom_p.Name = "bottom_p";
-            this.bottom_p.Size = new System.Drawing.Size(699, 16);
+            this.bottom_p.Size = new System.Drawing.Size(834, 21);
             this.bottom_p.TabIndex = 7;
             // 
             // active_t
@@ -741,7 +877,7 @@
             this.active_t.Dock = System.Windows.Forms.DockStyle.Right;
             this.active_t.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.active_t.ForeColor = System.Drawing.Color.White;
-            this.active_t.Location = new System.Drawing.Point(552, 0);
+            this.active_t.Location = new System.Drawing.Point(687, 0);
             this.active_t.Name = "active_t";
             this.active_t.Size = new System.Drawing.Size(147, 15);
             this.active_t.TabIndex = 9;
@@ -849,7 +985,7 @@
             this.toolStripSeparator2});
             this.toolStrip.Location = new System.Drawing.Point(0, 0);
             this.toolStrip.Name = "toolStrip";
-            this.toolStrip.Size = new System.Drawing.Size(699, 25);
+            this.toolStrip.Size = new System.Drawing.Size(834, 25);
             this.toolStrip.Stretch = true;
             this.toolStrip.TabIndex = 0;
             this.toolStrip.Text = "toolStrip1";
@@ -874,12 +1010,38 @@
             this.timer1.Interval = 1;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
+            this.pictureBox1.Location = new System.Drawing.Point(292, 30);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(530, 88);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.TabIndex = 14;
+            this.pictureBox1.TabStop = false;
+            // 
+            // button2
+            // 
+            this.button2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.button2.FlatAppearance.BorderSize = 0;
+            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button2.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button2.ForeColor = System.Drawing.Color.White;
+            this.button2.Location = new System.Drawing.Point(466, 142);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(63, 23);
+            this.button2.TabIndex = 15;
+            this.button2.Text = "Settings";
+            this.button2.UseVisualStyleBackColor = false;
+            // 
             // app
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(75)))), ((int)(((byte)(75)))), ((int)(((byte)(75)))));
-            this.ClientSize = new System.Drawing.Size(699, 246);
+            this.ClientSize = new System.Drawing.Size(834, 516);
+            this.Controls.Add(this.button2);
+            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.bottom_p);
             this.Controls.Add(this.pages);
@@ -900,6 +1062,10 @@
             this.pages.ResumeLayout(false);
             this.panel4.ResumeLayout(false);
             this.panel4.PerformLayout();
+            this.groupBox9.ResumeLayout(false);
+            this.groupBox9.PerformLayout();
+            this.groupBox8.ResumeLayout(false);
+            this.groupBox8.PerformLayout();
             this.panel5.ResumeLayout(false);
             this.panel5.PerformLayout();
             this.groupBox3.ResumeLayout(false);
@@ -927,6 +1093,7 @@
             this.contextMenuStrip1.ResumeLayout(false);
             this.toolStrip.ResumeLayout(false);
             this.toolStrip.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -968,7 +1135,6 @@
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.TextBox textBox2;
         private System.Windows.Forms.Panel panel4;
-        private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Panel panel5;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.GroupBox groupBox3;
@@ -1000,6 +1166,19 @@
         private System.Windows.Forms.NumericUpDown numericUpDown1;
         private System.Windows.Forms.ToolStripMenuItem unloadToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.GroupBox groupBox9;
+        private System.Windows.Forms.TextBox textBox9;
+        private System.Windows.Forms.TextBox textBox10;
+        private System.Windows.Forms.Button button8;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.GroupBox groupBox8;
+        private System.Windows.Forms.TextBox textBox8;
+        private System.Windows.Forms.TextBox textBox7;
+        private System.Windows.Forms.Button button9;
     }
 }
 

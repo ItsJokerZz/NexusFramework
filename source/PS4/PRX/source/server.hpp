@@ -13,7 +13,7 @@ extern std::string consoleType;
 namespace OrbisControl {
 extern int server_sock, client_sock;
 
-extern void HandlePlugin(bool load, char* process_name, char* prx_path);
+extern int HandlePlugin(int load, ...);
 
 extern char* DecodeURL(const char* url);
 extern void SendResponse(const char* message);
@@ -32,7 +32,9 @@ namespace CMDS {
     extern void Notify();
     extern void Beep();
     extern void TempLimit();
-    extern void HandlePRX();
+    
+    extern void LoadSPRX();
+    extern void UnloadSPRX();
 }
 
 extern void HandleCommand(void (*func)());

@@ -9,11 +9,22 @@ void PrintToConsole(const char* message, int type) {
   sceKernelDebugOutText(type, logMessage.c_str());
 }
 
-void Notify(int type, const char* _msg) {
+void TextNotify(int type, const char* _msg) {
   std::string msg = _msg;
-  sceKernelLoadStartModule("/system/common/lib/libSceSysUtil.sprx", 0, NULL, 0,
-                           0, 0);
   sceSysUtilSendSystemNotificationWithText(type, msg.c_str());
+}
+
+void ImageNotify(const char* IconUri, const char* text) {
+  if (IconUri == NULL) IconUri = "cxml://psnotification/tex_icon_system";
+  
+    OrbisNotificationRequest Buffer;
+    Buffer.type = NotificationRequest;
+    Buffer.unk3 = 0;
+    Buffer.useIconImageUri = 1;
+    Buffer.targetId = -1;
+    strcpy(Buffer.message, text);
+    strcpy(Buffer.iconUri, IconUri);
+    sceKernelSendNotificationRequest(0, &Buffer, sizeof(Buffer), 0);
 }
 
 const char* Type() {
@@ -69,9 +80,15 @@ const char* GetFWVersion() {
   return versionString;
 }
 
-uint32_t GetTemperature() {
+uint32_t GetCPUTemperature() {
   uint32_t celsius;
   sceKernelGetCpuTemperature(&celsius);
+  return celsius;
+}
+
+uint32_t GetSOCTemperature() {
+  uint32_t celsius;
+  sceKernelGetSocSensorTemperature(0, &celsius);
   return celsius;
 }
 
@@ -101,13 +118,15 @@ void Beep(int type) {
 }
 
 void PrintToConsole(const char* message, int type);
-void Notify(int type, const char* _msg);
+void TextNotify(int type, const char* _msg);
+void ImageNotify(const char* IconUri, const char* text);
 const char* Type() ;
 void MountRootDirectories();
 int32_t GetSystemLanguageID();
 const char* GetSystemLanguage();
 const char* GetFWVersion();
-uint32_t GetTemperature();
+uint32_t GetCPUTemperature();
+uint32_t GetSOCTemperature();
 void SetTemperatureLimit(uint8_t limit = 60);
 const char* GetKeyboardInput(const char* title, const char* initialText);
 void Beep(int type);

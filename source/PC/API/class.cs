@@ -22,15 +22,31 @@ namespace OrbisControlAPI
         private string _ipAddress;
         private bool _connected;
         private float _firmware;
-        private int _temperature;
+        private int _cpuTemp;
+        private int _socTemp;
         private string _sysType;
+
+        private int _sprxHandle;
 
         public string PS4Version { get; private set; }
 
         public bool Connected => _connected;
         public string IPAddress => _ipAddress;
         public string Firmware => _firmware.ToString("F2");
-        public int Temperature => _temperature;
+
+        public enum Temp { CPU, SOC, SetTreshold }
+
+        public int Temperature(Temp temp)
+        {
+            if (temp == Temp.CPU)
+                return _cpuTemp;
+
+            if (temp == Temp.SOC)
+                return _socTemp;
+
+            return 0;
+        }
+
         public string SystemType => _sysType;
 
         private bool ConnectToBinLoader(string ip, string port)
@@ -86,7 +102,7 @@ namespace OrbisControlAPI
             }
             catch (HttpRequestException)
             {
-               return;
+                return;
             }
         }
 
@@ -103,7 +119,7 @@ namespace OrbisControlAPI
             }
             catch (HttpRequestException)
             {
-               return;
+                return;
             }
         }
 
@@ -119,7 +135,7 @@ namespace OrbisControlAPI
             }
             catch (HttpRequestException)
             {
-               return;
+                return;
             }
         }
 
@@ -127,20 +143,23 @@ namespace OrbisControlAPI
         {
             try
             {
-                var response = await Client.GetAsync(url + "temp");
+                var response = await Client.GetAsync(url + "temp?type=cpu");
                 response.EnsureSuccessStatusCode();
-
                 var responseBody = await response.Content.ReadAsStringAsync();
+                int.TryParse(responseBody, out _cpuTemp);
 
-                int.TryParse(responseBody, out _temperature);
+                var _response = await Client.GetAsync(url + "temp?type=soc");
+                _response.EnsureSuccessStatusCode();
+                var _responseBody = await _response.Content.ReadAsStringAsync();
+                int.TryParse(_responseBody, out _socTemp);
             }
             catch (TaskCanceledException)
             {
-               return;
+                return;
             }
             catch (HttpRequestException)
             {
-               return;
+                return;
             }
         }
 
@@ -176,7 +195,7 @@ namespace OrbisControlAPI
                     await UpdateSysType(url);
 
                     _timer = new Timer(async _ => await UpdateTemperature(url),
-                        null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+                        null, TimeSpan.Zero, TimeSpan.FromSeconds(1.00));
                 }
             }
             catch (TaskCanceledException)
@@ -185,7 +204,7 @@ namespace OrbisControlAPI
             }
             catch (HttpRequestException)
             {
-               return;
+                return;
             }
         }
 
@@ -201,7 +220,7 @@ namespace OrbisControlAPI
             }
             catch (HttpRequestException)
             {
-               return;
+                return;
             }
 
             _ipAddress = null;
@@ -248,7 +267,7 @@ namespace OrbisControlAPI
             }
             catch (HttpRequestException)
             {
-               return;
+                return;
             }
         }
 
@@ -268,7 +287,7 @@ namespace OrbisControlAPI
             }
             catch (HttpRequestException)
             {
-               return;
+                return;
             }
         }
 
@@ -280,7 +299,6 @@ namespace OrbisControlAPI
             Triple,
             Continuous
         }
-
 
         public async Task Beep(BeepType type)
         {
@@ -294,13 +312,73 @@ namespace OrbisControlAPI
             }
             catch (TaskCanceledException)
             {
-               return;
+                return;
             }
             catch (HttpRequestException)
             {
-               return;
+                return;
             }
         }
+
+        public async Task<int> LoadModule(string process, string sprxPath)
+        {
+            if (_connected && !string.IsNullOrWhiteSpace(process) && !string.IsNullOrWhiteSpace(sprxPath))
+            {
+                try
+                {
+                    var url = $"http://{_ipAddress}:1337/lSPRX?process={process}&path={sprxPath}";
+                    var response = await Client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    string handleKey = "Handle: ";
+                    int handleStartIndex = responseContent.IndexOf(handleKey) + handleKey.Length;
+                    int handleEndIndex = responseContent.IndexOf('\n', handleStartIndex);
+
+                    if (handleEndIndex == -1)
+                    {
+                        handleEndIndex = responseContent.Length; // If there is no newline character, get until the end of the string
+                    }
+
+                    string handleString = responseContent.Substring(handleStartIndex, handleEndIndex - handleStartIndex).Trim();
+                    if (int.TryParse(handleString, out int handle))
+                    {
+                        return handle;
+                    }
+                }
+                catch (TaskCanceledException)
+                {
+                    return -1;
+                }
+                catch (HttpRequestException)
+                {
+                    return -1;
+                }
+            }
+
+            return -1;
+        }
+
+        public async Task UnloadModule(string process, int sprxPath)
+        {
+            if (!_connected && string.IsNullOrWhiteSpace(process)) return;
+
+            try
+            {
+                var url = $"http://{_ipAddress}:1337/unlSPRX?process={process}&path={sprxPath}";
+                var response = await Client.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (TaskCanceledException)
+            {
+                return;
+            }
+            catch (HttpRequestException)
+            {
+                return;
+            }
+        }
+
 
         public async Task InjectPayload(string ip)
         {

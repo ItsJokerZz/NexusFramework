@@ -12,9 +12,11 @@ extern bool freeOfSandbox();
 extern bool Keyboard(const char* Title, const char* initialTextBuffer, char* out_buffer);
 
 extern "C" {
-int32_t 
+int32_t
     sceSysmoduleLoadModule(OrbisSysModule moduleId),
     sceKernelGetSystemSwVersion(OrbisKernelSwVersion* version);
 
-uint32_t sceKernelGetCpuTemperature(uint32_t* celsius);
+uint32_t
+    sceKernelGetCpuTemperature(uint32_t* celsius),
+    sceKernelGetSocSensorTemperature(uint32_t* unk, uint32_t* celsius);
 }

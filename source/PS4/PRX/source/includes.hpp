@@ -25,6 +25,7 @@
 
 // Other Libraries
 #include <libjbc.h>
+#include <GoldHEN.h>
 
 // Project Dependencies
 #include "defines.hpp"

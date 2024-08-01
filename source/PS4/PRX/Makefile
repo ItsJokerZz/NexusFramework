@@ -5,7 +5,7 @@ TARGET := OrbisControl.prx
 LIBS := -lSceLibcInternal -lc -lc++ -lkernel -ljbc \
         -lSceSystemService -lSceUserService -lSceImeDialog \
         -lSceSysmodule -lSceIme -lSceLncUtil -lSceNet \
-        -lSceSysUtil
+        -lSceSysUtil -lGoldHEN_Hook
 
 # Additional compile flags.
 #EXTRAFLAGS  :=
