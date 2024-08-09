@@ -6,6 +6,7 @@
 
 /source/PC/ConsoleManager/bin
 /source/PC/ConsoleManager/obj
+/source/PC/ConsoleManager/.vs
 
 /source/PS4/PAYLOAD/BIN/build
 source/PS4/PAYLOAD/BIN/OrbisControl.bin
