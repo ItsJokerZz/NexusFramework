@@ -4,13 +4,13 @@
 /source/PC/API/bin
 /source/PC/API/obj
 
-/source/PC/CM/bin
-/source/PC/CM/obj
+/source/PC/ConsoleManager/bin
+/source/PC/ConsoleManager/obj
 
-/source/PS4/BIN/build
-source/PS4/BIN/OrbisControl.bin
-source/PS4/BIN/OrbisControl.map
+/source/PS4/PAYLOAD/BIN/build
+source/PS4/PAYLOAD/BIN/OrbisControl.bin
+source/PS4/PAYLOAD/BIN/OrbisControl.map
 
-/source/PS4/PRX/.vscode
-source/PS4/PRX/OrbisControl.prx
-/source/PS4/PRX/source/x64
+/source/PS4/SPRX/.vscode
+source/PS4/SPRX/OrbisControl.prx
+/source/PS4/SPRX/source/x64

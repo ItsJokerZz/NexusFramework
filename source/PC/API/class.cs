@@ -1,174 +1,80 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
+
+using static OrbisControlAPI.Utilities;
+using static OrbisControlAPI.Definitions;
 
 namespace OrbisControlAPI
 {
     public class OCAPI
     {
-        private HttpClient Client
-               = new HttpClient();
-
-        private Timer _timer;
-        private Socket socket;
-
-        public string Version { get; private set; } = "0.01";
-
-        private string _ipAddress;
-        private bool _connected;
-        private float _firmware;
-        private int _cpuTemp;
-        private int _socTemp;
-        private string _sysType;
-
-        private int _sprxHandle;
-
-        public string PS4Version { get; private set; }
-
-        public bool Connected => _connected;
+        public string Version = _version;
         public string IPAddress => _ipAddress;
+        public string SprxVersion => _sprxVersion;
         public string Firmware => _firmware.ToString("F2");
-
-        public enum Temp { CPU, SOC, SetTreshold }
-
-        public int Temperature(Temp temp)
-        {
-            if (temp == Temp.CPU)
-                return _cpuTemp;
-
-            if (temp == Temp.SOC)
-                return _socTemp;
-
-            return 0;
-        }
-
         public string SystemType => _sysType;
 
-        private bool ConnectToBinLoader(string ip, string port)
+        public int Temperature(Temp temp) => Definitions.Temperature(temp);
+
+        public bool Connected => _connected;
+
+        public enum Temp { getCPU, getSOC, SetTreshold }
+        public enum BeepType { Stop, Single, Double, Triple, Continuous }
+        // public enum ConsoleType { CEX, KIT, TEST }
+
+
+        public List<string> FindConsoles(string[] subnets, int startRange, int endRange)
         {
-            WebClient client = new WebClient();
-            bool ret = false;
-
-            if (!System.Net.IPAddress.TryParse(ip, out var ipAddress)) return false;
-            if (!int.TryParse(port, out var portNumber)) return false;
-
-            try
+            var consoles = new List<string>();
+            foreach (var subnet in subnets)
             {
-                string response = client.DownloadString($"http://{ipAddress}:9090/status");
-
-                if (response.Contains("{ \"status\": \"ready\" }"))
+                for (int i = startRange; i <= endRange; i++)
                 {
-                    try
+                    var ip = $"{subnet}.{i}";
+                    foreach (var port in Ports)
                     {
-                        socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                        socket.ReceiveTimeout = 3000;
-                        socket.SendTimeout = 3000;
-                        socket.Connect(new IPEndPoint(ipAddress, portNumber));
-
-                        ret = true;
-                    }
-                    catch (Exception)
-                    {
-                        ret = false;
+                        if (IsPortOpen(ip, port, TimeSpan.FromSeconds(1)))
+                        {
+                            lock (consoles) consoles.Add(ip); break;
+                        }
                     }
                 }
-                else
+            }
+
+            return consoles;
+        }
+
+        public void InjectPayload(string ip)
+        {
+            if (IsPortOpen(ip, 1337, TimeSpan.FromSeconds(1)) == true) return;
+
+            try
+            {
+                var url = $"http://{_ipAddress}:1337/";
+                var response = Client.GetStringAsync(url).Result;
+            }
+            catch
+            {
+                try
                 {
-                    ret = false;
+                    if (ConnectToBinLoader(ip, "9090"))
+                    {
+                        socket.SendFile(Path.Combine(
+                            Path.GetDirectoryName(Assembly.GetEntryAssembly()
+                            .Location), "OrbisControl.bin"));
+                        socket.Close();
+                    }
+                }
+                catch
+                {
+                    return;
                 }
             }
-            catch (Exception)
-            {
-                ret = false;
-            }
-
-            return ret;
         }
 
-        private async Task UpdateFirmware(string url)
-        {
-            try
-            {
-                var response = await Client.GetAsync(url + "fw");
-                response.EnsureSuccessStatusCode();
-
-                var responseBody = await response.Content.ReadAsStringAsync();
-                float.TryParse(responseBody, out _firmware);
-            }
-            catch (HttpRequestException)
-            {
-                return;
-            }
-        }
-
-        private async Task UpdatePS4Version(string url)
-        {
-            try
-            {
-                var response = await Client.GetAsync(url + "version");
-                response.EnsureSuccessStatusCode();
-
-                var responseBody = await response.Content.ReadAsStringAsync();
-                if (float.TryParse(responseBody, out float number))
-                    PS4Version = number.ToString("F2");
-            }
-            catch (HttpRequestException)
-            {
-                return;
-            }
-        }
-
-        private async Task UpdateSysType(string url)
-        {
-            try
-            {
-                var response = await Client.GetAsync(url + "sysType");
-                response.EnsureSuccessStatusCode();
-
-                _sysType = await response.Content.ReadAsStringAsync();
-
-            }
-            catch (HttpRequestException)
-            {
-                return;
-            }
-        }
-
-        private async Task UpdateTemperature(string url)
-        {
-            try
-            {
-                var response = await Client.GetAsync(url + "temp?type=cpu");
-                response.EnsureSuccessStatusCode();
-                var responseBody = await response.Content.ReadAsStringAsync();
-                int.TryParse(responseBody, out _cpuTemp);
-
-                var _response = await Client.GetAsync(url + "temp?type=soc");
-                _response.EnsureSuccessStatusCode();
-                var _responseBody = await _response.Content.ReadAsStringAsync();
-                int.TryParse(_responseBody, out _socTemp);
-            }
-            catch (TaskCanceledException)
-            {
-                return;
-            }
-            catch (HttpRequestException)
-            {
-                return;
-            }
-        }
-
-        // add FindConsole and FindAndConnect
-        // make return multiple consoles if
-        // they exist specify like...
-        // var a = FindConsole; var b = var[0];
-
-        public async Task Connect(string ipAddress)
+        public void Connect(string ipAddress)
         {
             if (string.IsNullOrEmpty(ipAddress))
                 throw new ArgumentException("IP address cannot be null or empty.", nameof(ipAddress));
@@ -180,228 +86,145 @@ namespace OrbisControlAPI
 
             try
             {
-                var connectResponse = await Client.GetAsync(url + "connect");
-                connectResponse.EnsureSuccessStatusCode();
-
-                var connectResponseBody = await connectResponse.Content.ReadAsStringAsync();
-
-                if (bool.TryParse(connectResponseBody, out bool connected) && connected)
+                var connectResponse = Client.GetStringAsync(url + "connect").Result;
+                if (bool.TryParse(connectResponse, out bool connected) && connected)
                 {
                     _connected = true;
                     _ipAddress = ipAddress;
 
-                    await UpdateFirmware(url);
-                    await UpdatePS4Version(url);
-                    await UpdateSysType(url);
-
-                    _timer = new Timer(async _ => await UpdateTemperature(url),
-                        null, TimeSpan.Zero, TimeSpan.FromSeconds(1.00));
+                    UpdateFirmware(url);
+                    UpdateSprxVersion(url);
+                    UpdateTemperature(url);
+                    UpdateSysType(url);
                 }
             }
-            catch (TaskCanceledException)
-            {
-                return;
-            }
-            catch (HttpRequestException)
+            catch (AggregateException)
             {
                 return;
             }
         }
 
-        public async Task Disconnect()
+        public void Disconnect()
         {
-            if (!_connected) return;
-
-            try
+            if (_connected)
             {
-                var url = $"http://{_ipAddress}:1337/disconnect";
-                var response = await Client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-            }
-            catch (HttpRequestException)
-            {
-                return;
+                try
+                {
+                    var url = $"http://{_ipAddress}:1337/disconnect";
+                    Client.GetStringAsync(url).Wait();
+                }
+                catch
+                {
+                    return;
+                }
             }
 
             _ipAddress = null;
             _connected = false;
 
-            if (_timer != null)
-            {
-                try
-                {
-                    _timer.Change(Timeout.Infinite, 0);
-                    _timer.Dispose();
-                    _timer = null; // Set to null to indicate it has been disposed
-                }
-                catch (ObjectDisposedException) { /* do nothing */ }
-            }
+            _firmware = 0;
+            _sysType = null;
+            _cpuTemp = -1;
+            _socTemp = -1;
         }
-
-        public async Task Unload()
+       
+        public void Unload()
         {
-            if (!_connected) return;
-
             try
             {
                 var url = $"http://{_ipAddress}:1337/unload";
-                var response = await Client.GetStringAsync(url);
+                Client.GetStringAsync(url).Wait();
             }
-            catch { return; }
-
+            catch
+            {
+                return;
+            }
         }
 
-        public async Task Notify(int type = 1, string msg = null)
+        public void Notify(int type = 1, string msg = null)
         {
             if (!_connected && type != -1 || msg == "") return;
 
             try
             {
                 var url = $"http://{_ipAddress}:1337/notify?type={type}&msg={msg}";
-                var response = await Client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
+                Client.GetStringAsync(url).Wait();
             }
-            catch (TaskCanceledException)
-            {
-                return;
-            }
-            catch (HttpRequestException)
+            catch
             {
                 return;
             }
         }
 
-        public async Task SetTempThreshold(int limit = -1)
+        public void SetTempThreshold(int limit = -1)
         {
             if (!_connected && limit != -1) return;
 
             try
             {
                 var url = $"http://{_ipAddress}:1337/setTempLimit?limit={limit}";
-                var response = await Client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
+                Client.GetStringAsync(url).Wait();
             }
-            catch (TaskCanceledException)
-            {
-                return;
-            }
-            catch (HttpRequestException)
+            catch
             {
                 return;
             }
         }
 
-        public enum BeepType
-        {
-            Stop,
-            Single,
-            Double,
-            Triple,
-            Continuous
-        }
-
-        public async Task Beep(BeepType type)
+        public void Beep(BeepType type)
         {
             if (!_connected) return;
 
             try
             {
                 var url = $"http://{_ipAddress}:1337/beep?type={(int)type}";
-                var response = await Client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
+                Client.GetStringAsync(url).Wait();
             }
-            catch (TaskCanceledException)
-            {
-                return;
-            }
-            catch (HttpRequestException)
+            catch
             {
                 return;
             }
         }
 
-        public async Task<int> LoadModule(string process, string sprxPath)
+        public int LoadModule(string process, string sprxPath)
         {
             if (_connected && !string.IsNullOrWhiteSpace(process) && !string.IsNullOrWhiteSpace(sprxPath))
             {
                 try
                 {
-                    var url = $"http://{_ipAddress}:1337/lSPRX?process={process}&path={sprxPath}";
-                    var response = await Client.GetAsync(url);
-                    response.EnsureSuccessStatusCode();
-
-                    var responseContent = await response.Content.ReadAsStringAsync();
                     string handleKey = "Handle: ";
+
+                    var url = $"http://{_ipAddress}:1337/lSPRX?process={process}&path={sprxPath}";
+                    var responseContent = Client.GetStringAsync(url).Result;
                     int handleStartIndex = responseContent.IndexOf(handleKey) + handleKey.Length;
                     int handleEndIndex = responseContent.IndexOf('\n', handleStartIndex);
 
-                    if (handleEndIndex == -1)
-                    {
-                        handleEndIndex = responseContent.Length; // If there is no newline character, get until the end of the string
-                    }
+                    if (handleEndIndex == -1) handleEndIndex = responseContent.Length;
 
                     string handleString = responseContent.Substring(handleStartIndex, handleEndIndex - handleStartIndex).Trim();
-                    if (int.TryParse(handleString, out int handle))
-                    {
-                        return handle;
-                    }
+
+                    if (int.TryParse(handleString, out int handle)) return handle;
                 }
-                catch (TaskCanceledException)
-                {
-                    return -1;
-                }
-                catch (HttpRequestException)
+                catch
                 {
                     return -1;
                 }
             }
-
             return -1;
         }
 
-        public async Task UnloadModule(string process, int sprxPath)
+        public void UnloadModule(string process, int sprxPath)
         {
             if (!_connected && string.IsNullOrWhiteSpace(process)) return;
 
             try
             {
                 var url = $"http://{_ipAddress}:1337/unlSPRX?process={process}&path={sprxPath}";
-                var response = await Client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-            }
-            catch (TaskCanceledException)
-            {
-                return;
-            }
-            catch (HttpRequestException)
-            {
-                return;
-            }
-        }
-
-
-        public async Task InjectPayload(string ip)
-        {
-            try
-            {
-                var url = $"http://{_ipAddress}:1337/";
-                var response = await Client.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-
-                Console.WriteLine(response);
+                Client.GetStringAsync(url).Wait();
             }
             catch
             {
-                try
-                {
-                    if (ConnectToBinLoader(ip, "9090"))
-                    {
-                        socket.SendFile(Path.Combine(
-                            Path.GetDirectoryName(Assembly.GetEntryAssembly()
-                            .Location), "OrbisControl.bin")); socket.Close();
-                    }
-                }
-                catch (Exception) { return; }
+                return;
             }
         }
     }

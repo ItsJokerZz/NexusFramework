@@ -37,7 +37,7 @@
             this.system_b = new System.Windows.Forms.Button();
             this.memory_b = new System.Windows.Forms.Button();
             this.pages = new System.Windows.Forms.Panel();
-            this.panel4 = new System.Windows.Forms.Panel();
+            this.memory_p = new System.Windows.Forms.Panel();
             this.label16 = new System.Windows.Forms.Label();
             this.groupBox9 = new System.Windows.Forms.GroupBox();
             this.textBox9 = new System.Windows.Forms.TextBox();
@@ -54,7 +54,7 @@
             this.button5 = new System.Windows.Forms.Button();
             this.textBox5 = new System.Windows.Forms.TextBox();
             this.textBox6 = new System.Windows.Forms.TextBox();
-            this.panel2 = new System.Windows.Forms.Panel();
+            this.details_p = new System.Windows.Forms.Panel();
             this.label8 = new System.Windows.Forms.Label();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.label11 = new System.Windows.Forms.Label();
@@ -72,7 +72,7 @@
             this.button1 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.textBox2 = new System.Windows.Forms.TextBox();
-            this.panel1 = new System.Windows.Forms.Panel();
+            this.system_p = new System.Windows.Forms.Panel();
             this.label14 = new System.Windows.Forms.Label();
             this.groupBox7 = new System.Windows.Forms.GroupBox();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
@@ -85,43 +85,43 @@
             this.radioButton3 = new System.Windows.Forms.RadioButton();
             this.radioButton2 = new System.Windows.Forms.RadioButton();
             this.radioButton1 = new System.Windows.Forms.RadioButton();
-            this.label2 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.button4 = new System.Windows.Forms.Button();
             this.textBox3 = new System.Windows.Forms.TextBox();
             this.textBox4 = new System.Windows.Forms.TextBox();
             this.bottom_p = new System.Windows.Forms.Panel();
-            this.active_t = new System.Windows.Forms.Label();
+            this.active_l = new System.Windows.Forms.Label();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.connect = new System.Windows.Forms.ToolStripMenuItem();
-            this.remove = new System.Windows.Forms.ToolStripMenuItem();
+            this.connect_mi = new System.Windows.Forms.ToolStripMenuItem();
+            this.remove_mi = new System.Windows.Forms.ToolStripMenuItem();
             this.renameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripTextBox3 = new System.Windows.Forms.ToolStripTextBox();
-            this.disconnectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.unloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripTextBox1 = new System.Windows.Forms.ToolStripTextBox();
+            this.disconnect_mi = new System.Windows.Forms.ToolStripMenuItem();
+            this.unload_mi = new System.Windows.Forms.ToolStripMenuItem();
+            this.consoleName_tb = new System.Windows.Forms.ToolStripTextBox();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripTextBox2 = new System.Windows.Forms.ToolStripTextBox();
+            this.consoleIP_tb = new System.Windows.Forms.ToolStripTextBox();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStrip = new System.Windows.Forms.ToolStrip();
-            this.button3 = new System.Windows.Forms.Button();
-            this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.button2 = new System.Windows.Forms.Button();
+            this.addConsole_b = new System.Windows.Forms.Button();
+            this.sysInfo_t = new System.Windows.Forms.Timer(this.components);
+            this.settings_b = new System.Windows.Forms.Button();
+            this.button10 = new System.Windows.Forms.Button();
+            this.logo = new System.Windows.Forms.PictureBox();
             this.consoles_p.SuspendLayout();
             this.pages.SuspendLayout();
-            this.panel4.SuspendLayout();
+            this.memory_p.SuspendLayout();
             this.groupBox9.SuspendLayout();
             this.groupBox8.SuspendLayout();
             this.panel5.SuspendLayout();
             this.groupBox3.SuspendLayout();
-            this.panel2.SuspendLayout();
+            this.details_p.SuspendLayout();
             this.groupBox5.SuspendLayout();
             this.groupBox4.SuspendLayout();
             this.panel3.SuspendLayout();
             this.groupBox1.SuspendLayout();
-            this.panel1.SuspendLayout();
+            this.system_p.SuspendLayout();
             this.groupBox7.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.groupBox6.SuspendLayout();
@@ -129,7 +129,7 @@
             this.bottom_p.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             this.toolStrip.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.logo)).BeginInit();
             this.SuspendLayout();
             // 
             // consoles_tv
@@ -214,25 +214,25 @@
             // 
             // pages
             // 
-            this.pages.Controls.Add(this.panel4);
-            this.pages.Controls.Add(this.panel2);
-            this.pages.Controls.Add(this.panel1);
+            this.pages.Controls.Add(this.memory_p);
+            this.pages.Controls.Add(this.details_p);
+            this.pages.Controls.Add(this.system_p);
             this.pages.Location = new System.Drawing.Point(292, 171);
             this.pages.Name = "pages";
             this.pages.Size = new System.Drawing.Size(530, 307);
             this.pages.TabIndex = 6;
             // 
-            // panel4
+            // memory_p
             // 
-            this.panel4.Controls.Add(this.label16);
-            this.panel4.Controls.Add(this.groupBox9);
-            this.panel4.Controls.Add(this.label4);
-            this.panel4.Controls.Add(this.groupBox8);
-            this.panel4.Controls.Add(this.panel5);
-            this.panel4.Location = new System.Drawing.Point(999, 999);
-            this.panel4.Name = "panel4";
-            this.panel4.Size = new System.Drawing.Size(530, 307);
-            this.panel4.TabIndex = 13;
+            this.memory_p.Controls.Add(this.label16);
+            this.memory_p.Controls.Add(this.groupBox9);
+            this.memory_p.Controls.Add(this.label4);
+            this.memory_p.Controls.Add(this.groupBox8);
+            this.memory_p.Controls.Add(this.panel5);
+            this.memory_p.Location = new System.Drawing.Point(999, 999);
+            this.memory_p.Name = "memory_p";
+            this.memory_p.Size = new System.Drawing.Size(530, 307);
+            this.memory_p.TabIndex = 13;
             // 
             // label16
             // 
@@ -420,17 +420,17 @@
             this.textBox6.TabIndex = 0;
             this.textBox6.Text = "222";
             // 
-            // panel2
+            // details_p
             // 
-            this.panel2.Controls.Add(this.label8);
-            this.panel2.Controls.Add(this.groupBox5);
-            this.panel2.Controls.Add(this.label3);
-            this.panel2.Controls.Add(this.groupBox4);
-            this.panel2.Controls.Add(this.panel3);
-            this.panel2.Location = new System.Drawing.Point(999, 999);
-            this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(461, 139);
-            this.panel2.TabIndex = 12;
+            this.details_p.Controls.Add(this.label8);
+            this.details_p.Controls.Add(this.groupBox5);
+            this.details_p.Controls.Add(this.label3);
+            this.details_p.Controls.Add(this.groupBox4);
+            this.details_p.Controls.Add(this.panel3);
+            this.details_p.Location = new System.Drawing.Point(999, 999);
+            this.details_p.Name = "details_p";
+            this.details_p.Size = new System.Drawing.Size(530, 307);
+            this.details_p.TabIndex = 12;
             // 
             // label8
             // 
@@ -622,26 +622,25 @@
             this.textBox2.TabIndex = 0;
             this.textBox2.Text = "222";
             // 
-            // panel1
+            // system_p
             // 
-            this.panel1.Controls.Add(this.label14);
-            this.panel1.Controls.Add(this.groupBox7);
-            this.panel1.Controls.Add(this.label17);
-            this.panel1.Controls.Add(this.label13);
-            this.panel1.Controls.Add(this.groupBox6);
-            this.panel1.Controls.Add(this.label2);
-            this.panel1.Controls.Add(this.groupBox2);
-            this.panel1.Location = new System.Drawing.Point(999, 999);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(461, 154);
-            this.panel1.TabIndex = 11;
+            this.system_p.Controls.Add(this.label14);
+            this.system_p.Controls.Add(this.groupBox7);
+            this.system_p.Controls.Add(this.label17);
+            this.system_p.Controls.Add(this.label13);
+            this.system_p.Controls.Add(this.groupBox6);
+            this.system_p.Controls.Add(this.groupBox2);
+            this.system_p.Location = new System.Drawing.Point(999, 999);
+            this.system_p.Name = "system_p";
+            this.system_p.Size = new System.Drawing.Size(530, 307);
+            this.system_p.TabIndex = 11;
             // 
             // label14
             // 
             this.label14.AutoSize = true;
             this.label14.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label14.ForeColor = System.Drawing.Color.White;
-            this.label14.Location = new System.Drawing.Point(271, 34);
+            this.label14.Location = new System.Drawing.Point(335, 156);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(147, 15);
             this.label14.TabIndex = 18;
@@ -651,7 +650,7 @@
             // 
             this.groupBox7.Controls.Add(this.numericUpDown1);
             this.groupBox7.Controls.Add(this.button7);
-            this.groupBox7.Location = new System.Drawing.Point(270, 48);
+            this.groupBox7.Location = new System.Drawing.Point(339, 167);
             this.groupBox7.Name = "groupBox7";
             this.groupBox7.Size = new System.Drawing.Size(185, 35);
             this.groupBox7.TabIndex = 17;
@@ -704,7 +703,7 @@
             this.label17.AutoSize = true;
             this.label17.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label17.ForeColor = System.Drawing.Color.White;
-            this.label17.Location = new System.Drawing.Point(3, 96);
+            this.label17.Location = new System.Drawing.Point(4, 251);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(126, 15);
             this.label17.TabIndex = 16;
@@ -715,7 +714,7 @@
             this.label13.AutoSize = true;
             this.label13.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label13.ForeColor = System.Drawing.Color.White;
-            this.label13.Location = new System.Drawing.Point(8, 0);
+            this.label13.Location = new System.Drawing.Point(350, 6);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(105, 15);
             this.label13.TabIndex = 15;
@@ -728,7 +727,7 @@
             this.groupBox6.Controls.Add(this.radioButton3);
             this.groupBox6.Controls.Add(this.radioButton2);
             this.groupBox6.Controls.Add(this.radioButton1);
-            this.groupBox6.Location = new System.Drawing.Point(6, 12);
+            this.groupBox6.Location = new System.Drawing.Point(354, 17);
             this.groupBox6.Name = "groupBox6";
             this.groupBox6.Size = new System.Drawing.Size(170, 71);
             this.groupBox6.TabIndex = 14;
@@ -799,25 +798,14 @@
             this.radioButton1.Text = "Single";
             this.radioButton1.UseVisualStyleBackColor = true;
             // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.Color.White;
-            this.label2.Location = new System.Drawing.Point(19, 180);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(109, 13);
-            this.label2.TabIndex = 10;
-            this.label2.Text = "Send Notification";
-            // 
             // groupBox2
             // 
             this.groupBox2.Controls.Add(this.button4);
             this.groupBox2.Controls.Add(this.textBox3);
             this.groupBox2.Controls.Add(this.textBox4);
-            this.groupBox2.Location = new System.Drawing.Point(6, 106);
+            this.groupBox2.Location = new System.Drawing.Point(7, 262);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(449, 42);
+            this.groupBox2.Size = new System.Drawing.Size(518, 42);
             this.groupBox2.TabIndex = 0;
             this.groupBox2.TabStop = false;
             // 
@@ -828,9 +816,9 @@
             this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button4.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button4.ForeColor = System.Drawing.Color.White;
-            this.button4.Location = new System.Drawing.Point(384, 14);
+            this.button4.Location = new System.Drawing.Point(453, 14);
             this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(59, 21);
+            this.button4.Size = new System.Drawing.Size(59, 20);
             this.button4.TabIndex = 8;
             this.button4.Text = "Notify";
             this.button4.UseVisualStyleBackColor = false;
@@ -845,7 +833,7 @@
             this.textBox3.Location = new System.Drawing.Point(42, 14);
             this.textBox3.MaxLength = 179;
             this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(336, 20);
+            this.textBox3.Size = new System.Drawing.Size(405, 20);
             this.textBox3.TabIndex = 1;
             // 
             // textBox4
@@ -864,34 +852,34 @@
             // bottom_p
             // 
             this.bottom_p.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
-            this.bottom_p.Controls.Add(this.active_t);
+            this.bottom_p.Controls.Add(this.active_l);
             this.bottom_p.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.bottom_p.Location = new System.Drawing.Point(0, 495);
             this.bottom_p.Name = "bottom_p";
             this.bottom_p.Size = new System.Drawing.Size(834, 21);
             this.bottom_p.TabIndex = 7;
             // 
-            // active_t
+            // active_l
             // 
-            this.active_t.AutoSize = true;
-            this.active_t.Dock = System.Windows.Forms.DockStyle.Right;
-            this.active_t.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.active_t.ForeColor = System.Drawing.Color.White;
-            this.active_t.Location = new System.Drawing.Point(687, 0);
-            this.active_t.Name = "active_t";
-            this.active_t.Size = new System.Drawing.Size(147, 15);
-            this.active_t.TabIndex = 9;
-            this.active_t.Text = "Active Console: NONE";
+            this.active_l.AutoSize = true;
+            this.active_l.Dock = System.Windows.Forms.DockStyle.Right;
+            this.active_l.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.active_l.ForeColor = System.Drawing.Color.White;
+            this.active_l.Location = new System.Drawing.Point(687, 0);
+            this.active_l.Name = "active_l";
+            this.active_l.Size = new System.Drawing.Size(147, 15);
+            this.active_l.TabIndex = 9;
+            this.active_l.Text = "Active Console: NONE";
             // 
             // contextMenuStrip1
             // 
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripMenuItem1,
-            this.connect,
-            this.remove,
+            this.connect_mi,
+            this.remove_mi,
             this.renameToolStripMenuItem,
-            this.disconnectToolStripMenuItem,
-            this.unloadToolStripMenuItem});
+            this.disconnect_mi,
+            this.unload_mi});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
             this.contextMenuStrip1.Size = new System.Drawing.Size(134, 136);
             // 
@@ -902,19 +890,19 @@
             this.toolStripMenuItem1.Text = "Inject";
             this.toolStripMenuItem1.Click += new System.EventHandler(this.toolStripMenuItem1_Click);
             // 
-            // connect
+            // connect_mi
             // 
-            this.connect.Name = "connect";
-            this.connect.Size = new System.Drawing.Size(133, 22);
-            this.connect.Text = "Connect";
-            this.connect.Click += new System.EventHandler(this.connect_Click);
+            this.connect_mi.Name = "connect_mi";
+            this.connect_mi.Size = new System.Drawing.Size(133, 22);
+            this.connect_mi.Text = "Connect";
+            this.connect_mi.Click += new System.EventHandler(this.connect_Click);
             // 
-            // remove
+            // remove_mi
             // 
-            this.remove.Name = "remove";
-            this.remove.Size = new System.Drawing.Size(133, 22);
-            this.remove.Text = "Remove";
-            this.remove.Click += new System.EventHandler(this.remove_Click);
+            this.remove_mi.Name = "remove_mi";
+            this.remove_mi.Size = new System.Drawing.Size(133, 22);
+            this.remove_mi.Text = "Remove";
+            this.remove_mi.Click += new System.EventHandler(this.remove_Click);
             // 
             // renameToolStripMenuItem
             // 
@@ -931,44 +919,44 @@
             this.toolStripTextBox3.Name = "toolStripTextBox3";
             this.toolStripTextBox3.Size = new System.Drawing.Size(100, 23);
             // 
-            // disconnectToolStripMenuItem
+            // disconnect_mi
             // 
-            this.disconnectToolStripMenuItem.Name = "disconnectToolStripMenuItem";
-            this.disconnectToolStripMenuItem.Size = new System.Drawing.Size(133, 22);
-            this.disconnectToolStripMenuItem.Text = "Disconnect";
-            this.disconnectToolStripMenuItem.Click += new System.EventHandler(this.disconnectToolStripMenuItem_Click);
+            this.disconnect_mi.Name = "disconnect_mi";
+            this.disconnect_mi.Size = new System.Drawing.Size(133, 22);
+            this.disconnect_mi.Text = "Disconnect";
+            this.disconnect_mi.Click += new System.EventHandler(this.disconnectToolStripMenuItem_Click);
             // 
-            // unloadToolStripMenuItem
+            // unload_mi
             // 
-            this.unloadToolStripMenuItem.Name = "unloadToolStripMenuItem";
-            this.unloadToolStripMenuItem.Size = new System.Drawing.Size(133, 22);
-            this.unloadToolStripMenuItem.Text = "Unload";
-            this.unloadToolStripMenuItem.Click += new System.EventHandler(this.unloadToolStripMenuItem_Click);
+            this.unload_mi.Name = "unload_mi";
+            this.unload_mi.Size = new System.Drawing.Size(133, 22);
+            this.unload_mi.Text = "Unload";
+            this.unload_mi.Click += new System.EventHandler(this.unloadToolStripMenuItem_Click);
             // 
-            // toolStripTextBox1
+            // consoleName_tb
             // 
-            this.toolStripTextBox1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
-            this.toolStripTextBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.toolStripTextBox1.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.toolStripTextBox1.ForeColor = System.Drawing.Color.White;
-            this.toolStripTextBox1.Name = "toolStripTextBox1";
-            this.toolStripTextBox1.Size = new System.Drawing.Size(100, 25);
-            this.toolStripTextBox1.Text = "Default";
+            this.consoleName_tb.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.consoleName_tb.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.consoleName_tb.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.consoleName_tb.ForeColor = System.Drawing.Color.White;
+            this.consoleName_tb.Name = "consoleName_tb";
+            this.consoleName_tb.Size = new System.Drawing.Size(100, 25);
+            this.consoleName_tb.Text = "Default";
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
             this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
-            // toolStripTextBox2
+            // consoleIP_tb
             // 
-            this.toolStripTextBox2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
-            this.toolStripTextBox2.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.toolStripTextBox2.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.toolStripTextBox2.ForeColor = System.Drawing.Color.White;
-            this.toolStripTextBox2.Name = "toolStripTextBox2";
-            this.toolStripTextBox2.Size = new System.Drawing.Size(110, 25);
-            this.toolStripTextBox2.Text = "192.168.137.130";
+            this.consoleIP_tb.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.consoleIP_tb.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.consoleIP_tb.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.consoleIP_tb.ForeColor = System.Drawing.Color.White;
+            this.consoleIP_tb.Name = "consoleIP_tb";
+            this.consoleIP_tb.Size = new System.Drawing.Size(110, 25);
+            this.consoleIP_tb.Text = "192.168.137.130";
             // 
             // toolStripSeparator2
             // 
@@ -979,9 +967,9 @@
             // 
             this.toolStrip.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
             this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripTextBox1,
+            this.consoleName_tb,
             this.toolStripSeparator1,
-            this.toolStripTextBox2,
+            this.consoleIP_tb,
             this.toolStripSeparator2});
             this.toolStrip.Location = new System.Drawing.Point(0, 0);
             this.toolStrip.Name = "toolStrip";
@@ -990,49 +978,59 @@
             this.toolStrip.TabIndex = 0;
             this.toolStrip.Text = "toolStrip1";
             // 
-            // button3
+            // addConsole_b
             // 
-            this.button3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
-            this.button3.FlatAppearance.BorderSize = 0;
-            this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button3.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button3.ForeColor = System.Drawing.Color.White;
-            this.button3.Location = new System.Drawing.Point(236, 0);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(82, 24);
-            this.button3.TabIndex = 13;
-            this.button3.Text = "Add Console";
-            this.button3.UseVisualStyleBackColor = false;
-            this.button3.Click += new System.EventHandler(this.toolStripButton1_Click);
+            this.addConsole_b.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.addConsole_b.FlatAppearance.BorderSize = 0;
+            this.addConsole_b.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.addConsole_b.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.addConsole_b.ForeColor = System.Drawing.Color.White;
+            this.addConsole_b.Location = new System.Drawing.Point(236, 0);
+            this.addConsole_b.Name = "addConsole_b";
+            this.addConsole_b.Size = new System.Drawing.Size(82, 24);
+            this.addConsole_b.TabIndex = 13;
+            this.addConsole_b.Text = "Add Console";
+            this.addConsole_b.UseVisualStyleBackColor = false;
+            this.addConsole_b.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
-            // timer1
+            // sysInfo_t
             // 
-            this.timer1.Interval = 1;
-            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            this.sysInfo_t.Interval = 1000;
+            this.sysInfo_t.Tick += new System.EventHandler(this.timer1_Tick);
             // 
-            // pictureBox1
+            // settings_b
             // 
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(292, 30);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(530, 88);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox1.TabIndex = 14;
-            this.pictureBox1.TabStop = false;
+            this.settings_b.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            this.settings_b.FlatAppearance.BorderSize = 0;
+            this.settings_b.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.settings_b.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.settings_b.ForeColor = System.Drawing.Color.White;
+            this.settings_b.Location = new System.Drawing.Point(466, 142);
+            this.settings_b.Name = "settings_b";
+            this.settings_b.Size = new System.Drawing.Size(63, 23);
+            this.settings_b.TabIndex = 15;
+            this.settings_b.Text = "Settings";
+            this.settings_b.UseVisualStyleBackColor = false;
             // 
-            // button2
+            // button10
             // 
-            this.button2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
-            this.button2.FlatAppearance.BorderSize = 0;
-            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button2.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button2.ForeColor = System.Drawing.Color.White;
-            this.button2.Location = new System.Drawing.Point(466, 142);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(63, 23);
-            this.button2.TabIndex = 15;
-            this.button2.Text = "Settings";
-            this.button2.UseVisualStyleBackColor = false;
+            this.button10.Location = new System.Drawing.Point(852, 124);
+            this.button10.Name = "button10";
+            this.button10.Size = new System.Drawing.Size(75, 23);
+            this.button10.TabIndex = 16;
+            this.button10.Text = "button10";
+            this.button10.UseVisualStyleBackColor = true;
+            this.button10.Click += new System.EventHandler(this.button10_Click);
+            // 
+            // logo
+            // 
+            this.logo.Image = ((System.Drawing.Image)(resources.GetObject("logo.Image")));
+            this.logo.Location = new System.Drawing.Point(292, 30);
+            this.logo.Name = "logo";
+            this.logo.Size = new System.Drawing.Size(542, 88);
+            this.logo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.logo.TabIndex = 14;
+            this.logo.TabStop = false;
             // 
             // app
             // 
@@ -1040,9 +1038,10 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(75)))), ((int)(((byte)(75)))), ((int)(((byte)(75)))));
             this.ClientSize = new System.Drawing.Size(834, 516);
-            this.Controls.Add(this.button2);
-            this.Controls.Add(this.pictureBox1);
-            this.Controls.Add(this.button3);
+            this.Controls.Add(this.button10);
+            this.Controls.Add(this.settings_b);
+            this.Controls.Add(this.logo);
+            this.Controls.Add(this.addConsole_b);
             this.Controls.Add(this.bottom_p);
             this.Controls.Add(this.pages);
             this.Controls.Add(this.memory_b);
@@ -1056,12 +1055,12 @@
             this.MaximizeBox = false;
             this.Name = "app";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Form1";
+            this.Text = "Console Manager by ItsJokerZz for GoldHEN";
             this.consoles_p.ResumeLayout(false);
             this.consoles_p.PerformLayout();
             this.pages.ResumeLayout(false);
-            this.panel4.ResumeLayout(false);
-            this.panel4.PerformLayout();
+            this.memory_p.ResumeLayout(false);
+            this.memory_p.PerformLayout();
             this.groupBox9.ResumeLayout(false);
             this.groupBox9.PerformLayout();
             this.groupBox8.ResumeLayout(false);
@@ -1070,8 +1069,8 @@
             this.panel5.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
-            this.panel2.ResumeLayout(false);
-            this.panel2.PerformLayout();
+            this.details_p.ResumeLayout(false);
+            this.details_p.PerformLayout();
             this.groupBox5.ResumeLayout(false);
             this.groupBox5.PerformLayout();
             this.groupBox4.ResumeLayout(false);
@@ -1080,8 +1079,8 @@
             this.panel3.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
+            this.system_p.ResumeLayout(false);
+            this.system_p.PerformLayout();
             this.groupBox7.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
             this.groupBox6.ResumeLayout(false);
@@ -1093,7 +1092,7 @@
             this.contextMenuStrip1.ResumeLayout(false);
             this.toolStrip.ResumeLayout(false);
             this.toolStrip.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.logo)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1109,32 +1108,31 @@
         private System.Windows.Forms.Panel pages;
         private System.Windows.Forms.Panel bottom_p;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-        private System.Windows.Forms.ToolStripMenuItem connect;
-        private System.Windows.Forms.ToolStripMenuItem remove;
+        private System.Windows.Forms.ToolStripMenuItem connect_mi;
+        private System.Windows.Forms.ToolStripMenuItem remove_mi;
         private System.Windows.Forms.ToolStripMenuItem renameToolStripMenuItem;
         private System.Windows.Forms.ToolStripTextBox toolStripTextBox3;
-        private System.Windows.Forms.Label active_t;
-        private System.Windows.Forms.ToolStripMenuItem disconnectToolStripMenuItem;
-        private System.Windows.Forms.ToolStripTextBox toolStripTextBox1;
+        private System.Windows.Forms.Label active_l;
+        private System.Windows.Forms.ToolStripMenuItem disconnect_mi;
+        private System.Windows.Forms.ToolStripTextBox consoleName_tb;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private System.Windows.Forms.ToolStripTextBox toolStripTextBox2;
+        private System.Windows.Forms.ToolStripTextBox consoleIP_tb;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStrip toolStrip;
-        private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Button addConsole_b;
+        private System.Windows.Forms.Panel system_p;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.TextBox textBox3;
         private System.Windows.Forms.TextBox textBox4;
-        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.Panel details_p;
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.TextBox textBox2;
-        private System.Windows.Forms.Panel panel4;
+        private System.Windows.Forms.Panel memory_p;
         private System.Windows.Forms.Panel panel5;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.GroupBox groupBox3;
@@ -1151,7 +1149,7 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label12;
-        private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.Timer sysInfo_t;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.GroupBox groupBox6;
@@ -1164,11 +1162,11 @@
         private System.Windows.Forms.GroupBox groupBox7;
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.NumericUpDown numericUpDown1;
-        private System.Windows.Forms.ToolStripMenuItem unloadToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem unload_mi;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
         private System.Windows.Forms.Label label15;
-        private System.Windows.Forms.PictureBox pictureBox1;
-        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.PictureBox logo;
+        private System.Windows.Forms.Button settings_b;
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.GroupBox groupBox9;
         private System.Windows.Forms.TextBox textBox9;
@@ -1179,6 +1177,7 @@
         private System.Windows.Forms.TextBox textBox8;
         private System.Windows.Forms.TextBox textBox7;
         private System.Windows.Forms.Button button9;
+        private System.Windows.Forms.Button button10;
     }
 }
 
