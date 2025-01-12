@@ -15,7 +15,7 @@ namespace OrbisControlAPI
         public static Socket socket;
 
         public static readonly int[] 
-            Ports = { 9090, 1337 };
+            Ports = { 9090 };
 
         public static bool _connected;
 

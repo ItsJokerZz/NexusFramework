@@ -15,6 +15,7 @@ namespace CM
         public app()
         {
             InitializeComponent();
+
             details_p.Dock = DockStyle.Fill;
 
             details_b.Click += (s, e) => ChangePage(s, details_p);
@@ -241,7 +242,7 @@ namespace CM
         private void button10_Click(object sender, EventArgs e)
         {
             var subnets = new[] { "192.168.137" };
-            var consoles = api.FindConsoles(subnets, 129, 130);
+            var consoles = api.FindConsoles(subnets, 243, 243);
 
             if (consoles.Count() != 0)
             {
@@ -249,6 +250,11 @@ namespace CM
                 foreach (var console in consoles)
                     Console.WriteLine(console);
             }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            api.TEST();
         }
     }
 }

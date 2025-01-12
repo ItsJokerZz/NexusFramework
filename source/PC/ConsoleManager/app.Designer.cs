@@ -109,6 +109,7 @@
             this.settings_b = new System.Windows.Forms.Button();
             this.button10 = new System.Windows.Forms.Button();
             this.logo = new System.Windows.Forms.PictureBox();
+            this.button2 = new System.Windows.Forms.Button();
             this.consoles_p.SuspendLayout();
             this.pages.SuspendLayout();
             this.memory_p.SuspendLayout();
@@ -956,7 +957,7 @@
             this.consoleIP_tb.ForeColor = System.Drawing.Color.White;
             this.consoleIP_tb.Name = "consoleIP_tb";
             this.consoleIP_tb.Size = new System.Drawing.Size(110, 25);
-            this.consoleIP_tb.Text = "192.168.137.130";
+            this.consoleIP_tb.Text = "192.168.137.243";
             // 
             // toolStripSeparator2
             // 
@@ -1014,7 +1015,7 @@
             // 
             // button10
             // 
-            this.button10.Location = new System.Drawing.Point(852, 124);
+            this.button10.Location = new System.Drawing.Point(860, 124);
             this.button10.Name = "button10";
             this.button10.Size = new System.Drawing.Size(75, 23);
             this.button10.TabIndex = 16;
@@ -1032,12 +1033,28 @@
             this.logo.TabIndex = 14;
             this.logo.TabStop = false;
             // 
+            // button2
+            // 
+            this.button2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.button2.FlatAppearance.BorderSize = 0;
+            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button2.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button2.ForeColor = System.Drawing.Color.White;
+            this.button2.Location = new System.Drawing.Point(598, 124);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(156, 23);
+            this.button2.TabIndex = 17;
+            this.button2.Text = "Load OCAPI into Game";
+            this.button2.UseVisualStyleBackColor = false;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
             // app
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(75)))), ((int)(((byte)(75)))), ((int)(((byte)(75)))));
             this.ClientSize = new System.Drawing.Size(834, 516);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.button10);
             this.Controls.Add(this.settings_b);
             this.Controls.Add(this.logo);
@@ -1178,6 +1195,7 @@
         private System.Windows.Forms.TextBox textBox7;
         private System.Windows.Forms.Button button9;
         private System.Windows.Forms.Button button10;
+        private System.Windows.Forms.Button button2;
     }
 }
 

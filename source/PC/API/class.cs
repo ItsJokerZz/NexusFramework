@@ -139,7 +139,7 @@ namespace OrbisControlAPI
             {
                 return;
             }
-        }
+        } 
 
         public void Notify(int type = 1, string msg = null)
         {
@@ -227,5 +227,22 @@ namespace OrbisControlAPI
                 return;
             }
         }
+
+
+
+
+        public void TEST()
+        {
+            try
+            {
+                var url = $"http://{_ipAddress}:1337/test";
+                Client.GetStringAsync(url).Wait();
+            }
+            catch
+            {
+                return;
+            }
+        }
+
     }
 }

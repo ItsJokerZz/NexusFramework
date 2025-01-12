@@ -65,7 +65,6 @@ namespace OrbisControlAPI
             }
         }
 
-
         public static void UpdateFirmware(string url)
         {
             try
