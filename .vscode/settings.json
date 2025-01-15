@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "functional": "cpp",
+        "vector": "c",
+        "xstring": "c",
+        "xutility": "c",
+        "common.h": "c",
+        "stddef.h": "c"
+    }
+}
