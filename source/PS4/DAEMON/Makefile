@@ -2,7 +2,7 @@ TOOLCHAIN     := $(OO_PS4_TOOLCHAIN)
 PROJDIR       := source
 INTDIR        := build
 
-VERSION       := 0.30
+VERSION       := 0.31
 TARGET        := OrbisControl.prx
 
 VERSION_FILE  := $(INTDIR)/.version
@@ -31,13 +31,13 @@ $(TARGET): $(INTDIR) $(OBJS) incrementBuild
 	-out=$(INTDIR)/$(PROJDIR).oelf --lib=$(TARGET) --paid 0x3800000000000011
 
 $(INTDIR)/%.o: $(PROJDIR)/%.c
-	$(CC) $(CFLAGS) -D _BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
+	$(CC) $(CFLAGS) -D BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
 $(INTDIR)/%.o: $(PROJDIR)/%.cpp
-	$(CCX) $(CXXFLAGS) -D _BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
+	$(CCX) $(CXXFLAGS) -D BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
 $(INTDIR)/%.o: $(COMMONDIR)/%.cpp
-	$(CCX) $(CXXFLAGS) -D _BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
+	$(CCX) $(CXXFLAGS) -D BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
 _unused       := $(shell mkdir -p $(INTDIR))
 UNAME_S       := $(shell uname -s)

@@ -1,7 +1,5 @@
 #include "../headers/includes.hpp"
 
-int BUILD = _BUILD;
-
 bool isDaemon = false,
      unload = false,
      connected = false,
@@ -25,15 +23,7 @@ int32_t module_start(int64_t args, const void *argp)
     return 0;
 }
 
-extern "C"
+extern "C" int32_t __wrap__init(size_t args, const void *argp)
 {
-    int32_t __wrap__init(size_t args, const void *argp)
-    {
-        return module_start(args, argp);
-    }
-
-    void entry()
-    {
-        module_start(0, NULL);
-    }
+    return module_start(args, argp);
 }
