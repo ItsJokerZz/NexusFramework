@@ -11,7 +11,7 @@ MAPFILE     := OrbisControl.map
 CFLAGS      := $(IDIRS) -Os -std=c11 -ffunction-sections -fdata-sections \
                -fno-builtin -nostartfiles -nostdlib -Wall -Wextra \
                -masm=intel -march=btver2 -mtune=btver2 -m64 -mabi=sysv \
-               -mcmodel=small -fpie -fPIC
+               -mcmodel=small -fpie -fPIC -Wno-unused-parameter
 
 LFLAGS      := $(LDIRS) -Xlinker -T $(LIBPS4)/linker.x -Xlinker -Map="$(MAPFILE)" \
                -Wl,--build-id=none -Wl,--gc-sections
@@ -39,7 +39,7 @@ $(ODIR):
 	@mkdir $@
 
 
-.PHONY: clean target all 
+.PHONY: clean target all
 
 .DEFAULT_GOAL := all
 

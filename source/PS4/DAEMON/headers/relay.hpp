@@ -4,7 +4,6 @@ namespace server
 {
     namespace relay
     {
-        extern bool alive;
         extern char buffer[BUFFER_SIZE];
         extern int relay_sock, daemon_sock;
 

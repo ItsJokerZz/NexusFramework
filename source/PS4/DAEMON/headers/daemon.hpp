@@ -8,6 +8,7 @@ namespace server
         extern int daemon_sock, client_sock;
 
         void *process(void *arg);
+        void *thread(void *arg);
         void start();
     }
 }

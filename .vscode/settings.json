@@ -34,6 +34,7 @@
         "utility": "cpp",
         "xhash": "cpp",
         "xmemory": "cpp",
-        "xtr1common": "cpp"
+        "xtr1common": "cpp",
+        "stdbool.h": "c"
     }
 }

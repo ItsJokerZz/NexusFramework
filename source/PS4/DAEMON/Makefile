@@ -31,13 +31,13 @@ $(TARGET): $(INTDIR) $(OBJS) incrementBuild
 	-out=$(INTDIR)/$(PROJDIR).oelf --lib=$(TARGET) --paid 0x3800000000000011
 
 $(INTDIR)/%.o: $(PROJDIR)/%.c
-	$(CC) $(CFLAGS) -D _BUILD=$(BUILD) -D VERSION=$(VERSION) -o $@ $<
+	$(CC) $(CFLAGS) -D _BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
 $(INTDIR)/%.o: $(PROJDIR)/%.cpp
-	$(CCX) $(CXXFLAGS) -D _BUILD=$(BUILD) -D VERSION=$(VERSION) -o $@ $<
+	$(CCX) $(CXXFLAGS) -D _BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
 $(INTDIR)/%.o: $(COMMONDIR)/%.cpp
-	$(CCX) $(CXXFLAGS) -D _BUILD=$(BUILD) -D VERSION=$(VERSION) -o $@ $<
+	$(CCX) $(CXXFLAGS) -D _BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
 _unused       := $(shell mkdir -p $(INTDIR))
 UNAME_S       := $(shell uname -s)
@@ -90,4 +90,4 @@ target: $(TARGET)
 
 stubs: $(TARGETSTUB)
 
-all: clean incrementBuild target stubs
+all: incrementBuild clean target stubs

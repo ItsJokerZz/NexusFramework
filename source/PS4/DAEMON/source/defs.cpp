@@ -1,6 +1,6 @@
 #include "../headers/includes.hpp"
 
-int BUILD = _BUILD+1;
+int BUILD = _BUILD;
 
 bool isDaemon = false,
      unload = false,

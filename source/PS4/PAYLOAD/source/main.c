@@ -1,59 +1,40 @@
 #include <ps4.h>
 #include <stdbool.h>
 
-static ScePthread thread;
+static int32_t (*_init)(size_t, const void *);
 static bool *unload;
-static void *(*entry)(void *);
 
 int64_t sceKernelDlsym(int64_t moduleHandle, const char *functionName, void *destFuncOffset) {
   return (int64_t)syscall(591, (void *)moduleHandle, (void *)functionName, destFuncOffset);
 }
 
-void sendNotification(const char *message) {
-  sceSysUtilSendSystemNotificationWithText(222, (char *)message);
-}
-
-static int loadModuleAndSymbols(const char *modulePath, int *prx_id) {
-  if (loadModule(modulePath, prx_id) != 0)
-    return -1;
-
-  if (sceKernelDlsym(*prx_id, "unload", (void **)&unload) < 0 || unload == NULL)
-    return -1;
-
-  if (sceKernelDlsym(*prx_id, "entry", (void **)&entry) < 0 || entry == NULL)
-    return -1;
-
-  *unload = false;
-
-  return 0;
-}
-
 int _main(void) {
+  int prx_id;
+
   initKernel();
   initLibc();
   jailbreak();
   initSysUtil();
   initPthread();
 
-  int prx_id;
-  if (loadModuleAndSymbols("/data/OrbisControl.prx", &prx_id) < 0)
+  if (loadModule("/data/OrbisControl.prx", &prx_id) != 0)
     return -1;
 
-  if (scePthreadCreate(&thread, NULL, entry, NULL, "OpenControlAPI") != 0)
+  if (sceKernelDlsym(prx_id, "__wrap__init", (void **)&_init) < 0 || _init == NULL)
     return -1;
 
-  scePthreadJoin(thread, NULL);
+  if (sceKernelDlsym(prx_id, "unload", (void **)&unload) < 0 || unload == NULL)
+    return -1;
 
-  for (;;) {
-    if (*unload) {
-      sendNotification("[OCAPI] Unloaded!");
-      unloadModule(prx_id);
-      scePthreadDetach(thread);
+  _init(0, NULL);
 
-      break;
-    }
-    sceKernelUsleep(1000000);
+  while (!*unload) {
+    sceKernelSleep(1);
   }
+
+  unloadModule(prx_id);
+
+  sceSysUtilSendSystemNotificationWithText(222, "[OCAPI] Unloaded!");
 
   return 0;
 }

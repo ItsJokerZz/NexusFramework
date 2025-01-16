@@ -52,7 +52,7 @@ namespace server
             return NULL;
         }
 
-        void start()
+        void *thread(void *arg)
         {
             OrbisNetSockaddr server_addr, client_addr;
             socklen_t client_addr_len = sizeof(client_addr);
@@ -110,6 +110,15 @@ namespace server
 
                 sceNetSocketClose(daemon_sock);
             }
+
+            return NULL;
+        }
+
+        void start()
+        {
+            pthread_t daemon_thread;
+            pthread_create(&daemon_thread, NULL, thread, NULL);
+            pthread_detach(daemon_thread);
         }
     }
 }
