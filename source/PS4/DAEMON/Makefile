@@ -2,9 +2,11 @@ TOOLCHAIN     := $(OO_PS4_TOOLCHAIN)
 PROJDIR       := source
 INTDIR        := build
 
+VERSION       := 0.30
 TARGET        := OrbisControl.prx
-BUILD         := $(shell cat $(INTDIR)/.number)
-VERSION       := 0.29
+
+VERSION_FILE  := $(INTDIR)/.version
+BUILD_FILE    := $(INTDIR)/.number
 
 LIBS          := -lc -lc++ -lkernel -lGoldHEN_Hook \
                  -lSceSystemService -lSceSysmodule \
@@ -23,7 +25,7 @@ CXXFLAGS      := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1 \
 LDFLAGS       := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr \
                  -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o --wrap=_init
 
-$(TARGET): $(INTDIR) $(OBJS) AddToBuildNum
+$(TARGET): $(INTDIR) $(OBJS) incrementBuild
 	$(LD) $(OBJS) -o $(INTDIR)/$(PROJDIR).elf $(LDFLAGS) -e module_start
 	$(TOOLCHAIN)/bin/$(CDIR)/create-fself -in=$(INTDIR)/$(PROJDIR).elf \
 	-out=$(INTDIR)/$(PROJDIR).oelf --lib=$(TARGET) --paid 0x3800000000000011
@@ -56,15 +58,29 @@ ifeq ($(UNAME_S),Darwin)
 	ASMLR := as
 endif
 
-.PHONY: AddToBuildNum clean all target stubs
+.PHONY: incrementBuild clean all target stubs
 
 .DEFAULT_GOAL := all
 
-AddToBuildNum:
+incrementBuild:
 	@mkdir -p $(INTDIR)
-	@touch $(INTDIR)/.number
-	@new_build=$$(($(BUILD) + 1)); \
-	echo $$new_build > $(INTDIR)/.number
+	@touch $(BUILD_FILE)
+	@if [ -f $(VERSION_FILE) ]; then \
+		last_version=$$(cat $(VERSION_FILE)); \
+		if [ "$(VERSION)" != "$$last_version" ]; then \
+			echo "$(VERSION)" > $(VERSION_FILE); \
+			echo "1" > $(BUILD_FILE); \
+		else \
+			build=$$(cat $(BUILD_FILE)); \
+			new_build=$$(($$build + 1)); \
+			echo $$new_build > $(BUILD_FILE); \
+		fi \
+	else \
+		echo "$(VERSION)" > $(VERSION_FILE); \
+		echo "1" > $(BUILD_FILE); \
+	fi
+
+BUILD := $(shell cat $(BUILD_FILE))
 
 clean:
 	rm -f $(INTDIR)/$(PROJDIR).oelf $(OBJS) \
@@ -74,4 +90,4 @@ target: $(TARGET)
 
 stubs: $(TARGETSTUB)
 
-all: AddToBuildNum clean target stubs
+all: incrementBuild target stubs

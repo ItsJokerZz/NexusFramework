@@ -1,4 +1,4 @@
-#include "../headers/includes.hpp"
+#pragma once
 
 namespace server
 {

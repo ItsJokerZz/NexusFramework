@@ -4,27 +4,6 @@ namespace System
 {
   std::string consoleType;
 
-  void TextNotify(int type, const char *_msg)
-  {
-    std::string msg = _msg;
-    sceSysUtilSendSystemNotificationWithText(type, msg.c_str());
-  }
-
-  void ImageNotify(const char *IconUri, const char *text)
-  {
-    if (IconUri == NULL)
-      IconUri = "cxml://psnotification/tex_icon_system";
-
-    OrbisNotificationRequest Buffer;
-    Buffer.type = NotificationRequest;
-    Buffer.unk3 = 0;
-    Buffer.useIconImageUri = 1;
-    Buffer.targetId = -1;
-    strcpy(Buffer.message, text);
-    strcpy(Buffer.iconUri, IconUri);
-    sceKernelSendNotificationRequest(0, &Buffer, sizeof(Buffer), 0);
-  }
-
   const char *Type()
   {
     int32_t cex = sceKernelIsCEX();
@@ -88,6 +67,27 @@ namespace System
     uint32_t celsius;
     sceKernelGetSocSensorTemperature(0, &celsius);
     return celsius;
+  }
+
+  void TextNotify(int type, const char *_msg)
+  {
+    std::string msg = _msg;
+    sceSysUtilSendSystemNotificationWithText(type, msg.c_str());
+  }
+
+  void ImageNotify(const char *IconUri, const char *text)
+  {
+    if (IconUri == NULL)
+      IconUri = "cxml://psnotification/tex_icon_system";
+
+    OrbisNotificationRequest Buffer;
+    Buffer.type = NotificationRequest;
+    Buffer.unk3 = 0;
+    Buffer.useIconImageUri = 1;
+    Buffer.targetId = -1;
+    strcpy(Buffer.message, text);
+    strcpy(Buffer.iconUri, IconUri);
+    sceKernelSendNotificationRequest(0, &Buffer, sizeof(Buffer), 0);
   }
 
   void SetTemperatureLimit(uint8_t limit = 60)

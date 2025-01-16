@@ -26,6 +26,8 @@ namespace server
                     if (!attached && strcmp(PerformGETRequest("attach"), "done") == 0)
                         attached = true;
                 }
+                else if (strstr(buffer, "GET /ping") != NULL)
+                    cmds::daemon::Ping();
                 else if (strstr(buffer, "GET /attach") != NULL)
                     cmds::daemon::Attach();
                 else

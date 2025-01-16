@@ -3,7 +3,7 @@ PROJDIR       := source
 INTDIR        := build
 TARGET        := OrbisControl_game.prx
 
-LIBS          := -lSceLibcInternal -lGoldHEN_Hook -lkernel -lSceSysmodule
+LIBS          := -lSceLibcInternal -lGoldHEN_Hook -lkernel -lSceNet -lSceHttp
 
 CFILES        := $(wildcard $(PROJDIR)/*.c)
 OBJS          := $(patsubst $(PROJDIR)/%.c, $(INTDIR)/%.o, $(CFILES))

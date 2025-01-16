@@ -29,7 +29,7 @@ namespace server
                     HandleCommand(cmds::client::Disconnect, client_sock, connected);
                 else if (strstr(buffer, "GET /attach") != NULL)
                     HandleCommand(cmds::client::Attach, client_sock, connected);
-                    
+
                 else if (strstr(buffer, "GET /version") != NULL)
                     HandleCommand(cmds::client::Version, client_sock, connected);
                 else if (strstr(buffer, "GET /fw") != NULL)

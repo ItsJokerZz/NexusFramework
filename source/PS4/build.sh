@@ -8,7 +8,10 @@ cd DAEMON
 make
 cd ..
 
-echo 
+BUILD=$(cat DAEMON/build/.number)
+VERSION=$(grep -oP '^VERSION\s*:=\s*\K[^\s]*' DAEMON/Makefile)
+
+echo
 echo "-------------------------------------------------------------------------------"
 echo "Building PAYLOAD..."
 echo "-------------------------------------------------------------------------------"
@@ -28,3 +31,7 @@ make
 cd ..
 
 echo "-------------------------------------------------------------------------------"
+
+echo
+echo "---- SUCCESSFULLY BUILT OrbisControl v$VERSION"b$BUILD ON $(date +"%m/%d/%Y @ %I:%M:%S %p") "----"
+echo "------------------------------------------------------------------------------"

@@ -9,8 +9,9 @@
 #define RESPONSE_CONNECT "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 79\r\n\r\n[OCAPI] Please connect to enable interaction between the client and the daemon."
 #define RESPONSE_ATTACH "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 74\r\n\r\n[OCAPI] Please attach to the apps' process before trying to access memory."
 
-extern bool unload,
-    connected, attached;
+#define PrintMsgToUART(fmt, ...) printMsgToUART(__FILE__, __FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)
+
+extern bool unload, connected, attached;
 
 extern int32_t module_start(int64_t args, const void *argp);
 

@@ -47,10 +47,15 @@ namespace cmds
         void Attach()
         {
             attached = false;
-            
+
+            if (isRelayRunning())
+            {
+                char *response = PerformGETRequest("attach");
+                if (response != NULL && strcmp(response, "done") == 0)
+                    attached = true;
+            }
+
             SendFormattedResponse("done", server::daemon::client_sock, &connected);
-            if (!attached && strcmp(PerformGETRequest("attach"), "done") == 0)
-                attached = true;
         }
 
         void GetFW()
@@ -197,10 +202,16 @@ namespace cmds
 
     namespace daemon
     {
+        void Ping()
+        {
+            SendFormattedResponse("true", server::relay::daemon_sock, &attached);
+        }
+
         void Attach()
         {
-            SendFormattedResponse("done", server::relay::daemon_sock, &attached);
             System::TextNotify(222, "[OCAPI] Attached!");
+
+            SendFormattedResponse("done", server::relay::daemon_sock, &attached);
         }
     }
 }

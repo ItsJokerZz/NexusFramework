@@ -19,6 +19,7 @@ namespace cmds
 
     namespace daemon
     {
+        void Ping();
         void Attach();
     }
 }

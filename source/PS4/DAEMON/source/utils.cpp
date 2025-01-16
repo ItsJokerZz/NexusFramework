@@ -1,16 +1,22 @@
 #include "../headers/includes.hpp"
 
-void PrintMsgToUART(const char *fmt, ...)
+void printMsgToUART(const char *file, const char *func, int line, const char *fmt, ...)
 {
-    char buffer[256];
+    char msgBuffer[256];
+    time_t rawtime;
+    struct tm *timeinfo;
+    char timeBuffer[80];
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    char msg[512];
 
     va_list args;
     va_start(args, fmt);
-    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    vsnprintf(msgBuffer, sizeof(msgBuffer), fmt, args);
     va_end(args);
 
-    char msg[512];
-    snprintf(msg, sizeof(msg), "[OCAPI %.2fb%d] %s\n", VERSION, BUILD, buffer);
+    strftime(timeBuffer, sizeof(timeBuffer), "%m/%d/%Y @ %I:%M:%S%p", timeinfo);
+    snprintf(msg, sizeof(msg), "[OCAPI %.2fb%d] %s: (%s:%d->%s) %s\n", VERSION, BUILD, timeBuffer, file, line, func, msgBuffer);
 
     sceKernelDebugOutText(0, msg);
 }
@@ -49,12 +55,12 @@ char *PerformGETRequest(const char *cmd)
     }
 
     // Create the HTTP connection
-    connId = sceHttpCreateConnection(tmplId, "127.0.0.1", "http", RELAYS_PORT, 1); 
+    connId = sceHttpCreateConnection(tmplId, "127.0.0.1", "http", RELAYS_PORT, 1);
     if (connId < 0)
     {
         PrintMsgToUART("Failed to create HTTP connection. Error code: %d", connId);
         sceHttpDeleteTemplate(tmplId); // Cleanup template
-        sceHttpTerm(httpCtxId); // Cleanup HTTP context
+        sceHttpTerm(httpCtxId);        // Cleanup HTTP context
         return NULL;
     }
 
@@ -67,20 +73,20 @@ char *PerformGETRequest(const char *cmd)
     {
         PrintMsgToUART("Failed to create HTTP request. Error code: %d", reqId);
         sceHttpDeleteConnection(connId); // Cleanup connection
-        sceHttpDeleteTemplate(tmplId); // Cleanup template
-        sceHttpTerm(httpCtxId); // Cleanup HTTP context
+        sceHttpDeleteTemplate(tmplId);   // Cleanup template
+        sceHttpTerm(httpCtxId);          // Cleanup HTTP context
         return NULL;
     }
 
     // Send the HTTP request (no data body for GET)
     int sendRequestResult = sceHttpSendRequest(reqId, NULL, 0);
-    if (sendRequestResult < 0)
+    if (sendRequestResult < 0 && strcmp(cmd, "attach") != 0)
     {
         PrintMsgToUART("Failed to send HTTP request. Error code: %d", sendRequestResult);
-        sceHttpDeleteRequest(reqId); // Cleanup request
+        sceHttpDeleteRequest(reqId);     // Cleanup request
         sceHttpDeleteConnection(connId); // Cleanup connection
-        sceHttpDeleteTemplate(tmplId); // Cleanup template
-        sceHttpTerm(httpCtxId); // Cleanup HTTP context
+        sceHttpDeleteTemplate(tmplId);   // Cleanup template
+        sceHttpTerm(httpCtxId);          // Cleanup HTTP context
         return NULL;
     }
 
@@ -89,10 +95,10 @@ char *PerformGETRequest(const char *cmd)
     if (bytesRead < 0)
     {
         PrintMsgToUART("Failed to read HTTP response. Error code: %d", bytesRead);
-        sceHttpDeleteRequest(reqId); // Cleanup request
+        sceHttpDeleteRequest(reqId);     // Cleanup request
         sceHttpDeleteConnection(connId); // Cleanup connection
-        sceHttpDeleteTemplate(tmplId); // Cleanup template
-        sceHttpTerm(httpCtxId); // Cleanup HTTP context
+        sceHttpDeleteTemplate(tmplId);   // Cleanup template
+        sceHttpTerm(httpCtxId);          // Cleanup HTTP context
         return NULL;
     }
 
@@ -109,12 +115,18 @@ char *PerformGETRequest(const char *cmd)
     }
 
     // Cleanup only if they were successfully created
-    sceHttpDeleteRequest(reqId); // Cleanup request
+    sceHttpDeleteRequest(reqId);     // Cleanup request
     sceHttpDeleteConnection(connId); // Cleanup connection
-    sceHttpDeleteTemplate(tmplId); // Cleanup template
-    sceHttpTerm(httpCtxId); // Cleanup HTTP context
+    sceHttpDeleteTemplate(tmplId);   // Cleanup template
+    sceHttpTerm(httpCtxId);          // Cleanup HTTP context
 
     return buffer;
+}
+
+bool isRelayRunning()
+{
+    char *response = PerformGETRequest("ping");
+    return (response != NULL && strcmp(response, "true") == 0);
 }
 
 char *DecodeURL(const char *url)
