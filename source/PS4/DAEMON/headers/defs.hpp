@@ -11,6 +11,8 @@
 
 #define PrintMsgToUART(fmt, ...) printMsgToUART(__FILE__, __FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)
 
+extern int BUILD;
+
 extern bool unload, connected, attached;
 
 extern int32_t module_start(int64_t args, const void *argp);

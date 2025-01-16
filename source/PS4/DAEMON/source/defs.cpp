@@ -1,5 +1,7 @@
 #include "../headers/includes.hpp"
 
+int BUILD = _BUILD+1;
+
 bool isDaemon = false,
      unload = false,
      connected = false,
