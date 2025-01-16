@@ -4,52 +4,55 @@ namespace server
 {
     namespace daemon
     {
-        char buffer[BUFFER_SIZE];
+        std::array<char, BUFFER_SIZE> buffer{};
         int daemon_sock, client_sock;
 
         void *process(void *arg)
         {
-            client_sock = *(int *)arg;
+            client_sock = *static_cast<int*>(arg);
+            std::fill(buffer.begin(), buffer.end(), 0);
 
-            memset(buffer, 0, sizeof(buffer));
-
-            int bytes_received = sceNetRecv(client_sock, buffer, sizeof(buffer) - 1, 0);
+            int bytes_received = sceNetRecv(client_sock, buffer.data(), buffer.size() - 1, 0);
 
             if (bytes_received > 0)
             {
                 buffer[bytes_received] = '\0';
+                const std::string request(buffer.data());
 
-                if (strstr(buffer, "GET /connect") != NULL)
-                    cmds::client::connect();
+                // Use a map instead of unordered_map for C++11 compatibility
+                static const std::map<std::string, std::function<void()>> commands = {
+                    {"GET /connect", cmds::client::connect},
+                    {"GET /unload", cmds::client::unload},
+                    {"GET /disconnect", []() { handle_command(cmds::client::disconnect, client_sock, connected); }},
+                    {"GET /attach", []() { handle_command(cmds::client::attach, client_sock, connected); }},
+                    {"GET /version", []() { handle_command(cmds::client::version, client_sock, connected); }},
+                    {"GET /fw", []() { handle_command(cmds::client::get_fw, client_sock, connected); }},
+                    {"GET /temp", []() { handle_command(cmds::client::get_temp, client_sock, connected); }},
+                    {"GET /notify", []() { handle_command(cmds::client::notify, client_sock, connected); }},
+                    {"GET /temp_limit", []() { handle_command(cmds::client::temp_limit, client_sock, connected); }},
+                    {"GET /sys_type", []() { handle_command(cmds::client::sys_type, client_sock, connected); }},
+                    {"GET /beep", []() { handle_command(cmds::client::beep, client_sock, connected); }}
+                };
 
-                else if (strstr(buffer, "GET /unload") != NULL)
-                    cmds::client::unload();
+                // Replace auto with explicit type for C++11 compatibility
+                typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
+                CommandIter it = std::find_if(commands.begin(), commands.end(),
+                    [&request](const std::pair<std::string, std::function<void()>>& pair) {
+                        return request.find(pair.first) != std::string::npos;
+                    });
 
-                else if (strstr(buffer, "GET /disconnect") != NULL)
-                    handle_command(cmds::client::disconnect, client_sock, connected);
-                else if (strstr(buffer, "GET /attach") != NULL)
-                    handle_command(cmds::client::attach, client_sock, connected);
-
-                else if (strstr(buffer, "GET /version") != NULL)
-                    handle_command(cmds::client::version, client_sock, connected);
-                else if (strstr(buffer, "GET /fw") != NULL)
-                    handle_command(cmds::client::get_fw, client_sock, connected);
-                else if (strstr(buffer, "GET /sysType") != NULL)
-                    handle_command(cmds::client::sys_type, client_sock, connected);
-                else if (strstr(buffer, "GET /temp") != NULL)
-                    handle_command(cmds::client::get_temp, client_sock, connected);
-                else if (strstr(buffer, "GET /notify") != NULL)
-                    handle_command(cmds::client::notify, client_sock, connected);
-                else if (strstr(buffer, "GET /setTempLimit") != NULL)
-                    handle_command(cmds::client::temp_limit, client_sock, connected);
-                else if (strstr(buffer, "GET /beep") != NULL)
-                    handle_command(cmds::client::beep, client_sock, connected);
+                if (it != commands.end())
+                {
+                    it->second();
+                }
                 else
+                {
                     sceNetSend(client_sock, RESPONSE_404, strlen(RESPONSE_404), 0);
+                }
             }
             sceNetSocketClose(client_sock);
 
-            return NULL;
+            return nullptr;
         }
 
         void *thread(void *arg)
@@ -110,7 +113,7 @@ namespace server
                 sceNetSocketClose(daemon_sock);
             }
 
-            return NULL;
+            return nullptr;
         }
 
         void start()

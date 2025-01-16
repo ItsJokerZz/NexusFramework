@@ -112,10 +112,7 @@ namespace OrbisControlAPI
         {
             try
             {
-                _sysType = Client.GetStringAsync(url + "sysType").Result;
-                //string k = "";
-                //var X = Enum.GetName(typeof(ConsoleType), k);
-                //Console.Write(X);
+                _sysType = Client.GetStringAsync(url + "sys_type").Result;
             }
             catch { return; }
         }

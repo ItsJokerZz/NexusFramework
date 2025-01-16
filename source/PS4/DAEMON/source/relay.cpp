@@ -4,38 +4,50 @@ namespace server
 {
     namespace relay
     {
-        char buffer[BUFFER_SIZE];
+        std::array<char, BUFFER_SIZE> buffer{};
         int relay_sock, daemon_sock;
 
         void *process(void *arg)
         {
-            daemon_sock = *(int *)arg;
+            daemon_sock = *static_cast<int *>(arg);
+            std::fill(buffer.begin(), buffer.end(), 0);
 
-            memset(buffer, 0, sizeof(buffer));
-
-            int bytes_received = sceNetRecv(daemon_sock, buffer, sizeof(buffer) - 1, 0);
+            int bytes_received = sceNetRecv(daemon_sock, buffer.data(), buffer.size() - 1, 0);
 
             if (bytes_received > 0)
             {
                 buffer[bytes_received] = '\0';
+                const std::string request(buffer.data());
 
-                if (strstr(buffer, "GET /test") != NULL)
+                static const std::map<std::string, std::function<void()>> commands = {
+                    {"GET /test", []()
+                     {
+                         send_formatted_response("done", server::relay::daemon_sock, &attached);
+                         if (!attached && strcmp(perform_get_request("attach"), "done") == 0)
+                             attached = true;
+                     }},
+                    {"GET /ping", cmds::daemon::ping},
+                    {"GET /attach", cmds::daemon::attach}};
+
+                typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
+                CommandIter it = std::find_if(commands.begin(), commands.end(),
+                                              [&request](const std::pair<std::string, std::function<void()>> &pair)
+                                              {
+                                                  return request.find(pair.first) != std::string::npos;
+                                              });
+
+                if (it != commands.end())
                 {
-                    send_formatted_response("done", server::relay::daemon_sock, &attached);
-
-                    if (!attached && strcmp(perform_get_request("attach"), "done") == 0)
-                        attached = true;
+                    it->second();
                 }
-                else if (strstr(buffer, "GET /ping") != NULL)
-                    cmds::daemon::ping();
-                else if (strstr(buffer, "GET /attach") != NULL)
-                    cmds::daemon::attach();
                 else
+                {
                     sceNetSend(daemon_sock, RESPONSE_404, strlen(RESPONSE_404), 0);
+                }
             }
             sceNetSocketClose(daemon_sock);
 
-            return NULL;
+            return nullptr;
         }
 
         void *thread(void *arg)
@@ -55,13 +67,11 @@ namespace server
                     continue;
                 }
 
-                memset(&server_addr, 0, sizeof(server_addr));
+                std::memset(&server_addr, 0, sizeof(server_addr));
                 server_addr.len = sizeof(server_addr);
                 server_addr.sa_family = ORBIS_NET_AF_INET;
-                *(uint16_t *)server_addr.sa_data = sceNetHtons(RELAYS_PORT);
-                memset(server_addr.sa_data + 2, 0, 4);
-
-                // *(uint32_t *)(relay_addr.sa_data + 2) = sceNetHtonl(0x7F000001); // Bind to localhost (127.0.0.1)
+                *reinterpret_cast<uint16_t *>(server_addr.sa_data) = sceNetHtons(RELAYS_PORT);
+                std::memset(server_addr.sa_data + 2, 0, 4);
 
                 if (sceNetBind(relay_sock, &server_addr, sizeof(server_addr)) < 0)
                 {
@@ -91,20 +101,20 @@ namespace server
                     }
 
                     pthread_t daemon_thread;
-                    pthread_create(&daemon_thread, NULL, process, &daemon_sock);
+                    pthread_create(&daemon_thread, nullptr, process, &daemon_sock);
                     pthread_detach(daemon_thread);
                 }
 
                 sceNetSocketClose(relay_sock);
             }
 
-            return NULL;
+            return nullptr;
         }
 
         void start()
         {
             pthread_t relay_thread;
-            pthread_create(&relay_thread, NULL, thread, NULL);
+            pthread_create(&relay_thread, nullptr, thread, nullptr);
             pthread_detach(relay_thread);
         }
     }

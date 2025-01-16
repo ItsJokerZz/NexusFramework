@@ -35,6 +35,9 @@
         "xhash": "cpp",
         "xmemory": "cpp",
         "xtr1common": "cpp",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "array": "cpp",
+        "map": "cpp",
+        "xtree": "cpp"
     }
 }

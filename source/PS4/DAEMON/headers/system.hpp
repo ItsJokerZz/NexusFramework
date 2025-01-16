@@ -1,20 +1,31 @@
 #pragma once
 
-namespace sys_utils
-{
-    extern std::string console_type;
+#include <string>
+#include <cstdint>
+#include <memory>
 
-    extern const char *get_console_type();
+namespace sys_utils {
+    extern std::string console_type;
+    
+    enum class BeepType {
+        Stop = 0,
+        Single = 1,
+        Double = 2,
+        Triple = 3,
+        Continuous = 4
+    };
+
+    extern const char* get_console_type();
     extern int32_t get_system_language_id();
-    extern const char *get_system_language();
-    extern const char *get_fw_version();
+    extern const char* get_system_language();
+    extern const char* get_fw_version();
     extern uint32_t get_cpu_temperature();
     extern uint32_t get_soc_temperature();
 
-    void text_notify(int type, const char *_msg);
-    void image_notify(const char *IconUri, const char *text);
-    void set_temperature_limit(uint8_t limit);
-    void beep(int type);
+    void text_notify(int type, const char* _msg);
+    void image_notify(const char* IconUri, const char* text);
+    void set_temperature_limit(uint8_t limit = 60);
+    void beep(BeepType type);
 }
 
 extern "C"

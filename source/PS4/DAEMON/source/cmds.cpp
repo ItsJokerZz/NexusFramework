@@ -6,9 +6,8 @@ namespace cmds
     {
         void version()
         {
-            char message[BUFFER_SIZE];
-            snprintf(message, sizeof(message), "%f", VERSION);
-            send_formatted_response(message, server::daemon::client_sock, &connected);
+            std::string message = std::to_string(VERSION);
+            send_formatted_response(message.c_str(), server::daemon::client_sock, &connected);
         }
 
         void connect()
@@ -66,11 +65,11 @@ namespace cmds
         void get_temp()
         {
             char temp[BUFFER_SIZE] = {0};
-            char *start = strstr(server::daemon::buffer, "type=");
+            const char* start = strstr(server::daemon::buffer.data(), "type=");
             if (start)
             {
                 start += 5;
-                char *end = strchr(start, '&');
+                char* end = strchr(start, '&');
                 if (end)
                     *end = '\0';
                 sscanf(start, "%s", temp);
@@ -98,46 +97,47 @@ namespace cmds
 
         void notify()
         {
-            char *msg = NULL;
+            std::string msg;
             int type = 0;
 
-            char *start = strstr(server::daemon::buffer, "type=");
-            if (start)
-            {
-                start += 5;
-                char *end = strchr(start, '&');
-                if (end)
-                    *end = '\0';
-                sscanf(start, "%d", &type);
-                start = end ? strchr(end + 1, '=') : NULL;
-                if (start)
-                    start += 1;
+            // Parse type
+            const char* type_start = strstr(server::daemon::buffer.data(), "type=");
+            if (type_start) {
+                type_start += 5;
+                const char* type_end = strchr(type_start, '&');
+                if (type_end) {
+                    std::string type_str(type_start, type_end);
+                    type = std::stoi(type_str);
+                    type_start = strchr(type_end + 1, '=');
+                    if (type_start) type_start += 1;
+                }
             }
 
-            if (start)
-            {
-                char* end = strchr(start, ' ');
-                if (end)
-                    *end = '\0';
-                msg = decode_url(start);
+            // Parse message
+            if (type_start) {
+                const char* msg_end = strchr(type_start, ' ');
+                if (msg_end) {
+                    std::string encoded_msg(type_start, msg_end);
+                    char* decoded = decode_url(encoded_msg.c_str());
+                    if (decoded) {
+                        msg = std::string(decoded);
+                        free(decoded);  // Free the decoded string if it was dynamically allocated
+                    }
+                }
             }
 
-            sys_utils::text_notify(type, msg ? msg : NULL);
-
-            if (msg)
-                free(msg);
-
+            sys_utils::text_notify(type, msg.empty() ? nullptr : msg.c_str());
             send_formatted_response("done", server::daemon::client_sock, &connected);
         }
 
         void temp_limit()
         {
             uint8_t temp = 0;
-            char *start = strstr(server::daemon::buffer, "limit=");
+            const char* start = strstr(server::daemon::buffer.data(), "limit=");
             if (start)
             {
                 start += 6;
-                char *end = strchr(start, '&');
+                char* end = strchr(start, '&');
                 if (end)
                     *end = '\0';
                 sscanf(start, "%hhu", &temp);
@@ -158,42 +158,39 @@ namespace cmds
         void beep()
         {
             int type = -1;
-            char *start = strstr(server::daemon::buffer, "type=");
-            if (start)
-            {
+            const char* start = strstr(server::daemon::buffer.data(), "type=");
+            if (start) {
                 start += 5;
-                char *end = strchr(start, '&');
-                if (end)
-                    *end = '\0';
-                sscanf(start, "%d", &type);
-                start = end ? strchr(end + 1, '=') : NULL;
-                if (start)
-                    start += 1;
+                const char* end = strchr(start, '&');
+                if (end) {
+                    std::string type_str(start, end);
+                    type = std::stoi(type_str);
+                }
             }
 
-            switch (type)
-            {
-            case 0: // stop
-                sys_utils::beep(0);
-                break;
-            case 1: // single
-                sys_utils::beep(1);
-                break;
-            case 2: // double
-                sys_utils::beep(1);
-                sceKernelUsleep(125000);
-                sys_utils::beep(1);
-                break;
-            case 3: // triple
-                sys_utils::beep(1);
-                sceKernelUsleep(125000);
-                sys_utils::beep(1);
-                sceKernelUsleep(125000);
-                sys_utils::beep(1);
-                break;
-            case 4: // continuous
-                sys_utils::beep(6);
-                break;
+            using BeepType = sys_utils::BeepType;
+            switch (static_cast<BeepType>(type)) {
+                case BeepType::Stop:
+                    sys_utils::beep(BeepType::Stop);
+                    break;
+                case BeepType::Single:
+                    sys_utils::beep(BeepType::Single);
+                    break;
+                case BeepType::Double:
+                    sys_utils::beep(BeepType::Single);
+                    sceKernelUsleep(125000);
+                    sys_utils::beep(BeepType::Single);
+                    break;
+                case BeepType::Triple:
+                    sys_utils::beep(BeepType::Single);
+                    sceKernelUsleep(125000);
+                    sys_utils::beep(BeepType::Single);
+                    sceKernelUsleep(125000);
+                    sys_utils::beep(BeepType::Single);
+                    break;
+                case BeepType::Continuous:
+                    sys_utils::beep(BeepType::Continuous);
+                    break;
             }
 
             send_formatted_response("done", server::daemon::client_sock, &connected);

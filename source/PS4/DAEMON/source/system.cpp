@@ -90,7 +90,7 @@ namespace sys_utils
     sceKernelSendNotificationRequest(0, &Buffer, sizeof(Buffer), 0);
   }
 
-  void set_temperature_limit(uint8_t limit = 60)
+  void set_temperature_limit(uint8_t limit)
   {
     int fd = open("/dev/icc_fan", O_RDONLY);
     if (fd < 0)
@@ -102,8 +102,8 @@ namespace sys_utils
     close(fd);
   }
 
-  void beep(int type)
+  void beep(BeepType type)
   {
-    sceKernelIccSetBuzzer(type);
+    sceKernelIccSetBuzzer(static_cast<int>(type));
   }
 }

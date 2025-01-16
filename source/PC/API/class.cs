@@ -22,7 +22,7 @@ namespace OrbisControlAPI
 
         public enum Temp { getCPU, getSOC, SetTreshold }
         public enum BeepType { Stop, Single, Double, Triple, Continuous }
-        // public enum ConsoleType { CEX, KIT, TEST }
+        public enum ConsoleType { CEX, KIT, TEST }
 
 
         public List<string> FindConsoles(string[] subnets, int startRange, int endRange)
