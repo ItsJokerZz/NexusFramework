@@ -1,33 +1,33 @@
 #include "../headers/includes.hpp"
 
-namespace System
+namespace sys_utils
 {
-  std::string consoleType;
+  std::string console_type;
 
-  const char *Type()
+  const char *get_console_type()
   {
     int32_t cex = sceKernelIsCEX();
     int32_t devKit = sceKernelIsDevKit();
     int32_t testKit = sceKernelIsTestKit();
 
     if (cex)
-      consoleType = "CEX";
+      console_type = "CEX";
     if (devKit)
-      consoleType = "KIT";
+      console_type = "KIT";
     if (testKit)
-      consoleType = "TEST";
+      console_type = "TEST";
 
-    return consoleType.c_str();
+    return console_type.c_str();
   }
 
-  int32_t GetSystemLanguageID()
+  int32_t get_system_language_id()
   {
     int32_t languageID = -1;
     sceSystemServiceParamGetInt(ORBIS_SYSTEM_SERVICE_PARAM_ID_LANG, &languageID);
     return languageID;
   }
 
-  const char *GetSystemLanguage()
+  const char *get_system_language()
   {
     static const char *languages[] = {
         "jp", "en-US", "fr", "es", "de", "it", "nl", "pt-PT",
@@ -35,7 +35,7 @@ namespace System
         "pl", "pt-BR", "en-GB", "tr", "es-LA", "ar", "fr-CA", "cs",
         "hu", "el", "ro", "th", "vi", "id"};
 
-    int32_t langID = GetSystemLanguageID();
+    int32_t langID = get_system_language_id();
     if (langID >= ORBIS_SYSTEM_PARAM_LANG_JAPANESE &&
         langID <= ORBIS_SYSTEM_PARAM_LANG_INDONESIAN)
     {
@@ -44,7 +44,7 @@ namespace System
     return "NULL";
   }
 
-  const char *GetFWVersion()
+  const char *get_fw_version()
   {
     static char versionString[0x1C];
     OrbisKernelSwVersion versionInfo;
@@ -55,27 +55,27 @@ namespace System
     return versionString;
   }
 
-  uint32_t GetCPUTemperature()
+  uint32_t get_cpu_temperature()
   {
     uint32_t celsius;
     sceKernelGetCpuTemperature(&celsius);
     return celsius;
   }
 
-  uint32_t GetSOCTemperature()
+  uint32_t get_soc_temperature()
   {
     uint32_t celsius;
     sceKernelGetSocSensorTemperature(0, &celsius);
     return celsius;
   }
 
-  void TextNotify(int type, const char *_msg)
+  void text_notify(int type, const char *_msg)
   {
     std::string msg = _msg;
     sceSysUtilSendSystemNotificationWithText(type, msg.c_str());
   }
 
-  void ImageNotify(const char *IconUri, const char *text)
+  void image_notify(const char *IconUri, const char *text)
   {
     if (IconUri == NULL)
       IconUri = "cxml://psnotification/tex_icon_system";
@@ -90,7 +90,7 @@ namespace System
     sceKernelSendNotificationRequest(0, &Buffer, sizeof(Buffer), 0);
   }
 
-  void SetTemperatureLimit(uint8_t limit = 60)
+  void set_temperature_limit(uint8_t limit = 60)
   {
     int fd = open("/dev/icc_fan", O_RDONLY);
     if (fd < 0)
@@ -102,7 +102,7 @@ namespace System
     close(fd);
   }
 
-  void Beep(int type)
+  void beep(int type)
   {
     sceKernelIccSetBuzzer(type);
   }

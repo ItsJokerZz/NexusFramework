@@ -1,27 +1,6 @@
 #include "../headers/includes.hpp"
 
-void printMsgToUART(const char *file, const char *func, int line, const char *fmt, ...)
-{
-    char msgBuffer[256];
-    time_t rawtime;
-    struct tm *timeinfo;
-    char timeBuffer[80];
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    char msg[512];
-
-    va_list args;
-    va_start(args, fmt);
-    vsnprintf(msgBuffer, sizeof(msgBuffer), fmt, args);
-    va_end(args);
-
-    strftime(timeBuffer, sizeof(timeBuffer), "%m/%d/%Y @ %I:%M:%S%p", timeinfo);
-    snprintf(msg, sizeof(msg), "[OCAPI %.2fb%d] %s: (%s:%d->%s) %s\n", VERSION, BUILD, timeBuffer, file, line, func, msgBuffer);
-
-    sceKernelDebugOutText(0, msg);
-}
-
-char *performGETRequest(const char *cmd)
+char *perform_get_request(const char *cmd)
 {
     static char buffer[BUFFER_SIZE];
 
@@ -38,7 +17,7 @@ char *performGETRequest(const char *cmd)
     httpCtxId = sceHttpInit(0, 0, 1024 * 1024); // Keep httpCtxId here
     if (httpCtxId < 0)
     {
-        PrintMsgToUART("Failed to initialize HTTP. Error code: %d", httpCtxId);
+        log_message("Failed to initialize HTTP. Error code: %d", httpCtxId);
         return NULL;
     }
 
@@ -49,7 +28,7 @@ char *performGETRequest(const char *cmd)
     tmplId = sceHttpCreateTemplate(httpCtxId, userAgent, 1, 0);
     if (tmplId < 0)
     {
-        PrintMsgToUART("Failed to create HTTP template. Error code: %d", tmplId);
+        log_message("Failed to create HTTP template. Error code: %d", tmplId);
         sceHttpTerm(httpCtxId); // Cleanup HTTP context if template creation fails
         return NULL;
     }
@@ -58,7 +37,7 @@ char *performGETRequest(const char *cmd)
     connId = sceHttpCreateConnection(tmplId, "127.0.0.1", "http", RELAYS_PORT, 1);
     if (connId < 0)
     {
-        PrintMsgToUART("Failed to create HTTP connection. Error code: %d", connId);
+        log_message("Failed to create HTTP connection. Error code: %d", connId);
         sceHttpDeleteTemplate(tmplId); // Cleanup template
         sceHttpTerm(httpCtxId);        // Cleanup HTTP context
         return NULL;
@@ -71,7 +50,7 @@ char *performGETRequest(const char *cmd)
     reqId = sceHttpCreateRequest(connId, ORBIS_METHOD_GET, url, 0);
     if (reqId < 0)
     {
-        PrintMsgToUART("Failed to create HTTP request. Error code: %d", reqId);
+        log_message("Failed to create HTTP request. Error code: %d", reqId);
         sceHttpDeleteConnection(connId); // Cleanup connection
         sceHttpDeleteTemplate(tmplId);   // Cleanup template
         sceHttpTerm(httpCtxId);          // Cleanup HTTP context
@@ -82,7 +61,7 @@ char *performGETRequest(const char *cmd)
     int sendRequestResult = sceHttpSendRequest(reqId, NULL, 0);
     if (sendRequestResult < 0 && strcmp(cmd, "attach") != 0)
     {
-        PrintMsgToUART("Failed to send HTTP request. Error code: %d", sendRequestResult);
+        log_message("Failed to send HTTP request. Error code: %d", sendRequestResult);
         sceHttpDeleteRequest(reqId);     // Cleanup request
         sceHttpDeleteConnection(connId); // Cleanup connection
         sceHttpDeleteTemplate(tmplId);   // Cleanup template
@@ -94,7 +73,7 @@ char *performGETRequest(const char *cmd)
     bytesRead = sceHttpReadData(reqId, buffer, sizeof(buffer));
     if (bytesRead < 0)
     {
-        PrintMsgToUART("Failed to read HTTP response. Error code: %d", bytesRead);
+        log_message("Failed to read HTTP response. Error code: %d", bytesRead);
         sceHttpDeleteRequest(reqId);     // Cleanup request
         sceHttpDeleteConnection(connId); // Cleanup connection
         sceHttpDeleteTemplate(tmplId);   // Cleanup template
@@ -123,13 +102,13 @@ char *performGETRequest(const char *cmd)
     return buffer;
 }
 
-bool isRelayRunning()
+bool is_relay_running()
 {
-    char *response = performGETRequest("ping");
+    char *response = perform_get_request("ping");
     return (response != NULL && strcmp(response, "true") == 0);
 }
 
-char *DecodeURL(const char *url)
+char *decode_url(const char *url)
 {
     size_t len = strlen(url);
     char *decoded = (char *)malloc(len + 1);
@@ -162,20 +141,18 @@ char *DecodeURL(const char *url)
     return decoded;
 }
 
-void HandleCommand(void (*func)(), int socket, bool toggle)
+void send_response(const char *msg, int socket, bool toggle)
 {
-    if (toggle)
-        func();
-    else
+    ssize_t bytes_sent = sceNetSend(socket, msg, strlen(msg), 0);
+
+    if (bytes_sent < 0 || bytes_sent < strlen(msg))
     {
-        if (socket == server::daemon::client_sock)
-            SendResponse(RESPONSE_CONNECT, socket, toggle);
-        else if (socket == server::relay::daemon_sock)
-            SendResponse(RESPONSE_ATTACH, socket, toggle);
+        toggle = false;
+        attached = false;
     }
 }
 
-void SendFormattedResponse(const char *message, int socket, bool *toggle)
+void send_formatted_response(const char *message, int socket, bool *toggle)
 {
     char response[BUFFER_SIZE];
     int message_length = snprintf(response, sizeof(response), RESPONSE_OK, (int)strlen(message), message);
@@ -184,16 +161,18 @@ void SendFormattedResponse(const char *message, int socket, bool *toggle)
         message_length = sizeof(response) - 1;
         response[message_length] = '\0';
     }
-    SendResponse(response, socket, *toggle);
+    send_response(response, socket, *toggle);
 }
 
-void SendResponse(const char *msg, int socket, bool toggle)
+void handle_command(void (*func)(), int socket, bool toggle)
 {
-    ssize_t bytes_sent = sceNetSend(socket, msg, strlen(msg), 0);
-
-    if (bytes_sent < 0 || bytes_sent < strlen(msg))
+    if (toggle)
+        func();
+    else
     {
-        toggle = false;
-        attached = false;
+        if (socket == server::daemon::client_sock)
+            send_response(RESPONSE_CONNECT, socket, toggle);
+        else if (socket == server::relay::daemon_sock)
+            send_response(RESPONSE_ATTACH, socket, toggle);
     }
 }

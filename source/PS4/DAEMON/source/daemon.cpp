@@ -20,30 +20,30 @@ namespace server
                 buffer[bytes_received] = '\0';
 
                 if (strstr(buffer, "GET /connect") != NULL)
-                    cmds::client::Connect();
+                    cmds::client::connect();
 
                 else if (strstr(buffer, "GET /unload") != NULL)
-                    cmds::client::Unload();
+                    cmds::client::unload();
 
                 else if (strstr(buffer, "GET /disconnect") != NULL)
-                    HandleCommand(cmds::client::Disconnect, client_sock, connected);
+                    handle_command(cmds::client::disconnect, client_sock, connected);
                 else if (strstr(buffer, "GET /attach") != NULL)
-                    HandleCommand(cmds::client::Attach, client_sock, connected);
+                    handle_command(cmds::client::attach, client_sock, connected);
 
                 else if (strstr(buffer, "GET /version") != NULL)
-                    HandleCommand(cmds::client::Version, client_sock, connected);
+                    handle_command(cmds::client::version, client_sock, connected);
                 else if (strstr(buffer, "GET /fw") != NULL)
-                    HandleCommand(cmds::client::GetFW, client_sock, connected);
+                    handle_command(cmds::client::get_fw, client_sock, connected);
                 else if (strstr(buffer, "GET /sysType") != NULL)
-                    HandleCommand(cmds::client::SysType, client_sock, connected);
+                    handle_command(cmds::client::sys_type, client_sock, connected);
                 else if (strstr(buffer, "GET /temp") != NULL)
-                    HandleCommand(cmds::client::GetTemp, client_sock, connected);
+                    handle_command(cmds::client::get_temp, client_sock, connected);
                 else if (strstr(buffer, "GET /notify") != NULL)
-                    HandleCommand(cmds::client::Notify, client_sock, connected);
+                    handle_command(cmds::client::notify, client_sock, connected);
                 else if (strstr(buffer, "GET /setTempLimit") != NULL)
-                    HandleCommand(cmds::client::TempLimit, client_sock, connected);
+                    handle_command(cmds::client::temp_limit, client_sock, connected);
                 else if (strstr(buffer, "GET /beep") != NULL)
-                    HandleCommand(cmds::client::Beep, client_sock, connected);
+                    handle_command(cmds::client::beep, client_sock, connected);
                 else
                     sceNetSend(client_sock, RESPONSE_404, strlen(RESPONSE_404), 0);
             }
@@ -64,8 +64,8 @@ namespace server
 
                 if (daemon_sock < 0)
                 {
-                    PrintMsgToUART("Daemon failed to create server socket, retrying...");
-                    sceKernelSleep(1);
+                    log_message("Daemon failed to create server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
+                    sceKernelSleep(RETRY_DELAY_SECONDS);
                     continue;
                 }
 
@@ -77,29 +77,28 @@ namespace server
 
                 if (sceNetBind(daemon_sock, &server_addr, sizeof(server_addr)) < 0)
                 {
-                    PrintMsgToUART("Daemon failed to bind server socket, retrying...");
+                    log_message("Daemon failed to bind server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(daemon_sock);
-                    sceKernelSleep(1);
+                    sceKernelSleep(RETRY_DELAY_SECONDS);
                     continue;
                 }
 
                 if (sceNetListen(daemon_sock, 1) < 0)
                 {
-                    PrintMsgToUART("Daemon failed to listen on server socket, retrying...");
-
+                    log_message("Daemon failed to listen on server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(daemon_sock);
-                    sceKernelSleep(1);
+                    sceKernelSleep(RETRY_DELAY_SECONDS);
                     continue;
                 }
 
-                PrintMsgToUART("Daemon has started a server listening on port 1337.");
+                log_message("Daemon has started a server listening on port 1337.");
 
                 while (!unload)
                 {
                     client_sock = sceNetAccept(daemon_sock, &client_addr, &client_addr_len);
                     if (client_sock < 0)
                     {
-                        PrintMsgToUART("Failed to accept client connection");
+                        log_message("Failed to accept client connection");
                         continue;
                     }
 

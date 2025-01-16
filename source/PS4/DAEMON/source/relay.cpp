@@ -21,15 +21,15 @@ namespace server
 
                 if (strstr(buffer, "GET /test") != NULL)
                 {
-                    SendFormattedResponse("done", server::relay::daemon_sock, &attached);
+                    send_formatted_response("done", server::relay::daemon_sock, &attached);
 
-                    if (!attached && strcmp(performGETRequest("attach"), "done") == 0)
+                    if (!attached && strcmp(perform_get_request("attach"), "done") == 0)
                         attached = true;
                 }
                 else if (strstr(buffer, "GET /ping") != NULL)
-                    cmds::daemon::Ping();
+                    cmds::daemon::ping();
                 else if (strstr(buffer, "GET /attach") != NULL)
-                    cmds::daemon::Attach();
+                    cmds::daemon::attach();
                 else
                     sceNetSend(daemon_sock, RESPONSE_404, strlen(RESPONSE_404), 0);
             }
@@ -50,8 +50,8 @@ namespace server
 
                 if (relay_sock < 0)
                 {
-                    PrintMsgToUART("Relay failed to create server socket, retrying...");
-                    sceKernelSleep(1);
+                    log_message("Relay failed to create server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
+                    sceKernelSleep(RETRY_DELAY_SECONDS);
                     continue;
                 }
 
@@ -65,29 +65,28 @@ namespace server
 
                 if (sceNetBind(relay_sock, &server_addr, sizeof(server_addr)) < 0)
                 {
-                    PrintMsgToUART("Relay failed to bind server socket, retrying...");
+                    log_message("Relay failed to bind server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(relay_sock);
-                    sceKernelSleep(1);
+                    sceKernelSleep(RETRY_DELAY_SECONDS);
                     continue;
                 }
 
                 if (sceNetListen(relay_sock, 1) < 0)
                 {
-                    PrintMsgToUART("Relay failed to listen on server socket, retrying...");
-
+                    log_message("Relay failed to listen on server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(relay_sock);
-                    sceKernelSleep(1);
+                    sceKernelSleep(RETRY_DELAY_SECONDS);
                     continue;
                 }
 
-                PrintMsgToUART("Relay has started a server listening on port 8008.");
+                log_message("Relay has started a server listening on port 8008.");
 
                 while (!unload)
                 {
                     daemon_sock = sceNetAccept(relay_sock, &daemon_addr, &daemon_addr_len);
                     if (daemon_sock < 0)
                     {
-                        PrintMsgToUART("Failed to accept daemon connection");
+                        log_message("Failed to accept daemon connection");
                         continue;
                     }
 

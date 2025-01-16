@@ -1,20 +1,20 @@
 #pragma once
 
-namespace System
+namespace sys_utils
 {
-    extern std::string consoleType;
+    extern std::string console_type;
 
-    extern const char *Type();
-    extern int32_t GetSystemLanguageID();
-    extern const char *GetSystemLanguage();
-    extern const char *GetFWVersion();
-    extern uint32_t GetCPUTemperature();
-    extern uint32_t GetSOCTemperature();
+    extern const char *get_console_type();
+    extern int32_t get_system_language_id();
+    extern const char *get_system_language();
+    extern const char *get_fw_version();
+    extern uint32_t get_cpu_temperature();
+    extern uint32_t get_soc_temperature();
 
-    void TextNotify(int type, const char *_msg);
-    void ImageNotify(const char *IconUri, const char *text);
-    void SetTemperatureLimit(uint8_t limit);
-    void Beep(int type);
+    void text_notify(int type, const char *_msg);
+    void image_notify(const char *IconUri, const char *text);
+    void set_temperature_limit(uint8_t limit);
+    void beep(int type);
 }
 
 extern "C"

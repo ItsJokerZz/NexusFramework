@@ -4,22 +4,22 @@ namespace cmds
 {
     namespace client
     {
-        void Version()
+        void version()
         {
             char message[BUFFER_SIZE];
             snprintf(message, sizeof(message), "%f", VERSION);
-            SendFormattedResponse(message, server::daemon::client_sock, &connected);
+            send_formatted_response(message, server::daemon::client_sock, &connected);
         }
 
-        void Connect()
+        void connect()
         {
-            SendFormattedResponse("true", server::daemon::client_sock, &connected);
+            send_formatted_response("true", server::daemon::client_sock, &connected);
             connected = true;
         }
 
-        void Unload()
+        void unload()
         {
-            SendFormattedResponse("done", server::daemon::client_sock, &connected);
+            send_formatted_response("done", server::daemon::client_sock, &connected);
             if (server::daemon::daemon_sock >= 0)
             {
                 sceNetSocketClose(server::daemon::daemon_sock);
@@ -30,12 +30,12 @@ namespace cmds
                 sceNetSocketClose(server::daemon::client_sock);
                 server::daemon::client_sock = -1;
             }
-            unload = true;
+            ::unload = true;
         }
 
-        void Disconnect()
+        void disconnect()
         {
-            SendFormattedResponse("done", server::daemon::client_sock, &connected);
+            send_formatted_response("done", server::daemon::client_sock, &connected);
             if (server::daemon::client_sock >= 0)
             {
                 sceNetSocketClose(server::daemon::client_sock);
@@ -44,26 +44,26 @@ namespace cmds
             connected = false;
         }
 
-        void Attach()
+        void attach()
         {
             attached = false;
 
-            if (isRelayRunning())
+            if (is_relay_running())
             {
-                char *response = performGETRequest("attach");
+                char* response = perform_get_request("attach");
                 if (response != NULL && strcmp(response, "done") == 0)
                     attached = true;
             }
 
-            SendFormattedResponse("done", server::daemon::client_sock, &connected);
+            send_formatted_response("done", server::daemon::client_sock, &connected);
         }
 
-        void GetFW()
+        void get_fw()
         {
-            SendFormattedResponse(System::GetFWVersion(), server::daemon::client_sock, &connected);
+            send_formatted_response(sys_utils::get_fw_version(), server::daemon::client_sock, &connected);
         }
 
-        void GetTemp()
+        void get_temp()
         {
             char temp[BUFFER_SIZE] = {0};
             char *start = strstr(server::daemon::buffer, "type=");
@@ -82,21 +82,21 @@ namespace cmds
             int tempValue = NULL;
             if (strcmp(temp, "cpu") == 0)
             {
-                tempValue = System::GetCPUTemperature();
+                tempValue = sys_utils::get_cpu_temperature();
             }
             else if (strcmp(temp, "soc") == 0)
             {
-                tempValue = System::GetSOCTemperature();
+                tempValue = sys_utils::get_soc_temperature();
             }
             else
                 return; // Maybe remove this as well
 
             char message[BUFFER_SIZE];
             snprintf(message, sizeof(message), "%i", tempValue);
-            SendFormattedResponse(message, server::daemon::client_sock, &connected);
+            send_formatted_response(message, server::daemon::client_sock, &connected);
         }
 
-        void Notify()
+        void notify()
         {
             char *msg = NULL;
             int type = 0;
@@ -116,21 +116,21 @@ namespace cmds
 
             if (start)
             {
-                char *end = strchr(start, ' ');
+                char* end = strchr(start, ' ');
                 if (end)
                     *end = '\0';
-                msg = DecodeURL(start);
+                msg = decode_url(start);
             }
 
-            System::TextNotify(type, msg ? msg : NULL);
+            sys_utils::text_notify(type, msg ? msg : NULL);
 
             if (msg)
                 free(msg);
 
-            SendFormattedResponse("done", server::daemon::client_sock, &connected);
+            send_formatted_response("done", server::daemon::client_sock, &connected);
         }
 
-        void TempLimit()
+        void temp_limit()
         {
             uint8_t temp = 0;
             char *start = strstr(server::daemon::buffer, "limit=");
@@ -146,16 +146,16 @@ namespace cmds
                     start += 1;
             }
 
-            System::SetTemperatureLimit(temp);
-            SendFormattedResponse("done", server::daemon::client_sock, &connected);
+            sys_utils::set_temperature_limit(temp);
+            send_formatted_response("done", server::daemon::client_sock, &connected);
         }
 
-        void SysType()
+        void sys_type()
         {
-            SendFormattedResponse(System::Type(), server::daemon::client_sock, &connected);
+            send_formatted_response(sys_utils::get_console_type(), server::daemon::client_sock, &connected);
         }
 
-        void Beep()
+        void beep()
         {
             int type = -1;
             char *start = strstr(server::daemon::buffer, "type=");
@@ -174,44 +174,43 @@ namespace cmds
             switch (type)
             {
             case 0: // stop
-                System::Beep(0);
+                sys_utils::beep(0);
                 break;
             case 1: // single
-                System::Beep(1);
+                sys_utils::beep(1);
                 break;
             case 2: // double
-                System::Beep(1);
+                sys_utils::beep(1);
                 sceKernelUsleep(125000);
-                System::Beep(1);
+                sys_utils::beep(1);
                 break;
             case 3: // triple
-                System::Beep(1);
+                sys_utils::beep(1);
                 sceKernelUsleep(125000);
-                System::Beep(1);
+                sys_utils::beep(1);
                 sceKernelUsleep(125000);
-                System::Beep(1);
+                sys_utils::beep(1);
                 break;
             case 4: // continuous
-                System::Beep(6);
+                sys_utils::beep(6);
                 break;
             }
 
-            SendFormattedResponse("done", server::daemon::client_sock, &connected);
+            send_formatted_response("done", server::daemon::client_sock, &connected);
         }
     }
 
     namespace daemon
     {
-        void Ping()
+        void ping()
         {
-            SendFormattedResponse("true", server::relay::daemon_sock, &attached);
+            send_formatted_response("true", server::relay::daemon_sock, &attached);
         }
 
-        void Attach()
+        void attach()
         {
-            System::TextNotify(222, "[OCAPI] Attached!");
-
-            SendFormattedResponse("done", server::relay::daemon_sock, &attached);
+            sys_utils::text_notify(222, "[OCAPI] Attached!");
+            send_formatted_response("done", server::relay::daemon_sock, &attached);
         }
     }
 }
