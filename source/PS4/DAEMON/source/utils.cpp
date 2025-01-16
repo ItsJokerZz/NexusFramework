@@ -21,7 +21,7 @@ void printMsgToUART(const char *file, const char *func, int line, const char *fm
     sceKernelDebugOutText(0, msg);
 }
 
-char *PerformGETRequest(const char *cmd)
+char *performGETRequest(const char *cmd)
 {
     static char buffer[BUFFER_SIZE];
 
@@ -125,7 +125,7 @@ char *PerformGETRequest(const char *cmd)
 
 bool isRelayRunning()
 {
-    char *response = PerformGETRequest("ping");
+    char *response = performGETRequest("ping");
     return (response != NULL && strcmp(response, "true") == 0);
 }
 

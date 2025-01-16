@@ -23,7 +23,7 @@ namespace server
                 {
                     SendFormattedResponse("done", server::relay::daemon_sock, &attached);
 
-                    if (!attached && strcmp(PerformGETRequest("attach"), "done") == 0)
+                    if (!attached && strcmp(performGETRequest("attach"), "done") == 0)
                         attached = true;
                 }
                 else if (strstr(buffer, "GET /ping") != NULL)

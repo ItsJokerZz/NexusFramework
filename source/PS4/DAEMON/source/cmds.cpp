@@ -50,7 +50,7 @@ namespace cmds
 
             if (isRelayRunning())
             {
-                char *response = PerformGETRequest("attach");
+                char *response = performGETRequest("attach");
                 if (response != NULL && strcmp(response, "done") == 0)
                     attached = true;
             }
