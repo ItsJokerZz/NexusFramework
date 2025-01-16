@@ -10,7 +10,7 @@ void PrintMsgToUART(const char *fmt, ...)
     va_end(args);
 
     char msg[512];
-    snprintf(msg, sizeof(msg), "[OCAPI %.2fb%d] %s\n", version, build, buffer);
+    snprintf(msg, sizeof(msg), "[OCAPI %.2fb%d] %s\n", VERSION, BUILD, buffer);
 
     sceKernelDebugOutText(0, msg);
 }
@@ -37,7 +37,7 @@ char *PerformGETRequest(const char *cmd)
     }
 
     // Format the User-Agent string
-    snprintf(userAgent, sizeof(userAgent), "OCAPIv%.2fb%d", version, build);
+    snprintf(userAgent, sizeof(userAgent), "OCAPIv%.2fb%d", VERSION, BUILD);
 
     // Create the HTTP template using the context ID
     tmplId = sceHttpCreateTemplate(httpCtxId, userAgent, 1, 0);
@@ -116,7 +116,6 @@ char *PerformGETRequest(const char *cmd)
 
     return buffer;
 }
-
 
 char *DecodeURL(const char *url)
 {

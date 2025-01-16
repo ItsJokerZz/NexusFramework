@@ -7,7 +7,7 @@ namespace cmds
         void Version()
         {
             char message[BUFFER_SIZE];
-            snprintf(message, sizeof(message), "%f", version);
+            snprintf(message, sizeof(message), "%f", VERSION);
             SendFormattedResponse(message, server::daemon::client_sock, &connected);
         }
 

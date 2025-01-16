@@ -1,86 +1,77 @@
-# Library metadata.
-TARGET      := OrbisControl.prx
+TOOLCHAIN     := $(OO_PS4_TOOLCHAIN)
+PROJDIR       := source
+INTDIR        := build
 
-# Libraries linked into the ELF.
-LIBS := -lc -lc++ -lkernel -lGoldHEN_Hook -lSceSystemService \
-		-lSceSysmodule -lSceNet -lSceHttp -lSceSysUtil
+TARGET        := OrbisControl.prx
+BUILD         := $(shell cat $(INTDIR)/.number)
+VERSION       := 0.29
 
-# Additional compile flags.
-EXTRAFLAGS   := -Wall -Wno-int-to-pointer-cast -Werror -Wno-for-loop-analysis \
-               -fcolor-diagnostics -Iinclude -Wall -D__ORBIS__ -D__PS4__ \
-               -Wno-unused-function -Wno-misleading-indentation -Wno-invalid-noreturn
+LIBS          := -lc -lc++ -lkernel -lGoldHEN_Hook \
+                 -lSceSystemService -lSceSysmodule \
+                 -lSceNet -lSceHttp -lSceSysUtil
 
-# Root vars.
-TOOLCHAIN    := $(OO_PS4_TOOLCHAIN)
-PROJDIR      := source
-INTDIR       := build
+CPPFILES      := $(wildcard $(PROJDIR)/*.cpp)
+OBJS          := $(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES))
 
-# Define objects to build.
-CFILES       := $(wildcard $(PROJDIR)/*.c)
-CPPFILES     := $(wildcard $(PROJDIR)/*.cpp)
-ASMFILES     := $(wildcard $(PROJDIR)/*.s)
+CFLAGS        := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c \
+                 $(EXTRAFLAGS) -isysroot $(TOOLCHAIN) -isystem $(TOOLCHAIN)/include \
+                 -Iinclude -std=c11 -D_DEFAULT_SOURCE -DFMT_HEADER_ONLY
 
-OBJS         := \
-$(patsubst $(PROJDIR)/%.c, $(INTDIR)/%.o, $(CFILES)) \
-$(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES)) \
-$(patsubst $(PROJDIR)/%.s, $(INTDIR)/%.o, $(ASMFILES)) \
+CXXFLAGS      := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1 \
+                 -std=c++11 -Iinclude -DFMT_HEADER_ONLY
 
-# Define final C/C++ flags.
-CFLAGS       := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c \
-               $(EXTRAFLAGS) -isysroot $(TOOLCHAIN) -isystem $(TOOLCHAIN)/include \
-			   -Iinclude -std=c11 -D_DEFAULT_SOURCE -DFMT_HEADER_ONLY 
+LDFLAGS       := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr \
+                 -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o --wrap=_init
 
-CXXFLAGS     := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1 \
-			   -std=c++11 -Iinclude -DFMT_HEADER_ONLY
-
-LDFLAGS      := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr \
-               -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o
-
-# Create the intermediate directory incase it doesn't already exist.
-_unused      := $(shell mkdir -p $(INTDIR))
-
-# Check for Linux vs macOS and account for clang/ld path.
-UNAME_S      := $(shell uname -s)
-
-ifeq ($(UNAME_S),Linux)
-	CC       := clang
-	CCX      := clang++
-	LD       := ld.lld
-	CDIR     := linux
-	ASMLR    := as
-endif
-
-ifeq ($(UNAME_S),Darwin)
-	CC       := /usr/local/opt/llvm/bin/clang
-	CCX      := /usr/local/opt/llvm/bin/clang++
-	LD       := /usr/local/opt/llvm/bin/ld.lld
-	CDIR     := macos
-	ASMLR    := as
-endif
-
-# Define build rules.
-$(TARGET): $(INTDIR) $(OBJS)
-	$(LD) $(OBJS) -o $(INTDIR)/$(PROJDIR).elf $(LDFLAGS) -e entry
+$(TARGET): $(INTDIR) $(OBJS) AddToBuildNum
+	$(LD) $(OBJS) -o $(INTDIR)/$(PROJDIR).elf $(LDFLAGS) -e module_start
 	$(TOOLCHAIN)/bin/$(CDIR)/create-fself -in=$(INTDIR)/$(PROJDIR).elf \
 	-out=$(INTDIR)/$(PROJDIR).oelf --lib=$(TARGET) --paid 0x3800000000000011
 
-$(INTDIR)/%.o: $(PROJDIR)/%.s
-	$(ASMLR) -o $@ $<
-
 $(INTDIR)/%.o: $(PROJDIR)/%.c
-	$(CC) $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -D BUILD=$(BUILD) -D VERSION=$(VERSION) -o $@ $<
 
 $(INTDIR)/%.o: $(PROJDIR)/%.cpp
-	$(CCX) $(CXXFLAGS) -o $@ $<
+	$(CCX) $(CXXFLAGS) -D BUILD=$(BUILD) -D VERSION=$(VERSION) -o $@ $<
 
 $(INTDIR)/%.o: $(COMMONDIR)/%.cpp
-	$(CCX) $(CXXFLAGS) -o $@ $<
+	$(CCX) $(CXXFLAGS) -D BUILD=$(BUILD) -D VERSION=$(VERSION) -o $@ $<
 
-# Define phony targets.
-.PHONY: clean
+_unused       := $(shell mkdir -p $(INTDIR))
+UNAME_S       := $(shell uname -s)
+
+ifeq ($(UNAME_S),Linux)
+	CC := clang
+	CCX := clang++
+	LD := ld.lld
+	CDIR := linux
+	ASMLR := as
+endif
+
+ifeq ($(UNAME_S),Darwin)
+	CC := /usr/local/opt/llvm/bin/clang
+	CCX := /usr/local/opt/llvm/bin/clang++
+	LD := /usr/local/opt/llvm/bin/ld.lld
+	CDIR := macos
+	ASMLR := as
+endif
+
+.PHONY: AddToBuildNum clean all target stubs
+
 .DEFAULT_GOAL := all
 
-all: $(TARGET) $(TARGETSTUB)
+AddToBuildNum:
+	@mkdir -p $(INTDIR)
+	@touch $(INTDIR)/.number
+	@new_build=$$(($(BUILD) + 1)); \
+	echo $$new_build > $(INTDIR)/.number
 
 clean:
-	rm -f $(TARGET) $(TARGETSTUB) $(INTDIR)/$(PROJDIR).elf $(INTDIR)/$(PROJDIR).oelf $(OBJS)
+	rm -f $(INTDIR)/$(PROJDIR).oelf $(OBJS) \
+    $(TARGET) $(TARGETSTUB) $(INTDIR)/$(PROJDIR).elf
+
+target: $(TARGET)
+
+stubs: $(TARGETSTUB)
+
+all: AddToBuildNum clean target stubs

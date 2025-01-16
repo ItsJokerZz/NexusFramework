@@ -1,14 +1,11 @@
 #include "../headers/includes.hpp"
 
-float version = 0.27;
-int8_t build = 13;
-
 bool isDaemon = false,
      unload = false,
      connected = false,
      attached = false;
 
-extern "C" void entry()
+int32_t module_start(int64_t args, const void *argp)
 {
     struct proc_info info;
     sys_sdk_proc_info(&info);
@@ -22,4 +19,19 @@ extern "C" void entry()
         server::daemon::start();
     else
         server::relay::start();
+
+    return 0;
+}
+
+extern "C"
+{
+    int32_t __wrap__init(size_t args, const void *argp)
+    {
+        return module_start(args, argp);
+    }
+
+    void entry()
+    {
+        module_start(0, NULL);
+    }
 }
