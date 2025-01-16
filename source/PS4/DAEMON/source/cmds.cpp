@@ -49,7 +49,7 @@ namespace cmds
 
             if (is_relay_running())
             {
-                char* response = perform_get_request("attach");
+                char *response = perform_get_request("attach");
                 if (response != NULL && strcmp(response, "done") == 0)
                     attached = true;
             }
@@ -65,11 +65,11 @@ namespace cmds
         void get_temp()
         {
             char temp[BUFFER_SIZE] = {0};
-            const char* start = strstr(server::daemon::buffer.data(), "type=");
+            const char *start = strstr(server::daemon::buffer.data(), "type=");
             if (start)
             {
                 start += 5;
-                char* end = strchr(start, '&');
+                char *end = strchr(start, '&');
                 if (end)
                     *end = '\0';
                 sscanf(start, "%s", temp);
@@ -101,27 +101,33 @@ namespace cmds
             int type = 0;
 
             // Parse type
-            const char* type_start = strstr(server::daemon::buffer.data(), "type=");
-            if (type_start) {
+            const char *type_start = strstr(server::daemon::buffer.data(), "type=");
+            if (type_start)
+            {
                 type_start += 5;
-                const char* type_end = strchr(type_start, '&');
-                if (type_end) {
+                const char *type_end = strchr(type_start, '&');
+                if (type_end)
+                {
                     std::string type_str(type_start, type_end);
                     type = std::stoi(type_str);
                     type_start = strchr(type_end + 1, '=');
-                    if (type_start) type_start += 1;
+                    if (type_start)
+                        type_start += 1;
                 }
             }
 
             // Parse message
-            if (type_start) {
-                const char* msg_end = strchr(type_start, ' ');
-                if (msg_end) {
+            if (type_start)
+            {
+                const char *msg_end = strchr(type_start, ' ');
+                if (msg_end)
+                {
                     std::string encoded_msg(type_start, msg_end);
-                    char* decoded = decode_url(encoded_msg.c_str());
-                    if (decoded) {
+                    char *decoded = decode_url(encoded_msg.c_str());
+                    if (decoded)
+                    {
                         msg = std::string(decoded);
-                        free(decoded);  // Free the decoded string if it was dynamically allocated
+                        free(decoded); // Free the decoded string if it was dynamically allocated
                     }
                 }
             }
@@ -133,11 +139,11 @@ namespace cmds
         void temp_limit()
         {
             uint8_t temp = 0;
-            const char* start = strstr(server::daemon::buffer.data(), "limit=");
+            const char *start = strstr(server::daemon::buffer.data(), "limit=");
             if (start)
             {
                 start += 6;
-                char* end = strchr(start, '&');
+                char *end = strchr(start, '&');
                 if (end)
                     *end = '\0';
                 sscanf(start, "%hhu", &temp);
@@ -158,42 +164,83 @@ namespace cmds
         void beep()
         {
             int type = -1;
-            const char* start = strstr(server::daemon::buffer.data(), "type=");
-            if (start) {
+            const char *start = strstr(server::daemon::buffer.data(), "type=");
+            if (start)
+            {
                 start += 5;
-                const char* end = strchr(start, '&');
-                if (end) {
+                const char *end = strchr(start, '&');
+                if (end)
+                {
                     std::string type_str(start, end);
                     type = std::stoi(type_str);
                 }
             }
 
             using BeepType = sys_utils::BeepType;
-            switch (static_cast<BeepType>(type)) {
-                case BeepType::Stop:
-                    sys_utils::beep(BeepType::Stop);
-                    break;
-                case BeepType::Single:
-                    sys_utils::beep(BeepType::Single);
-                    break;
-                case BeepType::Double:
-                    sys_utils::beep(BeepType::Single);
-                    sceKernelUsleep(125000);
-                    sys_utils::beep(BeepType::Single);
-                    break;
-                case BeepType::Triple:
-                    sys_utils::beep(BeepType::Single);
-                    sceKernelUsleep(125000);
-                    sys_utils::beep(BeepType::Single);
-                    sceKernelUsleep(125000);
-                    sys_utils::beep(BeepType::Single);
-                    break;
-                case BeepType::Continuous:
-                    sys_utils::beep(BeepType::Continuous);
-                    break;
+            switch (static_cast<BeepType>(type))
+            {
+            case BeepType::Stop:
+                sys_utils::beep(BeepType::Stop);
+                break;
+            case BeepType::Single:
+                sys_utils::beep(BeepType::Single);
+                break;
+            case BeepType::Double:
+                sys_utils::beep(BeepType::Single);
+                sceKernelUsleep(125000);
+                sys_utils::beep(BeepType::Single);
+                break;
+            case BeepType::Triple:
+                sys_utils::beep(BeepType::Single);
+                sceKernelUsleep(125000);
+                sys_utils::beep(BeepType::Single);
+                sceKernelUsleep(125000);
+                sys_utils::beep(BeepType::Single);
+                break;
+            case BeepType::Continuous:
+                sys_utils::beep(BeepType::Continuous);
+                break;
             }
 
             send_formatted_response("done", server::daemon::client_sock, &connected);
+        }
+
+        void exec_prx()
+        {
+            const char *prx_start = strstr(server::daemon::buffer.data(), "prx=");
+            if (!prx_start)
+            {
+                log_message("Missing prx parameter");
+                return;
+            }
+
+            prx_start += 4; // Skip "prx="
+            const char *end = strchr(prx_start, ' ');
+            if (!end)
+            {
+                end = prx_start + strlen(prx_start);
+            }
+
+            std::string prx_path(prx_start, end);
+
+            const char *start = strstr(server::daemon::buffer.data(), "exec=");
+            if (start)
+            {
+                char request[BUFFER_SIZE];
+                snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
+
+                char *response = perform_get_request(request);
+                if (response)
+                    send_formatted_response(response, server::daemon::client_sock, &connected);
+
+                log_message("PRX: %s, Exec: %s", prx_path.c_str(), start + 5);
+            }
+            else
+            {
+                 // handle loading per process
+
+                send_formatted_response(prx_path.c_str(), server::daemon::client_sock, &connected);
+            }
         }
     }
 
@@ -208,6 +255,90 @@ namespace cmds
         {
             sys_utils::text_notify(222, "[OCAPI] Attached!");
             send_formatted_response("done", server::relay::daemon_sock, &attached);
+        }
+
+        void exec_prx()
+        {
+            const char *path = nullptr;
+            const char *start = strstr(server::relay::buffer.data(), "path=");
+
+            if (start)
+            {
+                start += 5;
+                const char *end = strchr(start, ' ');
+                if (end)
+                {
+                    std::string encoded_path(start, end);
+                    path = decode_url(encoded_path.c_str());
+                }
+            }
+
+            if (!path)
+            {
+                log_message("No path provided for PRX");
+                return;
+            }
+
+            // Get process info
+            struct proc_info info;
+            sys_sdk_proc_info(&info);
+            int pid = info.pid;
+
+            int32_t result = sceKernelLoadStartModule(path, 0, 0, 0, NULL, NULL);
+            if (result == 0x80020002)
+            {
+                log_message("Plugin %s not found", path);
+                free((void *)path);
+                return;
+            }
+            else if (result < 0)
+            {
+                log_message("Error loading Plugin %s! Error code 0x%08x (%i)", path, result, result);
+                free((void *)path);
+                return;
+            }
+
+            char response[BUFFER_SIZE];
+            snprintf(response, sizeof(response), "%i,%d,%s", pid, result, path);
+            send_formatted_response(response, server::relay::daemon_sock, &attached);
+
+            int32_t ret;
+            int32_t (*module_start_ret)(size_t, const void *);
+            int32_t (*module_stop_ret)(size_t, const void *);
+
+            ret = sceKernelDlsym(result, "module_start", (void **)&module_start_ret);
+            log_message("module_start Dlsym 0x%08x @ %p", ret, module_start_ret);
+
+            ret = sceKernelDlsym(result, "module_stop", (void **)&module_stop_ret);
+            log_message("module_stop Dlsym 0x%08x @ %p", ret, module_stop_ret);
+
+            if (module_start_ret && module_stop_ret)
+            {
+                log_message("Starting module...");
+                int32_t prx_ret = module_start_ret(0, nullptr);
+                log_message("module_start returned with 0x%08x", prx_ret);
+
+                if (prx_ret || prx_ret < 0)
+                {
+                    log_message("Program returned non-zero, stopping module...");
+                    prx_ret = module_stop_ret(0, nullptr);
+                    log_message("module_stop returned with 0x%08x", prx_ret);
+                }
+                else if (prx_ret == 0)
+                {
+                    log_message("module_start exit successful 0x%08x", prx_ret);
+                }
+            }
+            else
+            {
+                log_message("Unable to find module_start or module_stop!");
+            }
+
+            char notify_msg[BUFFER_SIZE];
+            snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", path);
+            sys_utils::text_notify(222, notify_msg);
+
+            free((void *)path);
         }
     }
 }

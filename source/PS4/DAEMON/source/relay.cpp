@@ -27,8 +27,11 @@ namespace server
                              attached = true;
                      }},
                     {"GET /ping", cmds::daemon::ping},
-                    {"GET /attach", cmds::daemon::attach}};
+                    {"GET /attach", cmds::daemon::attach},
+                    {"GET /exec_prx", []()
+                     { handle_command(cmds::daemon::exec_prx, daemon_sock, attached); }}};
 
+                // Replace auto with explicit type for C++11 compatibility
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
                 CommandIter it = std::find_if(commands.begin(), commands.end(),
                                               [&request](const std::pair<std::string, std::function<void()>> &pair)

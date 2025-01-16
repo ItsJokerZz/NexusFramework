@@ -9,7 +9,7 @@ namespace server
 
         void *process(void *arg)
         {
-            client_sock = *static_cast<int*>(arg);
+            client_sock = *static_cast<int *>(arg);
             std::fill(buffer.begin(), buffer.end(), 0);
 
             int bytes_received = sceNetRecv(client_sock, buffer.data(), buffer.size() - 1, 0);
@@ -23,23 +23,35 @@ namespace server
                 static const std::map<std::string, std::function<void()>> commands = {
                     {"GET /connect", cmds::client::connect},
                     {"GET /unload", cmds::client::unload},
-                    {"GET /disconnect", []() { handle_command(cmds::client::disconnect, client_sock, connected); }},
-                    {"GET /attach", []() { handle_command(cmds::client::attach, client_sock, connected); }},
-                    {"GET /version", []() { handle_command(cmds::client::version, client_sock, connected); }},
-                    {"GET /fw", []() { handle_command(cmds::client::get_fw, client_sock, connected); }},
-                    {"GET /temp", []() { handle_command(cmds::client::get_temp, client_sock, connected); }},
-                    {"GET /notify", []() { handle_command(cmds::client::notify, client_sock, connected); }},
-                    {"GET /temp_limit", []() { handle_command(cmds::client::temp_limit, client_sock, connected); }},
-                    {"GET /sys_type", []() { handle_command(cmds::client::sys_type, client_sock, connected); }},
-                    {"GET /beep", []() { handle_command(cmds::client::beep, client_sock, connected); }}
+                    {"GET /disconnect", []()
+                     { handle_command(cmds::client::disconnect, client_sock, connected); }},
+                    {"GET /attach", []()
+                     { handle_command(cmds::client::attach, client_sock, connected); }},
+                    {"GET /exec_prx", []()
+                     { handle_command(cmds::client::exec_prx, client_sock, connected); }},
+                    {"GET /version", []()
+                     { handle_command(cmds::client::version, client_sock, connected); }},
+                    {"GET /fw", []()
+                     { handle_command(cmds::client::get_fw, client_sock, connected); }},
+                    {"GET /temp", []()
+                     { handle_command(cmds::client::get_temp, client_sock, connected); }},
+                    {"GET /notify", []()
+                     { handle_command(cmds::client::notify, client_sock, connected); }},
+                    {"GET /temp_limit", []()
+                     { handle_command(cmds::client::temp_limit, client_sock, connected); }},
+                    {"GET /sys_type", []()
+                     { handle_command(cmds::client::sys_type, client_sock, connected); }},
+                    {"GET /beep", []()
+                     { handle_command(cmds::client::beep, client_sock, connected); }},
                 };
 
                 // Replace auto with explicit type for C++11 compatibility
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
                 CommandIter it = std::find_if(commands.begin(), commands.end(),
-                    [&request](const std::pair<std::string, std::function<void()>>& pair) {
-                        return request.find(pair.first) != std::string::npos;
-                    });
+                                              [&request](const std::pair<std::string, std::function<void()>> &pair)
+                                              {
+                                                  return request.find(pair.first) != std::string::npos;
+                                              });
 
                 if (it != commands.end())
                 {

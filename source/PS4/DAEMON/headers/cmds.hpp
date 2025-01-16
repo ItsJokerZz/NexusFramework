@@ -15,11 +15,13 @@ namespace cmds
         void temp_limit();
         void sys_type();
         void beep();
+        void exec_prx();
     }
 
     namespace daemon
     {
         void ping();
         void attach();
+        void exec_prx();
     }
 }
