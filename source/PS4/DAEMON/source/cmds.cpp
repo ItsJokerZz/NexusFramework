@@ -339,5 +339,51 @@ namespace cmds
 
             free((void *)path);
         }
+
+        void process_list()
+        {
+            uint64_t pnum = 0;
+            if (sys_proc_list(NULL, &pnum))
+            {
+                send_formatted_response("Failed to get process count", server::relay::daemon_sock, &attached);
+                return;
+            }
+
+            if (pnum == 0) {
+                send_formatted_response("No processes found", server::relay::daemon_sock, &attached);
+                return;
+            }
+
+            struct proc_list_entry* proc_list = (struct proc_list_entry*)malloc(pnum * sizeof(struct proc_list_entry));
+            if (!proc_list)
+            {
+                send_formatted_response("Failed to allocate memory for process list", server::relay::daemon_sock, &attached);
+                return;
+            }
+
+            if (sys_proc_list(proc_list, &pnum))
+            {
+                free(proc_list);
+                send_formatted_response("Failed to retrieve process list", server::relay::daemon_sock, &attached);
+                return;
+            }
+
+            std::string response;
+            char line[512];
+            for (uint64_t i = 0; i < pnum; i++)
+            {
+                snprintf(line, sizeof(line), "%lu, %s\n", i, proc_list[i].p_comm);
+                response += line;
+            }
+
+            free(proc_list);
+            
+            if (response.empty()) {
+                send_formatted_response("Process list is empty", server::relay::daemon_sock, &attached);
+            } else {
+                sys_utils::text_notify(222, "[OCAPI] Process List Retrieved");
+                send_formatted_response(response.c_str(), server::relay::daemon_sock, &attached);
+            }
+        }
     }
 }
