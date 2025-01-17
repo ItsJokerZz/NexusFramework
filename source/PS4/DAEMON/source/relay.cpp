@@ -26,10 +26,45 @@ namespace server
                          if (!attached && strcmp(perform_get_request("attach"), "done") == 0)
                              attached = true;
                      }},
+
+                    {"GET /a", []()
+                     {
+                         send_formatted_response("done", server::relay::daemon_sock, &attached);
+
+                         uint64_t pnum;
+                         if (sys_proc_list(NULL, &pnum))
+                         {
+                             log_message("Failed to get process count");
+                             return;
+                         }
+
+                         struct proc_list_entry* proc_list = (struct proc_list_entry*)malloc(pnum * sizeof(struct proc_list_entry));
+                         if (!proc_list)
+                         {
+                             log_message("Failed to allocate memory for process list");
+                             return;
+                         }
+
+                         if (sys_proc_list(proc_list, &pnum))
+                         {
+                             log_message("Failed to retrieve process list");
+                             free(proc_list);
+                             return;
+                         }
+
+                         for (uint64_t i = 0; i < pnum; i++)
+                         {
+                             log_message("Process %d: %s", proc_list[i].pid, proc_list[i].p_comm);
+                         }
+
+                         free(proc_list);
+                     }},
+
+                    // maybe try to find a way to make this work with handle_command,
+                    // because the attached bool isnt updating between the relay and daemon
                     {"GET /ping", cmds::daemon::ping},
                     {"GET /attach", cmds::daemon::attach},
-                    {"GET /exec_prx", []()
-                     { handle_command(cmds::daemon::exec_prx, daemon_sock, attached); }}};
+                    {"GET /exec_prx", cmds::daemon::exec_prx}};
 
                 // Replace auto with explicit type for C++11 compatibility
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
@@ -48,6 +83,7 @@ namespace server
                     sceNetSend(daemon_sock, RESPONSE_404, strlen(RESPONSE_404), 0);
                 }
             }
+
             sceNetSocketClose(daemon_sock);
 
             return nullptr;

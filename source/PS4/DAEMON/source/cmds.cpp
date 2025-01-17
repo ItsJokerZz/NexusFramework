@@ -45,7 +45,7 @@ namespace cmds
 
         void attach()
         {
-            attached = false;
+           // attached = false;
 
             if (is_relay_running())
             {
@@ -207,14 +207,14 @@ namespace cmds
 
         void exec_prx()
         {
-            const char *prx_start = strstr(server::daemon::buffer.data(), "prx=");
+            const char *prx_start = strstr(server::daemon::buffer.data(), "path=");
             if (!prx_start)
             {
-                log_message("Missing prx parameter");
+                send_formatted_response("failed", server::daemon::client_sock, &connected);
                 return;
             }
 
-            prx_start += 4; // Skip "prx="
+            prx_start += 5;
             const char *end = strchr(prx_start, ' ');
             if (!end)
             {
@@ -223,22 +223,21 @@ namespace cmds
 
             std::string prx_path(prx_start, end);
 
-            const char *start = strstr(server::daemon::buffer.data(), "exec=");
-            if (start)
+            if (is_relay_running())
             {
+                // If relay is running, just send the path
                 char request[BUFFER_SIZE];
                 snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
 
                 char *response = perform_get_request(request);
                 if (response)
                     send_formatted_response(response, server::daemon::client_sock, &connected);
-
-                log_message("PRX: %s, Exec: %s", prx_path.c_str(), start + 5);
             }
             else
             {
-                 // handle loading per process
-
+                char notify_msg[BUFFER_SIZE];
+                snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", prx_path.c_str());
+                sys_utils::text_notify(222, notify_msg);
                 send_formatted_response(prx_path.c_str(), server::daemon::client_sock, &connected);
             }
         }

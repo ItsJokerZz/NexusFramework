@@ -176,3 +176,10 @@ void handle_command(void (*func)(), int socket, bool toggle)
             send_response(RESPONSE_ATTACH, socket, toggle);
     }
 }
+
+
+int sys_proc_list(struct proc_list_entry *procs, uint64_t *num)
+{
+    int goldHen_offset = 90;
+    return orbis_syscall(107 + goldHen_offset, procs, num);
+}

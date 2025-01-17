@@ -28,7 +28,7 @@ namespace server
                     {"GET /attach", []()
                      { handle_command(cmds::client::attach, client_sock, connected); }},
                     {"GET /exec_prx", []()
-                     { handle_command(cmds::client::exec_prx, client_sock, connected); }},
+                     { handle_command(cmds::client::exec_prx, client_sock, attached); }},
                     {"GET /version", []()
                      { handle_command(cmds::client::version, client_sock, connected); }},
                     {"GET /fw", []()
