@@ -23,6 +23,5 @@ namespace cmds
         void ping();
         void attach();
         void exec_prx();
-        void process_list();
     }
 }

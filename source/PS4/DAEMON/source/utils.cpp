@@ -177,9 +177,8 @@ void handle_command(void (*func)(), int socket, bool toggle)
     }
 }
 
-
 int sys_proc_list(struct proc_list_entry *procs, uint64_t *num)
 {
-    int goldHen_offset = 90;
+    int goldHen_offset = 90; // use the lib from apollo
     return orbis_syscall(107 + goldHen_offset, procs, num);
 }

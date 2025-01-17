@@ -2,7 +2,7 @@
 
 #define DAEMON_PORT 1337
 #define RELAYS_PORT 8008
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 4096
 #define RETRY_DELAY_SECONDS 5
 
 #define RESPONSE_OK "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s"
