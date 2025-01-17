@@ -20,32 +20,35 @@ namespace server
                 const std::string request(buffer.data());
 
                 static const std::map<std::string, std::function<void()>> commands = {
-                    {"GET /connect", cmds::client::connect},
-                    {"GET /unload", cmds::client::unload},
-
+                    {"GET /connect", cmds::client::connection::connect},
+                    {"GET /unload", cmds::client::connection::unload},
                     {"GET /disconnect", []()
-                     { handle_command(cmds::client::disconnect, client_sock, connected); }},
+                     { handle_command(cmds::client::connection::disconnect, client_sock, connected); }},
                     {"GET /attach", []()
-                     { handle_command(cmds::client::attach, client_sock, connected); }},
+                     { handle_command(cmds::client::connection::attach, client_sock, connected); }},
+                    {"GET /version", []()
+                     { handle_command(cmds::client::connection::version, client_sock, connected); }},
+
+                    {"GET /fw", []()
+                     { handle_command(cmds::client::sys_info::get_fw, client_sock, connected); }},
+                    {"GET /sys_type", []()
+                     { handle_command(cmds::client::sys_info::sys_type, client_sock, connected); }},
+                    {"GET /temp", []()
+                     { handle_command(cmds::client::sys_info::get_temp, client_sock, connected); }},
+
+                    {"GET /notify", []()
+                     { handle_command(cmds::client::sys_control::notify, client_sock, connected); }},
+                    {"GET /temp_limit", []()
+                     { handle_command(cmds::client::sys_control::temp_limit, client_sock, connected); }},
+                    {"GET /beep", []()
+                     { handle_command(cmds::client::sys_control::beep, client_sock, connected); }},
+
                     {"GET /proc_list", []()
                      { handle_command(cmds::client::proc_list, client_sock, connected); }},
                     {"GET /exec_prx", []() // check if attached for app
                      { handle_command(cmds::client::exec_prx, client_sock, connected); }},
-
-                    {"GET /version", []()
-                     { handle_command(cmds::client::version, client_sock, connected); }},
-                    {"GET /fw", []()
-                     { handle_command(cmds::client::get_fw, client_sock, connected); }},
-                    {"GET /temp", []()
-                     { handle_command(cmds::client::get_temp, client_sock, connected); }},
-                    {"GET /notify", []()
-                     { handle_command(cmds::client::notify, client_sock, connected); }},
-                    {"GET /temp_limit", []()
-                     { handle_command(cmds::client::temp_limit, client_sock, connected); }},
-                    {"GET /sys_type", []()
-                     { handle_command(cmds::client::sys_type, client_sock, connected); }},
-                    {"GET /beep", []()
-                     { handle_command(cmds::client::beep, client_sock, connected); }},
+                    {"GET /load_plugin", []() // check if attached for app
+                     { handle_command(cmds::client::load_plugin, client_sock, connected); }},
                 };
 
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;

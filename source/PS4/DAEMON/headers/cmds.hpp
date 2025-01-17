@@ -4,19 +4,36 @@ namespace cmds
 {
     namespace client
     {
-        void version();
-        void connect();
-        void unload();
-        void disconnect();
-        void attach();
-        void get_fw();
-        void get_temp();
-        void notify();
-        void temp_limit();
-        void sys_type();
-        void beep();
+        namespace connection
+        {
+            void version();
+            void connect();
+            void unload();
+            void disconnect();
+            void attach();
+
+        }
+
+        namespace sys_info
+        {
+            void sys_type();
+            void get_fw();
+            void get_temp();
+
+        }
+
+        namespace sys_control
+        {
+            void notify();
+            void temp_limit();
+            void beep();
+
+        }
+
         void exec_prx();
         void proc_list();
+        void load_plugin();
+
     }
 
     namespace daemon
@@ -25,5 +42,6 @@ namespace cmds
         void attach();
         void exec_prx();
         void load_plugin();
+
     }
 }

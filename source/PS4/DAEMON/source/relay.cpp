@@ -42,7 +42,7 @@ namespace server
                                               });
 
                 if (it != commands.end())
-                 it->second();
+                    it->second();
                 else
                     sceNetSend(daemon_sock, RESPONSE_404, strlen(RESPONSE_404), 0);
             }
@@ -101,7 +101,7 @@ namespace server
                     if (daemon_sock < 0)
                     {
                         log_message("Failed to accept daemon connection");
-                        
+
                         continue;
                     }
 

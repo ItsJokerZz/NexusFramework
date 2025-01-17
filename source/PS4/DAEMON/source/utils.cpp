@@ -141,13 +141,13 @@ char *decode_url(const char *url)
     return decoded;
 }
 
-void send_response(const char *msg, int socket, bool toggle)
+void send_response(const char *msg, int socket, bool &toggle) // Pass by reference
 {
     ssize_t bytes_sent = sceNetSend(socket, msg, strlen(msg), 0);
 
     if (bytes_sent < 0 || bytes_sent < strlen(msg))
     {
-        toggle = false;
+        toggle = false; // This will now update the original variable
         attached = false;
     }
 }
@@ -161,10 +161,10 @@ void send_formatted_response(const char *message, int socket, bool *toggle)
         message_length = sizeof(response) - 1;
         response[message_length] = '\0';
     }
-    send_response(response, socket, *toggle);
+    send_response(response, socket, *toggle); // Pass by value as it's dereferenced inside
 }
 
-void handle_command(void (*func)(), int socket, bool toggle)
+void handle_command(void (*func)(), int socket, bool &toggle)
 {
     if (toggle)
         func();
