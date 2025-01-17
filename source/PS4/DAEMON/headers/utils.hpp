@@ -21,21 +21,13 @@ struct proc_list_entry
         sceKernelDebugOutText(0, _msg_buffer);                                                   \
     } while (0)
 
-extern int sys_proc_list(struct proc_list_entry *procs, uint64_t *num);
-extern char *perform_get_request(const char *cmd);
-extern bool is_relay_running();
-extern char *decode_url(const char *url);
-void send_response(const char *msg, int socket, bool toggle);
-void send_formatted_response(const char *message, int socket, bool *toggle);
-void handle_command(void (*func)(), int socket, bool toggle);
-
 asm("orbis_syscall:\n"
     "movq $0, %rax\n"
     "movq %rcx, %r10\n"
     "syscall\n"
     "jb err\n"
     "retq\n"
-"err:\n"
+    "err:\n"
     "pushq %rax\n"
     "callq __error\n"
     "popq %rcx\n"
@@ -43,5 +35,12 @@ asm("orbis_syscall:\n"
     "movq $0xFFFFFFFFFFFFFFFF, %rax\n"
     "movq $0xFFFFFFFFFFFFFFFF, %rdx\n"
     "retq\n");
-    
 int orbis_syscall(int num, ...);
+
+extern int sys_proc_list(struct proc_list_entry *procs, uint64_t *num);
+extern char *perform_get_request(const char *cmd);
+extern bool is_relay_running();
+extern char *decode_url(const char *url);
+void send_response(const char *msg, int socket, bool toggle);
+void send_formatted_response(const char *message, int socket, bool *toggle);
+void handle_command(void (*func)(), int socket, bool toggle);

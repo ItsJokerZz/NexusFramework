@@ -16,6 +16,7 @@ namespace cmds
         void sys_type();
         void beep();
         void exec_prx();
+        void proc_list();
     }
 
     namespace daemon

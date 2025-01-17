@@ -26,51 +26,6 @@ namespace server
                          if (!attached && strcmp(perform_get_request("attach"), "done") == 0)
                              attached = true;
                      }},
-                    {"GET /a", []()
-                     {
-                         uint64_t num = 0;
-                         struct proc_list_entry *procs = nullptr;
-
-                         // Retrieve number of processes
-                         if (sys_proc_list(nullptr, &num) != 0 || num == 0)
-                         {
-                             log_message("Failed to retrieve process list or no processes found");
-                             return;
-                         }
-
-                         // Dynamically allocate memory for process list
-                         procs = (struct proc_list_entry *)malloc(sizeof(struct proc_list_entry) * num);
-                         if (!procs)
-                         {
-                             log_message("Memory allocation failed");
-                             return;
-                         }
-
-                         // Retrieve actual process data
-                         if (sys_proc_list(procs, &num) != 0)
-                         {
-                             log_message("Failed to retrieve process list");
-                             free(procs);
-                             return;
-                         }
-
-                         std::string log_string;
-                         for (uint64_t i = 0; i < num; i++)
-                         {
-                             if (procs[i].p_comm[sizeof(procs[i].p_comm) - 1] != '\0')
-                             {
-                                 procs[i].p_comm[sizeof(procs[i].p_comm) - 1] = '\0'; // Null-terminate if needed
-                             }
-
-                             log_string += std::to_string(procs[i].pid) + ":" + procs[i].p_comm + ",\n";
-                         }
-
-                         send_formatted_response(log_string.c_str(), server::relay::daemon_sock, &attached);
-
-                         log_message("%s", log_string.c_str());
-
-                         free(procs);
-                     }},
 
                     // maybe try to find a way to make this work with handle_command,
                     // because the attached bool isnt updating between the relay and daemon
@@ -78,7 +33,6 @@ namespace server
                     {"GET /attach", cmds::daemon::attach},
                     {"GET /exec_prx", cmds::daemon::exec_prx}};
 
-                // Replace auto with explicit type for C++11 compatibility
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
                 CommandIter it = std::find_if(commands.begin(), commands.end(),
                                               [&request](const std::pair<std::string, std::function<void()>> &pair)
@@ -87,13 +41,9 @@ namespace server
                                               });
 
                 if (it != commands.end())
-                {
-                    it->second();
-                }
+                 it->second();
                 else
-                {
                     sceNetSend(daemon_sock, RESPONSE_404, strlen(RESPONSE_404), 0);
-                }
             }
             sceNetSocketClose(daemon_sock);
 
@@ -114,6 +64,7 @@ namespace server
                 {
                     log_message("Relay failed to create server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
+
                     continue;
                 }
 
@@ -128,6 +79,7 @@ namespace server
                     log_message("Relay failed to bind server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(relay_sock);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
+
                     continue;
                 }
 
@@ -136,6 +88,7 @@ namespace server
                     log_message("Relay failed to listen on server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(relay_sock);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
+
                     continue;
                 }
 
@@ -147,6 +100,7 @@ namespace server
                     if (daemon_sock < 0)
                     {
                         log_message("Failed to accept daemon connection");
+                        
                         continue;
                     }
 

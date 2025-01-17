@@ -19,16 +19,19 @@ namespace server
                 buffer[bytes_received] = '\0';
                 const std::string request(buffer.data());
 
-                // Use a map instead of unordered_map for C++11 compatibility
                 static const std::map<std::string, std::function<void()>> commands = {
                     {"GET /connect", cmds::client::connect},
                     {"GET /unload", cmds::client::unload},
+
                     {"GET /disconnect", []()
                      { handle_command(cmds::client::disconnect, client_sock, connected); }},
                     {"GET /attach", []()
                      { handle_command(cmds::client::attach, client_sock, connected); }},
-                    {"GET /exec_prx", []()
-                     { handle_command(cmds::client::exec_prx, client_sock, attached); }},
+                    {"GET /proc_list", []()
+                     { handle_command(cmds::client::proc_list, client_sock, connected); }},
+                    {"GET /exec_prx", []() // check if attached for app
+                     { handle_command(cmds::client::exec_prx, client_sock, connected); }},
+
                     {"GET /version", []()
                      { handle_command(cmds::client::version, client_sock, connected); }},
                     {"GET /fw", []()
@@ -45,7 +48,6 @@ namespace server
                      { handle_command(cmds::client::beep, client_sock, connected); }},
                 };
 
-                // Replace auto with explicit type for C++11 compatibility
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
                 CommandIter it = std::find_if(commands.begin(), commands.end(),
                                               [&request](const std::pair<std::string, std::function<void()>> &pair)
@@ -54,13 +56,9 @@ namespace server
                                               });
 
                 if (it != commands.end())
-                {
                     it->second();
-                }
                 else
-                {
                     sceNetSend(client_sock, RESPONSE_404, strlen(RESPONSE_404), 0);
-                }
             }
             sceNetSocketClose(client_sock);
 
@@ -95,6 +93,7 @@ namespace server
                     log_message("Daemon failed to bind server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(daemon_sock);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
+
                     continue;
                 }
 
@@ -103,6 +102,7 @@ namespace server
                     log_message("Daemon failed to listen on server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(daemon_sock);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
+
                     continue;
                 }
 
@@ -114,6 +114,7 @@ namespace server
                     if (client_sock < 0)
                     {
                         log_message("Failed to accept client connection");
+
                         continue;
                     }
 

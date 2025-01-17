@@ -45,7 +45,7 @@ namespace cmds
 
         void attach()
         {
-            // attached = false;
+            attached = false;
 
             if (is_relay_running())
             {
@@ -240,6 +240,47 @@ namespace cmds
                 sys_utils::text_notify(222, notify_msg);
                 send_formatted_response(prx_path.c_str(), server::daemon::client_sock, &connected);
             }
+        }
+
+        void proc_list()
+        {
+            uint64_t num = 0;
+            struct proc_list_entry
+                *procs = nullptr;
+
+            std::string log_string;
+
+            if (sys_proc_list(nullptr, &num) != 0 || num == 0)
+                return;
+
+            procs = (struct proc_list_entry *)malloc(sizeof(struct proc_list_entry) * num);
+            if (!procs)
+            {
+                send_formatted_response("none", server::relay::daemon_sock, &attached);
+
+                return;
+            }
+
+            if (sys_proc_list(procs, &num) != 0)
+            {
+                free(procs);
+
+                return;
+            }
+
+            for (uint64_t i = 0; i < num; i++)
+            {
+                if (procs[i].p_comm[sizeof(procs[i].p_comm) - 1] != '\0')
+                    procs[i].p_comm[sizeof(procs[i].p_comm) - 1] = '\0';
+
+                log_string += std::to_string(procs[i].pid) + ":" + procs[i].p_comm + ",\n";
+            }
+
+            send_formatted_response(log_string.c_str(), server::relay::daemon_sock, &attached);
+
+            log_message("%s", log_string.c_str());
+
+            free(procs);
         }
     }
 
