@@ -31,7 +31,8 @@ namespace server
                     // because the attached bool isnt updating between the relay and daemon
                     {"GET /ping", cmds::daemon::ping},
                     {"GET /attach", cmds::daemon::attach},
-                    {"GET /exec_prx", cmds::daemon::exec_prx}};
+                    {"GET /exec_prx", cmds::daemon::exec_prx},
+                    {"GET /load_plugin", cmds::daemon::load_plugin}};
 
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
                 CommandIter it = std::find_if(commands.begin(), commands.end(),
