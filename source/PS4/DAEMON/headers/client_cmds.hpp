@@ -29,7 +29,7 @@ namespace cmds
             void ring_buzzer();
 
         }
-        
+
         namespace process
         {
             void exec_prx();
@@ -38,15 +38,6 @@ namespace cmds
             void load_plugin();
 
         }
-
-    }
-
-    namespace daemon
-    {
-        void ping();
-        void attach();
-        void exec_prx();
-        void load_plugin();
 
     }
 }

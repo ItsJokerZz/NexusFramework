@@ -194,7 +194,7 @@ namespace OrbisControlAPI
                 {
                     string handleKey = "Handle: ";
 
-                    var url = $"http://{_ipAddress}:1337/lSPRX?process={process}&path={sprxPath}";
+                    var url = $"http://{_ipAddress}:1337/exec_prx?exec={process}&path={sprxPath}";
                     var responseContent = Client.GetStringAsync(url).Result;
                     int handleStartIndex = responseContent.IndexOf(handleKey) + handleKey.Length;
                     int handleEndIndex = responseContent.IndexOf('\n', handleStartIndex);
@@ -204,6 +204,9 @@ namespace OrbisControlAPI
                     string handleString = responseContent.Substring(handleStartIndex, handleEndIndex - handleStartIndex).Trim();
 
                     if (int.TryParse(handleString, out int handle)) return handle;
+
+                    Console.WriteLine(handleString);
+
                 }
                 catch
                 {

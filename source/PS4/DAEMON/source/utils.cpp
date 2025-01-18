@@ -200,6 +200,35 @@ void send_formatted_response(const char *message, int socket, bool *toggle)
     send_response(response, socket, *toggle); // Pass by value as it's dereferenced inside
 }
 
+void send_error_response(ErrorCode error_code, int socket, bool *toggle)
+{
+    std::string message = errors.count(error_code) ? errors[error_code] : "Unknown error.";
+
+    std::string log_string = "{\n"
+                             "    \"ERROR\": {\n"
+                             "        \"code\": " +
+                             std::to_string(static_cast<int>(error_code)) + ",\n"
+                                                                            "        \"msg\": \"" +
+                             message + "\"\n"
+                                       "    }\n"
+                                       "}";
+
+    send_formatted_response(log_string.c_str(), socket, toggle);
+}
+
+void send_error_response(const std::string &message, int socket, bool *toggle)
+{
+    // Create the JSON response with a default error code (0) and provided message
+    std::string log_string = "{\n"
+                             "    \"ERROR\": {\n"
+                             "        \"msg\": \"" +
+                             message + "\"\n"
+                                       "    }\n"
+                                       "}";
+
+    send_formatted_response(log_string.c_str(), socket, toggle);
+}
+
 void handle_command(void (*func)(), int socket, bool &toggle)
 {
     if (toggle)
@@ -207,8 +236,8 @@ void handle_command(void (*func)(), int socket, bool &toggle)
     else
     {
         if (socket == server::daemon::client_sock)
-            send_response(RESPONSE_CONNECT, socket, toggle);
+            send_error_response(ErrorCode::NOT_CONNECTED, socket, &toggle);
         else if (socket == server::relay::daemon_sock)
-            send_response(RESPONSE_ATTACH, socket, toggle);
+            send_error_response(ErrorCode::NOT_ATTACHED, socket, &toggle);
     }
 }

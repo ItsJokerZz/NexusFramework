@@ -1,15 +1,16 @@
 #pragma once
 
 #include <iostream>
+#include <unordered_map>
+#include <string>
 #include <chrono>
 #include <ctime>
-#include <string>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
-#include <vector>       // for std::vector
-#include <utility>      // for std::pair
-#include <algorithm>    // for std::sort
+#include <vector>
+#include <utility>
+#include <algorithm>
 
 #include <sys/socket.h>
 
@@ -25,6 +26,9 @@
 #include "defs.hpp"
 #include "utils.hpp"
 #include "system.hpp"
-#include "cmds.hpp"
+
+#include "client_cmds.hpp"
+#include "daemon_cmds.hpp"
+
 #include "daemon.hpp"
 #include "relay.hpp"
