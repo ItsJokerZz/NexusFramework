@@ -6,14 +6,11 @@ namespace server
     {
         threadData td;
 
-        int relay_sock = -1, daemon_sock = -1;
-
         void *process(void *arg)
         {
-            daemon_sock = *static_cast<int *>(arg);
             std::fill(td.buffer.begin(), td.buffer.end(), 0);
 
-            int bytes_received = sceNetRecv(daemon_sock, td.buffer.data(), td.buffer.size() - 1, 0);
+            int bytes_received = sceNetRecv(td.client_socket, td.buffer.data(), td.buffer.size() - 1, 0);
 
             if (bytes_received > 0)
             {
@@ -49,21 +46,20 @@ namespace server
                 else
                     send_error_response(INVALID_CMD);
             }
-            sceNetSocketClose(daemon_sock);
+            sceNetSocketClose(td.client_socket);
 
             return nullptr;
         }
 
         void *thread(void *arg)
         {
-            td.port = 1337;
+            td.port = 8008;
 
             while (!unload)
             {
-                relay_sock = sceNetSocket("relay_sock",
-                                          ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
+                td.server_socket = sceNetSocket("relay_socket", ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
 
-                if (relay_sock < 0)
+                if (td.server_socket < 0)
                 {
                     log_message("Relay failed to create server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
@@ -74,22 +70,22 @@ namespace server
                 std::memset(&td.server_addr, 0, sizeof(td.server_addr));
                 td.server_addr.len = sizeof(td.server_addr);
                 td.server_addr.sa_family = ORBIS_NET_AF_INET;
-                *reinterpret_cast<uint16_t *>(td.server_addr.sa_data) = sceNetHtons(RELAYS_PORT);
+                *reinterpret_cast<uint16_t *>(td.server_addr.sa_data) = sceNetHtons(td.port);
                 std::memset(td.server_addr.sa_data + 2, 0, 4);
 
-                if (sceNetBind(relay_sock, &td.server_addr, sizeof(td.server_addr)) < 0)
+                if (sceNetBind(td.server_socket, &td.server_addr, sizeof(td.server_addr)) < 0)
                 {
                     log_message("Relay failed to bind server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
-                    sceNetSocketClose(relay_sock);
+                    sceNetSocketClose(td.server_socket);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
 
                     continue;
                 }
 
-                if (sceNetListen(relay_sock, 1) < 0)
+                if (sceNetListen(td.server_socket, 1) < 0)
                 {
                     log_message("Relay failed to listen on server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
-                    sceNetSocketClose(relay_sock);
+                    sceNetSocketClose(td.server_socket);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
 
                     continue;
@@ -99,20 +95,19 @@ namespace server
 
                 while (!unload)
                 {
-                    daemon_sock = sceNetAccept(relay_sock, &td.client_addr, &td.client_addr_len);
-                    if (daemon_sock < 0)
+                    td.client_socket = sceNetAccept(td.server_socket, &td.client_addr, &td.client_addr_len);
+                    if (td.client_socket < 0)
                     {
                         log_message("Failed to accept daemon connection");
 
                         continue;
                     }
 
-                    pthread_t daemon_thread;
-                    pthread_create(&daemon_thread, nullptr, process, &daemon_sock);
-                    pthread_detach(daemon_thread);
+                    pthread_create(&td.client_thread, nullptr, process, &td.client_socket);
+                    pthread_detach(td.client_thread);
                 }
 
-                sceNetSocketClose(relay_sock);
+                sceNetSocketClose(td.server_socket);
             }
 
             return nullptr;
@@ -120,9 +115,8 @@ namespace server
 
         void start()
         {
-            pthread_t relay_thread;
-            pthread_create(&relay_thread, nullptr, thread, nullptr);
-            pthread_detach(relay_thread);
+            pthread_create(&td.server_thread, nullptr, thread, nullptr);
+            pthread_detach(td.server_thread);
         }
     }
 }

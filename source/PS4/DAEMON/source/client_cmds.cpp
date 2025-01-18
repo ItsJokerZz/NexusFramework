@@ -21,15 +21,15 @@ namespace cmds
             void unload()
             {
                 send_response("done");
-                if (server::daemon::daemon_sock >= 0)
+                if (server::daemon::td.server_socket >= 0)
                 {
-                    sceNetSocketClose(server::daemon::daemon_sock);
-                    server::daemon::daemon_sock = -1;
+                    sceNetSocketClose(server::daemon::td.server_socket);
+                    server::daemon::td.server_socket = -1;
                 }
-                if (server::daemon::client_sock >= 0)
+                if (server::daemon::td.client_socket >= 0)
                 {
-                    sceNetSocketClose(server::daemon::client_sock);
-                    server::daemon::client_sock = -1;
+                    sceNetSocketClose(server::daemon::td.client_socket);
+                    server::daemon::td.client_socket = -1;
                 }
                 ::unload = true;
             }
@@ -37,10 +37,10 @@ namespace cmds
             void disconnect()
             {
                 send_response("done");
-                if (server::daemon::client_sock >= 0)
+                if (server::daemon::td.client_socket >= 0)
                 {
-                    sceNetSocketClose(server::daemon::client_sock);
-                    server::daemon::client_sock = -1;
+                    sceNetSocketClose(server::daemon::td.client_socket);
+                    server::daemon::td.client_socket = -1;
                 }
                 connected = false;
             }

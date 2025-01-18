@@ -13,12 +13,13 @@
 
 struct threadData
 {
-    std::array<char, BUFFER_SIZE> buffer{};
-    pthread_t server_thread, client_thread;
-    OrbisNetSockaddr server_addr, client_addr;
+    std::array<char, BUFFER_SIZE> buffer{};         // Default: initialized to zero
+    pthread_t server_thread = 0, client_thread = 0; // Default: initialized to 0 (or nullptr)
+    OrbisNetSockaddr server_addr{};                 // Default: initialized using default constructor
+    OrbisNetSockaddr client_addr{};                 // Default: initialized using default constructor
 
-    socklen_t client_addr_len = sizeof(client_addr);
-    int port, server_socket = -1, client_socket = -1;
+    socklen_t client_addr_len = sizeof(OrbisNetSockaddr);    // Default: size of OrbisNetSockaddr
+    int port = -1, server_socket = -1, client_socket = -1; // Default: port 8080, socket values -1
 };
 
 enum ErrorCode

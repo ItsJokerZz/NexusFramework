@@ -147,8 +147,8 @@ std::string generate_json(const std::unordered_map<std::string, nlohmann::json> 
 void send_response(const char *message)
 {
     char response[BUFFER_SIZE];
-    int socket = (server::daemon::client_sock != -1) ? server::daemon::client_sock : server::relay::daemon_sock;
-    bool *toggle = (server::daemon::client_sock != -1) ? &connected : &attached;
+    int socket = (server::daemon::td.client_socket != -1) ? server::daemon::td.client_socket : server::relay::td.client_socket;
+    bool *toggle = (server::daemon::td.client_socket != -1) ? &connected : &attached;
 
     int message_length = snprintf(response, sizeof(response), RESPONSE_OK, (int)strlen(message), message);
 
@@ -175,8 +175,8 @@ void send_response(const nlohmann::json &response_data)
 
 void send_error_response(ErrorCode error_code)
 {
-    int socket = (server::daemon::client_sock != -1) ? server::daemon::client_sock : server::relay::daemon_sock;
-    bool *toggle = (server::daemon::client_sock != -1) ? &connected : &attached;
+    int socket = (server::daemon::td.client_socket != -1) ? server::daemon::td.client_socket : server::relay::td.client_socket;
+    bool *toggle = (server::daemon::td.client_socket != -1) ? &connected : &attached;
 
     const char *message = error_messages[UNKNOWN_ERROR].message;
 
@@ -203,8 +203,8 @@ void send_error_response(const std::string &message)
 
 void handle_command(void (*func)())
 {
-    int socket = (server::daemon::client_sock != -1) ? server::daemon::client_sock : server::relay::daemon_sock;
-    bool *toggle = (server::daemon::client_sock != -1) ? &connected : &attached;
+    int socket = (server::daemon::td.client_socket != -1) ? server::daemon::td.client_socket : server::relay::td.client_socket;
+    bool *toggle = (server::daemon::td.client_socket != -1) ? &connected : &attached;
 
     if (*toggle)
         func();

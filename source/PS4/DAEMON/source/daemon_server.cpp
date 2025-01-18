@@ -6,14 +6,11 @@ namespace server
     {
         threadData td;
 
-        int daemon_sock = -1, client_sock = -1;
-
         void *process(void *arg)
         {
-            client_sock = *static_cast<int *>(arg);
             std::fill(td.buffer.begin(), td.buffer.end(), 0);
 
-            int bytes_received = sceNetRecv(client_sock, td.buffer.data(), td.buffer.size() - 1, 0);
+            int bytes_received = sceNetRecv(td.client_socket, td.buffer.data(), td.buffer.size() - 1, 0);
 
             if (bytes_received > 0)
             {
@@ -71,7 +68,7 @@ namespace server
                 else
                     send_error_response(INVALID_CMD);
             }
-            sceNetSocketClose(client_sock);
+            sceNetSocketClose(td.client_socket);
 
             return nullptr;
         }
@@ -82,9 +79,9 @@ namespace server
 
             while (!unload)
             {
-                daemon_sock = sceNetSocket("daemon_sock", ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
+                td.server_socket = sceNetSocket("daemon_socket", ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
 
-                if (daemon_sock < 0)
+                if (td.server_socket < 0)
                 {
                     log_message("Daemon failed to create server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
@@ -94,22 +91,22 @@ namespace server
                 memset(&td.server_addr, 0, sizeof(td.server_addr));
                 td.server_addr.len = sizeof(td.server_addr);
                 td.server_addr.sa_family = ORBIS_NET_AF_INET;
-                *(uint16_t *)td.server_addr.sa_data = sceNetHtons(DAEMON_PORT);
+                *(uint16_t *)td.server_addr.sa_data = sceNetHtons(td.port);
                 memset(td.server_addr.sa_data + 2, 0, 4);
 
-                if (sceNetBind(daemon_sock, &td.server_addr, sizeof(td.server_addr)) < 0)
+                if (sceNetBind(td.server_socket, &td.server_addr, sizeof(td.server_addr)) < 0)
                 {
                     log_message("Daemon failed to bind server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
-                    sceNetSocketClose(daemon_sock);
+                    sceNetSocketClose(td.server_socket);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
 
                     continue;
                 }
 
-                if (sceNetListen(daemon_sock, 1) < 0)
+                if (sceNetListen(td.server_socket, 1) < 0)
                 {
                     log_message("Daemon failed to listen on server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
-                    sceNetSocketClose(daemon_sock);
+                    sceNetSocketClose(td.server_socket);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
 
                     continue;
@@ -119,20 +116,19 @@ namespace server
 
                 while (!unload)
                 {
-                    client_sock = sceNetAccept(daemon_sock, &td.client_addr, &td.client_addr_len);
-                    if (client_sock < 0)
+                    td.client_socket = sceNetAccept(td.server_socket, &td.client_addr, &td.client_addr_len);
+                    if (td.client_socket < 0)
                     {
                         log_message("Failed to accept client connection");
 
                         continue;
                     }
 
-                    pthread_t client_thread;
-                    pthread_create(&client_thread, NULL, process, &client_sock);
-                    pthread_detach(client_thread);
+                    pthread_create(&td.client_thread, NULL, process, &td.client_socket);
+                    pthread_detach(td.client_thread);
                 }
 
-                sceNetSocketClose(daemon_sock);
+                sceNetSocketClose(td.server_socket);
             }
 
             return nullptr;
@@ -140,9 +136,8 @@ namespace server
 
         void start()
         {
-            pthread_t daemon_thread;
-            pthread_create(&daemon_thread, NULL, thread, NULL);
-            pthread_detach(daemon_thread);
+            pthread_create(&td.server_thread, NULL, thread, NULL);
+            pthread_detach(td.server_thread);
         }
     }
 }
