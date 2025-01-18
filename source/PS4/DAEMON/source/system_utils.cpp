@@ -84,34 +84,23 @@ namespace sys_utils
     sceSysmoduleLoadModuleInternal(ORBIS_SYSMODULE_INTERNAL_USER_SERVICE);
     sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
 
-    OrbisUserServiceInitializeParams param;
-    param.priority = ORBIS_KERNEL_PRIO_FIFO_LOWEST;
+    sceUserServiceInitialize2();
 
-    ret = sceUserServiceInitialize(&param);
-    if (ret != 0 && ret != 0x80960003)
-    {
-      log_message("Error: Failed to initialize UserService. Error code: %d", ret);
-
-      return "USER";
-    }
-
-    OrbisUserServiceUserId userId;
+    OrbisUserServiceUserId userId = 0;
     ret = sceUserServiceGetInitialUser(&userId);
     if (ret != 0)
-    {
-      log_message("Error: Failed to get initial user. Error code: %d", ret);
-
       return "USER";
-    }
+
+    log_message("OrbisUserServiceUserId userId = %i", userId);
+
+    OrbisUserServiceLoginUserIdList idList = {};
+    sceUserServiceGetLoginUserIdList(&idList);
+    log_message("idList.userId[0] = %i", idList.userId[0]);
 
     static char username[ORBIS_USER_SERVICE_MAX_USER_NAME_LENGTH + 1];
-    ret = sceUserServiceGetUserName(userId, username, sizeof(username));
+    ret = sceUserServiceGetUserName(idList.userId[0], username, sizeof(username));
     if (ret != 0)
-    {
-      log_message("Error: Failed to get username. Error code: %d", ret);
-
       return "USER";
-    }
 
     return username;
   }
