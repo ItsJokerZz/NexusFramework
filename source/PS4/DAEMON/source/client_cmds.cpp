@@ -243,7 +243,9 @@ namespace cmds
                     }
 
                     if (prx_path.empty())
-                        send_error_response("failed", server::daemon::client_sock, &connected);
+                    {
+                        send_error_response(INVALID_ARGS, server::daemon::client_sock, &connected);
+                    }
                     else
                     {
                         char request[BUFFER_SIZE];
@@ -255,6 +257,12 @@ namespace cmds
                 }
                 else
                 {
+                    if (exec_path.empty() || prx_path.empty())
+                    {
+                        send_error_response(INVALID_ARGS, server::daemon::client_sock, &connected); // Send error if either param is missing
+                        return;
+                    }
+
                     int prx_handle = sys_sdk_proc_prx_load(const_cast<char *>(exec_path.c_str()), const_cast<char *>(prx_path.c_str()));
 
                     if (prx_handle >= 0)
@@ -272,7 +280,7 @@ namespace cmds
                     }
                     else
                     {
-                        send_error_response("failed", server::daemon::client_sock, &connected);
+                        send_error_response(UNKNOWN_ERROR, server::daemon::client_sock, &connected);
                     }
                 }
             }
@@ -282,7 +290,7 @@ namespace cmds
                 uint64_t num = 0;
                 struct proc_list_entry *procs = nullptr;
 
-                nlohmann::json response = {{"DATA", nlohmann::json::object()}};
+                nlohmann::json response = nlohmann::json::object(); // Start with an empty object
 
                 if (sys_utils::sys_proc_list(nullptr, &num) != 0 || num == 0)
                     return;
@@ -290,7 +298,6 @@ namespace cmds
                 procs = (struct proc_list_entry *)malloc(sizeof(struct proc_list_entry) * num);
                 if (!procs)
                 {
-                    send_formatted_response(response.dump(4).c_str(), server::daemon::client_sock, &connected);
                     return;
                 }
 
@@ -311,9 +318,10 @@ namespace cmds
 
                 std::sort(sorted_procs.begin(), sorted_procs.end());
 
+                // Add processes directly under the root of the response
                 for (const auto &proc : sorted_procs)
                 {
-                    response["DATA"][std::to_string(proc.first)] = proc.second;
+                    response[std::to_string(proc.first)] = proc.second;
                 }
 
                 send_formatted_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);

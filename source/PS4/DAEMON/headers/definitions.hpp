@@ -9,10 +9,11 @@
 
 enum ErrorCode
 {
-    INVALID_CMD = 0,
-    NOT_CONNECTED = 1,
-    NOT_ATTACHED = 2,
-    UNKNOWN_ERROR = 3,
+    INVALID_CMD,
+    NOT_CONNECTED,
+    NOT_ATTACHED,
+    UNKNOWN_ERROR,
+    INVALID_ARGS,
     ERROR_COUNT
 };
 
