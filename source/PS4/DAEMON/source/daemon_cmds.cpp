@@ -6,13 +6,13 @@ namespace cmds
     {
         void ping()
         {
-            send_formatted_response("true", server::relay::daemon_sock, &attached);
+            send_response("true", server::relay::daemon_sock, &attached);
         }
 
         void attach()
         {
             sys_utils::text_notify(222, "[OCAPI] Attached!");
-            send_formatted_response("done", server::relay::daemon_sock, &attached);
+            send_response("done", server::relay::daemon_sock, &attached);
         }
 
         void exec_prx()
@@ -57,7 +57,7 @@ namespace cmds
 
             char response[BUFFER_SIZE];
             snprintf(response, sizeof(response), "%i,%d,%s", pid, result, path);
-            send_formatted_response(response, server::relay::daemon_sock, &attached);
+            send_response(response, server::relay::daemon_sock, &attached);
 
             int32_t ret;
             int32_t (*module_start_ret)(size_t, const void *);
@@ -141,7 +141,7 @@ namespace cmds
 
             char response[BUFFER_SIZE];
             snprintf(response, sizeof(response), "%i,%d,%s", pid, result, plugin);
-            send_formatted_response(response, server::relay::daemon_sock, &attached);
+            send_response(response, server::relay::daemon_sock, &attached);
 
             int32_t ret;
             int32_t (*plugin_load_ret)(void);

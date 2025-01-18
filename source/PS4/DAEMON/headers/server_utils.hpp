@@ -53,12 +53,9 @@ extern bool is_relay_running();
 extern char *decode_url(const char *url);
 extern std::string create_json_response(const std::unordered_map<std::string, nlohmann::json> &data_entries);
 
-void send_response(const char *msg, int socket, bool &toggle);
+void send_response(const char *msg, int socket, bool *toggle);
 void send_response(const nlohmann::json &response_data, int socket, bool *toggle);
-
-void send_formatted_response(const char *message, int socket, bool *toggle);
-
-void send_error_response(ErrorCode code, int socket, bool *toggle);
+void send_error_response(ErrorCode error_code, int socket, bool *toggle);
 void send_error_response(const std::string &message, int socket, bool *toggle);
 
 void handle_command(void (*func)(), int socket, bool &toggle);

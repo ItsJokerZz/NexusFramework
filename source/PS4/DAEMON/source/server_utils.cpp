@@ -151,14 +151,22 @@ std::string create_json_response(const std::unordered_map<std::string, nlohmann:
     return response.dump(4);
 }
 
-void send_response(const char *msg, int socket, bool &toggle) // Pass by reference
+void send_response(const char *msg, int socket, bool *toggle)
 {
-    ssize_t bytes_sent = sceNetSend(socket, msg, strlen(msg), 0);
+    char response[BUFFER_SIZE];
+    int message_length = snprintf(response, sizeof(response), RESPONSE_OK, (int)strlen(msg), msg);
 
-    if (bytes_sent < 0 || bytes_sent < strlen(msg))
+    if (message_length >= sizeof(response))
     {
-        toggle = false; // This will now update the original variable
-        attached = false;
+        message_length = sizeof(response) - 1;
+        response[message_length] = '\0';
+    }
+
+    ssize_t bytes_sent = sceNetSend(socket, response, strlen(response), 0);
+
+    if (bytes_sent < 0 || bytes_sent < strlen(response))
+    {
+        *toggle = false; // This will now update the original variable
     }
 }
 
@@ -172,22 +180,8 @@ void send_response(const nlohmann::json &response_data, int socket, bool *toggle
     // Generate the final JSON response string
     std::string log_string = create_json_response(data_entries);
 
-    // Send the response
-    send_formatted_response(log_string.c_str(), socket, toggle);
-}
-
-void send_formatted_response(const char *message, int socket, bool *toggle)
-{
-    char response[BUFFER_SIZE];
-    int message_length = snprintf(response, sizeof(response), RESPONSE_OK, (int)strlen(message), message);
-
-    if (message_length >= sizeof(response))
-    {
-        message_length = sizeof(response) - 1;
-        response[message_length] = '\0';
-    }
-
-    send_response(response, socket, *toggle); // Pass by value as it's dereferenced inside
+    // Call send_response with the formatted JSON string
+    send_response(log_string.c_str(), socket, toggle);
 }
 
 void send_error_response(ErrorCode error_code, int socket, bool *toggle)
@@ -204,7 +198,7 @@ void send_error_response(ErrorCode error_code, int socket, bool *toggle)
         data_entries = {{"ERROR", error_data}};
 
     std::string log_string = create_json_response(data_entries);
-    send_formatted_response(log_string.c_str(), socket, toggle);
+    send_response(log_string.c_str(), socket, toggle);
 }
 
 void send_error_response(const std::string &message, int socket, bool *toggle)
@@ -217,7 +211,7 @@ void send_error_response(const std::string &message, int socket, bool *toggle)
                                        "    }\n"
                                        "}";
 
-    send_formatted_response(log_string.c_str(), socket, toggle);
+    send_response(log_string.c_str(), socket, toggle);
 }
 
 void handle_command(void (*func)(), int socket, bool &toggle)

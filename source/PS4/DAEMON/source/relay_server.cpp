@@ -22,7 +22,7 @@ namespace server
                 static const std::map<std::string, std::function<void()>> commands = {
                     {"GET /test", []()
                      {
-                         send_formatted_response("done", server::relay::daemon_sock, &attached);
+                         send_response("done", server::relay::daemon_sock, &attached);
                          if (!attached && strcmp(perform_get_request("attach"), "done") == 0)
                              attached = true;
                      }},

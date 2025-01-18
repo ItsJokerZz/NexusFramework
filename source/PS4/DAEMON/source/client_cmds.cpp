@@ -9,18 +9,18 @@ namespace cmds
             void version()
             {
                 std::string message = std::to_string(VERSION);
-                send_formatted_response(message.c_str(), server::daemon::client_sock, &connected);
+                send_response(message.c_str(), server::daemon::client_sock, &connected);
             }
 
             void connect()
             {
-                send_formatted_response("true", server::daemon::client_sock, &connected);
+                send_response("true", server::daemon::client_sock, &connected);
                 connected = true;
             }
 
             void unload()
             {
-                send_formatted_response("done", server::daemon::client_sock, &connected);
+                send_response("done", server::daemon::client_sock, &connected);
                 if (server::daemon::daemon_sock >= 0)
                 {
                     sceNetSocketClose(server::daemon::daemon_sock);
@@ -36,7 +36,7 @@ namespace cmds
 
             void disconnect()
             {
-                send_formatted_response("done", server::daemon::client_sock, &connected);
+                send_response("done", server::daemon::client_sock, &connected);
                 if (server::daemon::client_sock >= 0)
                 {
                     sceNetSocketClose(server::daemon::client_sock);
@@ -56,7 +56,7 @@ namespace cmds
                         attached = true;
                 }
 
-                send_formatted_response("done", server::daemon::client_sock, &connected);
+                send_response("done", server::daemon::client_sock, &connected);
             }
 
         }
@@ -65,12 +65,12 @@ namespace cmds
         {
             void sys_type()
             {
-                send_formatted_response(sys_utils::get_console_type(), server::daemon::client_sock, &connected);
+                send_response(sys_utils::get_console_type(), server::daemon::client_sock, &connected);
             }
 
             void get_fw()
             {
-                send_formatted_response(sys_utils::get_fw_version(), server::daemon::client_sock, &connected);
+                send_response(sys_utils::get_fw_version(), server::daemon::client_sock, &connected);
             }
 
             void get_temp()
@@ -103,7 +103,7 @@ namespace cmds
 
                 char message[BUFFER_SIZE];
                 snprintf(message, sizeof(message), "%i", tempValue);
-                send_formatted_response(message, server::daemon::client_sock, &connected);
+                send_response(message, server::daemon::client_sock, &connected);
             }
 
         }
@@ -146,7 +146,7 @@ namespace cmds
                 }
 
                 sys_utils::text_notify(type, msg.empty() ? nullptr : msg.c_str());
-                send_formatted_response("done", server::daemon::client_sock, &connected);
+                send_response("done", server::daemon::client_sock, &connected);
             }
 
             void temp_limit()
@@ -166,7 +166,7 @@ namespace cmds
                 }
 
                 sys_utils::set_temperature_limit(temp);
-                send_formatted_response("done", server::daemon::client_sock, &connected);
+                send_response("done", server::daemon::client_sock, &connected);
             }
 
             void ring_buzzer()
@@ -209,7 +209,7 @@ namespace cmds
                     break;
                 }
 
-                send_formatted_response("done", server::daemon::client_sock, &connected);
+                send_response("done", server::daemon::client_sock, &connected);
             }
 
         }
@@ -253,7 +253,7 @@ namespace cmds
                         snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
                         char *response = perform_get_request(request);
 
-                        send_formatted_response(response, server::daemon::client_sock, &connected);
+                        send_response(response, server::daemon::client_sock, &connected);
                     }
                 }
                 else
@@ -277,7 +277,7 @@ namespace cmds
                         nlohmann::json response = {{prx_path, prx_handle}};
                         std::string log_string = create_json_response(response);
 
-                        send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
+                        send_response(log_string.c_str(), server::daemon::client_sock, &connected);
                     }
                     else
                     {
@@ -320,7 +320,7 @@ namespace cmds
                 for (const auto &proc : sorted_procs)
                     response[std::to_string(proc.first)] = proc.second;
 
-                send_formatted_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
+                send_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
 
                 free(procs);
             }
@@ -344,7 +344,7 @@ namespace cmds
 
                 // Create and send JSON response using helper function
                 nlohmann::json response = {{"pid", pid}};
-                send_formatted_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
+                send_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
             }
 
             void load_plugin()
@@ -358,7 +358,7 @@ namespace cmds
                     }
                 }
 
-                send_formatted_response("done", server::daemon::client_sock, &connected);
+                send_response("done", server::daemon::client_sock, &connected);
             }
 
         }
