@@ -394,8 +394,7 @@ namespace cmds
                 {
                     if (perform_get_request("load_plugin") != NULL)
                     {
-                        // Directly pass the address of 'attached' to handle_command without lambda
-                        handle_command([]() {}, server::daemon::client_sock, attached); // Pass 'attached' as a pointer to handle_command
+                        handle_command([]() {}); // Pass 'attached' as a pointer to handle_command
                     }
                 }
 

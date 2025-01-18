@@ -200,15 +200,13 @@ void send_error_response(const std::string &message, int socket, bool *toggle)
     send_response(log_string.c_str(), socket, toggle);
 }
 
-void handle_command(void (*func)(), int socket, bool &toggle)
+void handle_command(void (*func)())
 {
-    if (toggle)
+    int socket = (server::daemon::client_sock != -1) ? server::daemon::client_sock : server::relay::daemon_sock;
+    bool *toggle = (server::daemon::client_sock != -1) ? &connected : &attached;
+
+    if (*toggle)
         func();
     else
-    {
-        if (socket == server::daemon::client_sock)
-            send_error_response(NOT_CONNECTED, socket, &toggle);
-        else if (socket == server::relay::daemon_sock)
-            send_error_response(NOT_ATTACHED, socket, &toggle);
-    }
+        send_error_response(toggle == &connected ? NOT_CONNECTED : NOT_ATTACHED, socket, toggle);
 }

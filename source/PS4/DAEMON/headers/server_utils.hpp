@@ -59,4 +59,4 @@ void send_response(const nlohmann::json &response_data, int socket, bool *toggle
 void send_error_response(ErrorCode error_code, int socket, bool *toggle);
 void send_error_response(const std::string &message, int socket, bool *toggle);
 
-void handle_command(void (*func)(), int socket, bool &toggle);
+void handle_command(void (*func)());

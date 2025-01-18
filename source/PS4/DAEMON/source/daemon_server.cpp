@@ -5,7 +5,7 @@ namespace server
     namespace daemon
     {
         std::array<char, BUFFER_SIZE> buffer{};
-        int daemon_sock, client_sock;
+        int daemon_sock = -1, client_sock = -1;
 
         void *process(void *arg)
         {
@@ -23,38 +23,39 @@ namespace server
                     {"GET /connect", cmds::client::connection::connect},
                     {"GET /unload", cmds::client::connection::unload},
                     {"GET /disconnect", []()
-                     { handle_command(cmds::client::connection::disconnect, client_sock, connected); }},
+                     { handle_command(cmds::client::connection::disconnect); }},
                     {"GET /attach", []()
-                     { handle_command(cmds::client::connection::attach, client_sock, connected); }},
-                    {"GET /version", []()
-                     { handle_command(cmds::client::connection::version, client_sock, connected); }},
+                     { handle_command(cmds::client::connection::attach); }},
+                    {"GET /get_api_version", []()
+                     { handle_command(cmds::client::connection::version); }},
 
                     {"GET /get_fw_version", []()
-                     { handle_command(cmds::client::sys_info::get_fw, client_sock, connected); }},
+                     { handle_command(cmds::client::sys_info::get_fw); }},
                     {"GET /get_sys_type", []()
-                     { handle_command(cmds::client::sys_info::sys_type, client_sock, connected); }},
+                     { handle_command(cmds::client::sys_info::sys_type); }},
                     {"GET /get_temperature", []()
-                     { handle_command(cmds::client::sys_info::get_temp, client_sock, connected); }},
+                     { handle_command(cmds::client::sys_info::get_temp); }},
                     {"GET /get_username", []()
-                     { handle_command(cmds::client::sys_info::get_user, client_sock, connected); }},
+                     { handle_command(cmds::client::sys_info::get_user); }},
 
                     {"GET /send_notify", []()
-                     { handle_command(cmds::client::sys_control::notify, client_sock, connected); }},
+                     { handle_command(cmds::client::sys_control::notify); }},
                     {"GET /set_temp_limit", []()
-                     { handle_command(cmds::client::sys_control::temp_limit, client_sock, connected); }},
+                     { handle_command(cmds::client::sys_control::temp_limit); }},
                     {"GET /ring_buzzer", []()
-                     { handle_command(cmds::client::sys_control::ring_buzzer, client_sock, connected); }},
+                     { handle_command(cmds::client::sys_control::ring_buzzer); }},
 
                     {"GET /get_proc_list", []()
-                     { handle_command(cmds::client::process::get_proc_list, client_sock, connected); }},
+                     { handle_command(cmds::client::process::get_proc_list); }},
                     {"GET /get_pid_by_name", []()
-                     { handle_command(cmds::client::process::find_pid_by_name, client_sock, connected); }},
+                     { handle_command(cmds::client::process::find_pid_by_name); }},
                     {"GET /get_name_of_pid", []()
-                     { handle_command(cmds::client::process::find_name_of_pid, client_sock, connected); }},
+                     { handle_command(cmds::client::process::find_name_of_pid); }},
+
                     {"GET /load_module", []()
-                     { handle_command(cmds::client::process::load_module, client_sock, connected); }},
+                     { handle_command(cmds::client::process::load_module); }},
                     {"GET /load_plugin", []()
-                     { handle_command(cmds::client::process::load_plugin, client_sock, connected); }},
+                     { handle_command(cmds::client::process::load_plugin); }},
                 };
 
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
