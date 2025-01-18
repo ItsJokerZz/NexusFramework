@@ -141,6 +141,16 @@ char *decode_url(const char *url)
     return decoded;
 }
 
+std::string create_json_response(const std::unordered_map<std::string, nlohmann::json> &data_entries)
+{
+    nlohmann::json response = {{"DATA", nlohmann::json::object()}};
+
+    for (const auto &pair : data_entries)
+        response["DATA"][pair.first] = pair.second;
+
+    return response.dump(4);
+}
+
 void send_response(const char *msg, int socket, bool &toggle) // Pass by reference
 {
     ssize_t bytes_sent = sceNetSend(socket, msg, strlen(msg), 0);
@@ -166,13 +176,16 @@ void send_formatted_response(const char *message, int socket, bool *toggle)
 
 void send_error_response(ErrorCode error_code, int socket, bool *toggle)
 {
-    std::string message = (error_code >= 0 && error_code < ERROR_COUNT) ? error_messages[error_code] : "Unknown error.";
+    std::string message = (error_code >= 0 &&
+                           error_code < ERROR_COUNT)
+                              ? error_messages[error_code]
+                              : "Unknown error.";
 
-    nlohmann::json response = {
-        {"ERROR", {{"code", static_cast<int>(error_code)}, {"msg", message.empty() ? "Unknown error." : message}}}};
+    nlohmann::json error_data = {
+        {"code", static_cast<int>(error_code)},
+        {"msg", message.empty() ? "Unknown error." : message}};
 
-    std::string log_string = response.dump(4); // 4 is for pretty printing with an indent of 4 spaces
-
+    std::string log_string = create_json_response(error_data);
     send_formatted_response(log_string.c_str(), socket, toggle);
 }
 

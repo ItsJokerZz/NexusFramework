@@ -239,7 +239,6 @@ namespace cmds
                     if (!attached)
                     {
                         send_error_response(NOT_ATTACHED, server::daemon::client_sock, &connected);
-
                         return;
                     }
 
@@ -265,12 +264,10 @@ namespace cmds
                         snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", prx_path.c_str());
                         sys_utils::text_notify(222, notify_msg);
 
-                        // Create a JSON response using nlohmann::json
-                        nlohmann::json response = {
-                            {"DATA", {{prx_path, prx_handle}}}};   // Pretty print response
-                        std::string log_string = response.dump(4); // 4 is for pretty printing with an indent of 4 spaces
+                        // Create and send JSON response using helper function
+                        nlohmann::json response = {{prx_path, prx_handle}};
+                        std::string log_string = create_json_response(response);
 
-                        // Send formatted success response
                         send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
                     }
                     else
@@ -319,7 +316,7 @@ namespace cmds
                     response["DATA"][std::to_string(proc.first)] = proc.second;
                 }
 
-                send_formatted_response(response.dump(4).c_str(), server::daemon::client_sock, &connected);
+                send_formatted_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
                 log_message("%s", response.dump(4).c_str());
 
                 free(procs);
@@ -342,11 +339,9 @@ namespace cmds
 
                 int pid = sys_utils::find_process_pid(proc_name.c_str(), &procID);
 
-                // Create a JSON response using nlohmann::json
+                // Create and send JSON response using helper function
                 nlohmann::json response = {{"pid", pid}};
-                std::string log_string = response.dump(4); // 4 is for pretty printing with an indent of 4 spaces
-
-                send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
+                send_formatted_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
             }
 
             void load_plugin()

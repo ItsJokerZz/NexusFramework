@@ -2,7 +2,7 @@ TOOLCHAIN     := $(OO_PS4_TOOLCHAIN)
 PROJDIR       := source
 INTDIR        := build
 
-VERSION       := 0.37
+VERSION       := 0.40
 TARGET        := OrbisControl.prx
 
 VERSION_FILE  := $(INTDIR)/.version
@@ -62,6 +62,8 @@ endif
 
 .DEFAULT_GOAL := all
 
+BUILD := $(shell cat $(BUILD_FILE))
+
 incrementBuild:
 	@mkdir -p $(INTDIR)
 	@touch $(BUILD_FILE)
@@ -80,7 +82,6 @@ incrementBuild:
 		echo "1" > $(BUILD_FILE); \
 	fi
 
-BUILD := $(shell cat $(BUILD_FILE))
 
 clean:
 	rm -f $(INTDIR)/$(PROJDIR).oelf $(OBJS) \
