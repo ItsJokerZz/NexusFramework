@@ -77,29 +77,13 @@ namespace sys_utils
     return 0;
   }
 
-  const char *get_username()
+  const char *get_username(OrbisUserServiceUserId userId)
   {
-    int ret;
-
-    sceSysmoduleLoadModuleInternal(ORBIS_SYSMODULE_INTERNAL_USER_SERVICE);
-    sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
-
-    sceUserServiceInitialize2();
-
-    OrbisUserServiceUserId userId = 0;
-    ret = sceUserServiceGetInitialUser(&userId);
-    if (ret != 0)
-      return "USER";
-
-    log_message("OrbisUserServiceUserId userId = %i", userId);
-
     OrbisUserServiceLoginUserIdList idList = {};
     sceUserServiceGetLoginUserIdList(&idList);
-    log_message("idList.userId[0] = %i", idList.userId[0]);
 
     static char username[ORBIS_USER_SERVICE_MAX_USER_NAME_LENGTH + 1];
-    ret = sceUserServiceGetUserName(idList.userId[0], username, sizeof(username));
-    if (ret != 0)
+    if (sceUserServiceGetUserName(idList.userId[0], username, sizeof(username)) != 0)
       return "USER";
 
     return username;
