@@ -105,6 +105,7 @@ namespace cmds
                 snprintf(message, sizeof(message), "%i", tempValue);
                 send_formatted_response(message, server::daemon::client_sock, &connected);
             }
+
         }
 
         namespace sys_control
@@ -290,16 +291,14 @@ namespace cmds
                 uint64_t num = 0;
                 struct proc_list_entry *procs = nullptr;
 
-                nlohmann::json response = nlohmann::json::object(); // Start with an empty object
+                nlohmann::json response = nlohmann::json::object();
 
                 if (sys_utils::sys_proc_list(nullptr, &num) != 0 || num == 0)
                     return;
 
                 procs = (struct proc_list_entry *)malloc(sizeof(struct proc_list_entry) * num);
                 if (!procs)
-                {
                     return;
-                }
 
                 if (sys_utils::sys_proc_list(procs, &num) != 0)
                 {
@@ -318,14 +317,10 @@ namespace cmds
 
                 std::sort(sorted_procs.begin(), sorted_procs.end());
 
-                // Add processes directly under the root of the response
                 for (const auto &proc : sorted_procs)
-                {
                     response[std::to_string(proc.first)] = proc.second;
-                }
 
                 send_formatted_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
-                log_message("%s", response.dump(4).c_str());
 
                 free(procs);
             }
@@ -365,6 +360,7 @@ namespace cmds
 
                 send_formatted_response("done", server::daemon::client_sock, &connected);
             }
+
         }
     }
 }

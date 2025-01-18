@@ -162,29 +162,48 @@ void send_response(const char *msg, int socket, bool &toggle) // Pass by referen
     }
 }
 
+void send_response(const nlohmann::json &response_data, int socket, bool *toggle)
+{
+    // Create a map to hold the "RESPONSE" key and associated JSON data
+    std::unordered_map<std::string, nlohmann::json> data_entries = {
+        {"RESPONSE", response_data} // The "RESPONSE" key holds the JSON data
+    };
+
+    // Generate the final JSON response string
+    std::string log_string = create_json_response(data_entries);
+
+    // Send the response
+    send_formatted_response(log_string.c_str(), socket, toggle);
+}
+
 void send_formatted_response(const char *message, int socket, bool *toggle)
 {
     char response[BUFFER_SIZE];
     int message_length = snprintf(response, sizeof(response), RESPONSE_OK, (int)strlen(message), message);
+
     if (message_length >= sizeof(response))
     {
         message_length = sizeof(response) - 1;
         response[message_length] = '\0';
     }
+
     send_response(response, socket, *toggle); // Pass by value as it's dereferenced inside
 }
 
 void send_error_response(ErrorCode error_code, int socket, bool *toggle)
 {
-    const char *message = error_messages[3].message;
+    const char *message = error_messages[UNKNOWN_ERROR].message;
 
     if (error_code >= 0 && error_code < ERROR_COUNT)
-        message = error_messages[error_code].message; // Access message using error_code
+        message = error_messages[error_code].message;
 
-    nlohmann::json error_data = {
-        {"ERROR", {{"CODE", static_cast<int>(error_code)}, {"MSG", message}}}};
+    nlohmann::json error_data =
+        {{std::to_string(error_code), message}};
 
-    std::string log_string = create_json_response(error_data);
+    std::unordered_map<std::string, nlohmann::json>
+        data_entries = {{"ERROR", error_data}};
+
+    std::string log_string = create_json_response(data_entries);
     send_formatted_response(log_string.c_str(), socket, toggle);
 }
 
