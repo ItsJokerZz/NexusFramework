@@ -9,32 +9,22 @@ bool is_relay_running()
 char *perform_get_request(const char *cmd)
 {
     static char buffer[BUFFER_SIZE];
-
-    int httpCtxId = 0;
-    int tmplId = 0;
-    int connId = 0;
-    int reqId = 0;
-    int bytesRead = 0;
-
-    char userAgent[64];
-    char url[256];
+    int httpCtxId = 0, tmplId = 0, connId = 0, reqId = 0, bytesRead = 0;
+    char userAgent[64], url[256];
 
     httpCtxId = sceHttpInit(0, 0, 1024 * 1024);
     if (httpCtxId < 0)
     {
         log_message("Failed to initialize HTTP. Error code: %d", httpCtxId);
-
         return NULL;
     }
 
     snprintf(userAgent, sizeof(userAgent), "OCAPIv%.2fb%d", VERSION, BUILD);
-
     tmplId = sceHttpCreateTemplate(httpCtxId, userAgent, 1, 0);
     if (tmplId < 0)
     {
         log_message("Failed to create HTTP template. Error code: %d", tmplId);
         sceHttpTerm(httpCtxId);
-
         return NULL;
     }
 
@@ -42,14 +32,12 @@ char *perform_get_request(const char *cmd)
     if (connId < 0)
     {
         log_message("Failed to create HTTP connection. Error code: %d", connId);
-
         sceHttpDeleteTemplate(tmplId);
         sceHttpTerm(httpCtxId);
         return NULL;
     }
 
     snprintf(url, sizeof(url), "/%s", cmd);
-
     reqId = sceHttpCreateRequest(connId, ORBIS_METHOD_GET, url, 0);
     if (reqId < 0)
     {
@@ -83,7 +71,6 @@ char *perform_get_request(const char *cmd)
     }
 
     buffer[bytesRead] = '\0';
-
     char *bodyStart = strstr(buffer, "\r\n\r\n");
     if (bodyStart != NULL)
     {
@@ -158,7 +145,7 @@ void send_response(const char *msg, int socket, bool *toggle)
     ssize_t bytes_sent = sceNetSend(socket, response, strlen(response), 0);
 
     if (bytes_sent < 0 || bytes_sent < strlen(response))
-        *toggle = false;
+        *toggle = false; // Modifying toggle
 }
 
 void send_response(const nlohmann::json &response_data, int socket, bool *toggle)
@@ -167,8 +154,7 @@ void send_response(const nlohmann::json &response_data, int socket, bool *toggle
         {"RESPONSE", response_data}};
 
     std::string log_string = generate_json(data_entries);
-
-    send_response(log_string.c_str(), socket, toggle);
+    send_response(log_string.c_str(), socket, toggle); // Pass toggle
 }
 
 void send_error_response(ErrorCode error_code, int socket, bool *toggle)
@@ -181,11 +167,9 @@ void send_error_response(ErrorCode error_code, int socket, bool *toggle)
     nlohmann::json error_data =
         {{std::to_string(error_code), message}};
 
-    std::unordered_map<std::string, nlohmann::json>
-        data_entries = {{"ERROR", error_data}};
-
+    std::unordered_map<std::string, nlohmann::json> data_entries = {{"ERROR", error_data}};
     std::string log_string = generate_json(data_entries);
-    send_response(log_string.c_str(), socket, toggle);
+    send_response(log_string.c_str(), socket, toggle); // Pass toggle
 }
 
 void send_error_response(const std::string &message, int socket, bool *toggle)
@@ -197,7 +181,7 @@ void send_error_response(const std::string &message, int socket, bool *toggle)
                                        "    }\n"
                                        "}";
 
-    send_response(log_string.c_str(), socket, toggle);
+    send_response(log_string.c_str(), socket, toggle); // Pass toggle
 }
 
 void handle_command(void (*func)())
@@ -208,5 +192,5 @@ void handle_command(void (*func)())
     if (*toggle)
         func();
     else
-        send_error_response(toggle == &connected ? NOT_CONNECTED : NOT_ATTACHED, socket, toggle);
+        send_error_response(toggle == &connected ? NOT_CONNECTED : NOT_ATTACHED, socket, toggle); // Modifying toggle
 }

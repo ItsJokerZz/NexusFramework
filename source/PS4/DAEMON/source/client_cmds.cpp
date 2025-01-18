@@ -241,16 +241,8 @@ namespace cmds
 
                 if (is_relay_running())
                 {
-                    if (!attached)
-                    {
-                        send_error_response(NOT_ATTACHED, server::daemon::client_sock, &connected);
-                        return;
-                    }
-
                     if (prx_path.empty())
-                    {
                         send_error_response(INVALID_ARGS, server::daemon::client_sock, &connected);
-                    }
                     else
                     {
                         char request[BUFFER_SIZE];
@@ -393,9 +385,7 @@ namespace cmds
                 if (is_relay_running())
                 {
                     if (perform_get_request("load_plugin") != NULL)
-                    {
                         handle_command([]() {}); // Pass 'attached' as a pointer to handle_command
-                    }
                 }
 
                 send_response("done", server::daemon::client_sock, &connected);

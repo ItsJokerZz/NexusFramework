@@ -25,7 +25,7 @@ Archive member included to satisfy reference by file (symbol)
 
 Merging program properties
 
-Removed property 0xc0000002 to merge build/main.o (0x3) and /tmp/cc75uQBy.o (not found)
+Removed property 0xc0000002 to merge build/main.o (0x3) and /tmp/cc0IDzwl.o (not found)
 Removed property 0xc0000002 to merge build/main.o (not found) and /opt/ps4sdk/libPS4/libPS4.a(kernel.o) (0x3)
 Removed property 0xc0000002 to merge build/main.o (not found) and /opt/ps4sdk/libPS4/libPS4.a(libc.o) (0x3)
 Removed property 0xc0000002 to merge build/main.o (not found) and /opt/ps4sdk/libPS4/libPS4.a(module.o) (0x3)
@@ -39,8 +39,8 @@ Removed property 0xc0000002 to merge build/main.o (not found) and /opt/ps4sdk/li
 
 Discarded input sections
 
- .data          0x0000000000000000        0x0 /tmp/cc75uQBy.o
- .bss           0x0000000000000000        0x0 /tmp/cc75uQBy.o
+ .data          0x0000000000000000        0x0 /tmp/cc0IDzwl.o
+ .bss           0x0000000000000000        0x0 /tmp/cc0IDzwl.o
  .text          0x0000000000000000        0x0 build/main.o
  .data          0x0000000000000000        0x0 build/main.o
  .bss           0x0000000000000000        0x0 build/main.o
@@ -349,13 +349,13 @@ Name             Origin             Length             Attributes
 
 Linker script and memory map
 
-LOAD /tmp/cc75uQBy.o
+LOAD /tmp/cc0IDzwl.o
 LOAD build/main.o
 
 .text           0x0000000000000000     0x16c9
  *(.text.start)
  *(.text*)
- .text          0x0000000000000000        0x5 /tmp/cc75uQBy.o
+ .text          0x0000000000000000        0x5 /tmp/cc0IDzwl.o
                 0x0000000000000000                _start
  .text.sceKernelDlsym
                 0x0000000000000005       0x19 build/main.o
@@ -429,10 +429,10 @@ LOAD build/main.o
                 0x00000000000016b4                SckSend
 
 .plt            0x00000000000016d0        0x0
- .plt           0x00000000000016d0        0x0 /tmp/cc75uQBy.o
+ .plt           0x00000000000016d0        0x0 /tmp/cc0IDzwl.o
 
 .plt.got        0x00000000000016d0        0x0
- .plt.got       0x00000000000016d0        0x0 /tmp/cc75uQBy.o
+ .plt.got       0x00000000000016d0        0x0 /tmp/cc0IDzwl.o
 
 .rodata         0x00000000000016cc      0x753
  *(.rodata)
@@ -460,50 +460,50 @@ LOAD build/main.o
 
 .gnu.version_d  0x0000000000001e20        0x0
  .gnu.version_d
-                0x0000000000001e20        0x0 /tmp/cc75uQBy.o
+                0x0000000000001e20        0x0 /tmp/cc0IDzwl.o
 
 .gnu.version    0x0000000000001e20        0x0
- .gnu.version   0x0000000000001e20        0x0 /tmp/cc75uQBy.o
+ .gnu.version   0x0000000000001e20        0x0 /tmp/cc0IDzwl.o
 
 .gnu.version_r  0x0000000000001e20        0x0
  .gnu.version_r
-                0x0000000000001e20        0x0 /tmp/cc75uQBy.o
+                0x0000000000001e20        0x0 /tmp/cc0IDzwl.o
 
 .dynsym         0x0000000000001e20       0x18
- .dynsym        0x0000000000001e20       0x18 /tmp/cc75uQBy.o
+ .dynsym        0x0000000000001e20       0x18 /tmp/cc0IDzwl.o
 
 .dynstr         0x0000000000001e38        0x1
- .dynstr        0x0000000000001e38        0x1 /tmp/cc75uQBy.o
+ .dynstr        0x0000000000001e38        0x1 /tmp/cc0IDzwl.o
 
 .gnu.hash       0x0000000000001e40       0x1c
- .gnu.hash      0x0000000000001e40       0x1c /tmp/cc75uQBy.o
+ .gnu.hash      0x0000000000001e40       0x1c /tmp/cc0IDzwl.o
 
 .eh_frame_hdr   0x0000000000001e5c        0x0
  .eh_frame_hdr  0x0000000000001e5c        0x0 build/main.o
 
 .rela.dyn       0x0000000000001e60        0x0
- .rela.plt      0x0000000000001e60        0x0 /tmp/cc75uQBy.o
- .rela.got      0x0000000000001e60        0x0 /tmp/cc75uQBy.o
- .rela.bss      0x0000000000001e60        0x0 /tmp/cc75uQBy.o
+ .rela.plt      0x0000000000001e60        0x0 /tmp/cc0IDzwl.o
+ .rela.got      0x0000000000001e60        0x0 /tmp/cc0IDzwl.o
+ .rela.bss      0x0000000000001e60        0x0 /tmp/cc0IDzwl.o
  .rela.data.rel.ro
-                0x0000000000001e60        0x0 /tmp/cc75uQBy.o
- .rela.ifunc    0x0000000000001e60        0x0 /tmp/cc75uQBy.o
+                0x0000000000001e60        0x0 /tmp/cc0IDzwl.o
+ .rela.ifunc    0x0000000000001e60        0x0 /tmp/cc0IDzwl.o
 
 .data
  *(.data)
 
 .dynamic        0x0000000000001e60       0xe0
- .dynamic       0x0000000000001e60       0xe0 /tmp/cc75uQBy.o
+ .dynamic       0x0000000000001e60       0xe0 /tmp/cc0IDzwl.o
                 0x0000000000001e60                _DYNAMIC
 
 .got            0x0000000000001f40        0x0
- .got           0x0000000000001f40        0x0 /tmp/cc75uQBy.o
+ .got           0x0000000000001f40        0x0 /tmp/cc0IDzwl.o
 
 .got.plt        0x0000000000001f40        0x0
- .got.plt       0x0000000000001f40        0x0 /tmp/cc75uQBy.o
+ .got.plt       0x0000000000001f40        0x0 /tmp/cc0IDzwl.o
 
 .data.rel.ro    0x0000000000001f40        0x0
- .data.rel.ro   0x0000000000001f40        0x0 /tmp/cc75uQBy.o
+ .data.rel.ro   0x0000000000001f40        0x0 /tmp/cc0IDzwl.o
 
 .data.DEBUG_SOCK
                 0x0000000000001f40        0x4
@@ -515,7 +515,7 @@ LOAD build/main.o
  *(.bss)
 
 .dynbss         0x0000000000001f44        0x0
- .dynbss        0x0000000000001f44        0x0 /tmp/cc75uQBy.o
+ .dynbss        0x0000000000001f44        0x0 /tmp/cc0IDzwl.o
 
 .bss.unload     0x0000000000001f48        0x8
  .bss.unload    0x0000000000001f48        0x8 build/main.o

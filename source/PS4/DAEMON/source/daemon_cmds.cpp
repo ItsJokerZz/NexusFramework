@@ -11,6 +11,8 @@ namespace cmds
 
         void attach()
         {
+            attached = true;
+
             sys_utils::text_notify(222, "[OCAPI] Attached!");
             send_response("done", server::relay::daemon_sock, &attached);
         }
