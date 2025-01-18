@@ -1,6 +1,13 @@
 #pragma once
 
+#include <iostream>
 #include <string>
+#include <cstdlib>
+#include <cstdio>
+#include <vector>       // for std::vector
+#include <utility>      // for std::pair
+#include <algorithm>    // for std::sort
+
 #include <sys/socket.h>
 
 #include <orbis/Net.h>

@@ -47,6 +47,8 @@ namespace server
                      { handle_command(cmds::client::proc_list, client_sock, connected); }},
                     {"GET /exec_prx", []() // check if attached for app
                      { handle_command(cmds::client::exec_prx, client_sock, connected); }},
+                    {"GET /find_proc_id", []() // check if attached for app
+                     { handle_command(cmds::client::find_procID, client_sock, connected); }},
                     {"GET /load_plugin", []() // check if attached for app
                      { handle_command(cmds::client::load_plugin, client_sock, connected); }},
                 };

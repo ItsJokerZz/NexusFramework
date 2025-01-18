@@ -32,6 +32,7 @@ namespace cmds
 
         void exec_prx();
         void proc_list();
+        void find_procID();
         void load_plugin();
 
     }

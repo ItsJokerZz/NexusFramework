@@ -257,10 +257,10 @@ namespace cmds
         void proc_list()
         {
             uint64_t num = 0;
-            struct proc_list_entry
-                *procs = nullptr;
+            struct proc_list_entry *procs = nullptr;
 
-            std::string log_string;
+            std::string log_string = "{\n"
+                                     "    \"DATA\": {\n";
 
             if (sys_proc_list(nullptr, &num) != 0 || num == 0)
                 return;
@@ -268,31 +268,72 @@ namespace cmds
             procs = (struct proc_list_entry *)malloc(sizeof(struct proc_list_entry) * num);
             if (!procs)
             {
-                send_formatted_response("none", server::relay::daemon_sock, &attached);
-
+                send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
                 return;
             }
 
             if (sys_proc_list(procs, &num) != 0)
             {
                 free(procs);
-
                 return;
             }
 
+            // Use a vector to sort the processes by their PID
+            std::vector<std::pair<int, std::string>> sorted_procs;
             for (uint64_t i = 0; i < num; i++)
             {
                 if (procs[i].p_comm[sizeof(procs[i].p_comm) - 1] != '\0')
                     procs[i].p_comm[sizeof(procs[i].p_comm) - 1] = '\0';
 
-                log_string += std::to_string(procs[i].pid) + ":" + procs[i].p_comm + ",\n";
+                sorted_procs.push_back({procs[i].pid, procs[i].p_comm});
             }
 
-            send_formatted_response(log_string.c_str(), server::relay::daemon_sock, &attached);
+            // Sort by the PID (first element of the pair)
+            std::sort(sorted_procs.begin(), sorted_procs.end());
+
+            // Construct the JSON output with sorted processes
+            for (size_t i = 0; i < sorted_procs.size(); i++)
+            {
+                log_string += "        \"" + std::to_string(sorted_procs[i].first) + "\": \"" + sorted_procs[i].second + "\"";
+
+                if (i < sorted_procs.size() - 1)
+                {
+                    log_string += ",\n"; // Add a comma for all but the last item
+                }
+            }
+
+            log_string += "\n"
+                          "    }\n"
+                          "}";
+
+            send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
 
             log_message("%s", log_string.c_str());
 
             free(procs);
+        }
+
+        void find_procID()
+        {
+            int procID;
+
+            const char *name = strstr(server::daemon::buffer.data(), "name=");
+            if (!name)
+            {
+                send_formatted_response("failed", server::daemon::client_sock, &connected);
+                return;
+            }
+
+            name += 5;
+            const char *end = strchr(name, ' ');
+            if (!end)
+                end = name + strlen(name);
+
+            std::string proc_name(name, end);
+
+            find_process_pid(proc_name.c_str(), &procID);
+
+            send_formatted_response(std::to_string(procID).c_str(), server::daemon::client_sock, &connected);
         }
 
         void load_plugin()
@@ -312,7 +353,6 @@ namespace cmds
 
             send_formatted_response("done", server::daemon::client_sock, &connected);
         }
-
     }
 
     namespace daemon
