@@ -22,7 +22,6 @@ int32_t module_start(int64_t args, const void *argp)
 
     if (titleId == DAEMON)
     {
-        sceSysmoduleLoadModuleInternal(ORBIS_SYSMODULE_INTERNAL_USER_SERVICE);
         sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
 
         sceUserServiceInitialize2();
