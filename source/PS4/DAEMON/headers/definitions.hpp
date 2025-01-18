@@ -3,10 +3,23 @@
 #define DAEMON "NPXS21002"
 #define DAEMON_PORT 1337
 #define RELAYS_PORT 8008
-#define BUFFER_SIZE 4096
+
 #define RETRY_DELAY_SECONDS 30
+#define CONNECTION_RETRY_MINUTES 5
+
+#define BUFFER_SIZE 4096
 
 #define RESPONSE_OK "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s"
+
+struct threadData
+{
+    std::array<char, BUFFER_SIZE> buffer{};
+    pthread_t server_thread, client_thread;
+    OrbisNetSockaddr server_addr, client_addr;
+
+    socklen_t client_addr_len = sizeof(client_addr);
+    int port, server_socket = -1, client_socket = -1;
+};
 
 enum ErrorCode
 {

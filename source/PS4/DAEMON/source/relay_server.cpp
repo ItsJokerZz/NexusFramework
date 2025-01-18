@@ -4,20 +4,21 @@ namespace server
 {
     namespace relay
     {
-        std::array<char, BUFFER_SIZE> buffer{};
+        threadData td;
+
         int relay_sock = -1, daemon_sock = -1;
 
         void *process(void *arg)
         {
             daemon_sock = *static_cast<int *>(arg);
-            std::fill(buffer.begin(), buffer.end(), 0);
+            std::fill(td.buffer.begin(), td.buffer.end(), 0);
 
-            int bytes_received = sceNetRecv(daemon_sock, buffer.data(), buffer.size() - 1, 0);
+            int bytes_received = sceNetRecv(daemon_sock, td.buffer.data(), td.buffer.size() - 1, 0);
 
             if (bytes_received > 0)
             {
-                buffer[bytes_received] = '\0';
-                const std::string request(buffer.data());
+                td.buffer[bytes_received] = '\0';
+                const std::string request(td.buffer.data());
 
                 static const std::map<std::string, std::function<void()>> commands = {
                     {"GET /test", []()
@@ -55,8 +56,7 @@ namespace server
 
         void *thread(void *arg)
         {
-            OrbisNetSockaddr server_addr, daemon_addr;
-            socklen_t daemon_addr_len = sizeof(daemon_addr);
+            td.port = 1337;
 
             while (!unload)
             {
@@ -71,13 +71,13 @@ namespace server
                     continue;
                 }
 
-                std::memset(&server_addr, 0, sizeof(server_addr));
-                server_addr.len = sizeof(server_addr);
-                server_addr.sa_family = ORBIS_NET_AF_INET;
-                *reinterpret_cast<uint16_t *>(server_addr.sa_data) = sceNetHtons(RELAYS_PORT);
-                std::memset(server_addr.sa_data + 2, 0, 4);
+                std::memset(&td.server_addr, 0, sizeof(td.server_addr));
+                td.server_addr.len = sizeof(td.server_addr);
+                td.server_addr.sa_family = ORBIS_NET_AF_INET;
+                *reinterpret_cast<uint16_t *>(td.server_addr.sa_data) = sceNetHtons(RELAYS_PORT);
+                std::memset(td.server_addr.sa_data + 2, 0, 4);
 
-                if (sceNetBind(relay_sock, &server_addr, sizeof(server_addr)) < 0)
+                if (sceNetBind(relay_sock, &td.server_addr, sizeof(td.server_addr)) < 0)
                 {
                     log_message("Relay failed to bind server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(relay_sock);
@@ -99,7 +99,7 @@ namespace server
 
                 while (!unload)
                 {
-                    daemon_sock = sceNetAccept(relay_sock, &daemon_addr, &daemon_addr_len);
+                    daemon_sock = sceNetAccept(relay_sock, &td.client_addr, &td.client_addr_len);
                     if (daemon_sock < 0)
                     {
                         log_message("Failed to accept daemon connection");

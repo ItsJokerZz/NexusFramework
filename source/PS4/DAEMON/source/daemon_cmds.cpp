@@ -20,7 +20,7 @@ namespace cmds
         void exec_prx()
         {
             const char *path = nullptr;
-            const char *start = strstr(server::relay::buffer.data(), "path=");
+            const char *start = strstr(server::relay::td.buffer.data(), "path=");
 
             if (start)
             {
@@ -99,7 +99,7 @@ namespace cmds
         void load_plugin()
         {
             const char *plugin = nullptr;
-            const char *start = strstr(server::relay::buffer.data(), "plugin=");
+            const char *start = strstr(server::relay::td.buffer.data(), "plugin=");
 
             if (start)
             {

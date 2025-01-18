@@ -74,6 +74,9 @@
         "ranges": "cpp",
         "span": "cpp",
         "valarray": "cpp",
-        "codecvt": "cpp"
+        "codecvt": "cpp",
+        "mutex": "cpp",
+        "stop_token": "cpp",
+        "thread": "cpp"
     }
 }

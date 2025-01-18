@@ -76,7 +76,7 @@ namespace cmds
             void get_temp()
             {
                 char temp[BUFFER_SIZE] = {0};
-                const char *start = strstr(server::daemon::buffer.data(), "type=");
+                const char *start = strstr(server::daemon::td.buffer.data(), "type=");
                 if (start)
                 {
                     start += 5;
@@ -119,7 +119,7 @@ namespace cmds
                 std::string msg;
                 int type = 0;
 
-                const char *type_start = strstr(server::daemon::buffer.data(), "type=");
+                const char *type_start = strstr(server::daemon::td.buffer.data(), "type=");
                 if (type_start)
                 {
                     type_start += 5;
@@ -156,7 +156,7 @@ namespace cmds
             void temp_limit()
             {
                 uint8_t temp = 0;
-                const char *start = strstr(server::daemon::buffer.data(), "limit=");
+                const char *start = strstr(server::daemon::td.buffer.data(), "limit=");
                 if (start)
                 {
                     start += 6;
@@ -176,7 +176,7 @@ namespace cmds
             void ring_buzzer()
             {
                 int type = 0;
-                const char *start = strstr(server::daemon::buffer.data(), "type=");
+                const char *start = strstr(server::daemon::td.buffer.data(), "type=");
                 if (start)
                 {
                     start += 5;
@@ -224,8 +224,8 @@ namespace cmds
             {
                 char request[BUFFER_SIZE];
 
-                std::string prx_path = extract_param("path=", server::daemon::buffer);
-                std::string exec_path = extract_param("exec=", server::daemon::buffer);
+                std::string prx_path = extract_param("path=", server::daemon::td.buffer);
+                std::string exec_path = extract_param("exec=", server::daemon::td.buffer);
 
                 auto load_prx = [](const std::string &exec_path, const std::string &prx_path) -> bool
                 {
@@ -332,7 +332,7 @@ namespace cmds
             {
                 int procID;
 
-                const char *name = strstr(server::daemon::buffer.data(), "name=");
+                const char *name = strstr(server::daemon::td.buffer.data(), "name=");
                 if (!name)
                     return;
 
@@ -355,7 +355,7 @@ namespace cmds
                 int pid = 0;
 
                 // Extract the pid from the input buffer
-                const char *pid_str = strstr(server::daemon::buffer.data(), "pid=");
+                const char *pid_str = strstr(server::daemon::td.buffer.data(), "pid=");
                 if (!pid_str)
                     return;
 

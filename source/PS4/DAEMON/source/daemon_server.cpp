@@ -4,20 +4,21 @@ namespace server
 {
     namespace daemon
     {
-        std::array<char, BUFFER_SIZE> buffer{};
+        threadData td;
+
         int daemon_sock = -1, client_sock = -1;
 
         void *process(void *arg)
         {
             client_sock = *static_cast<int *>(arg);
-            std::fill(buffer.begin(), buffer.end(), 0);
+            std::fill(td.buffer.begin(), td.buffer.end(), 0);
 
-            int bytes_received = sceNetRecv(client_sock, buffer.data(), buffer.size() - 1, 0);
+            int bytes_received = sceNetRecv(client_sock, td.buffer.data(), td.buffer.size() - 1, 0);
 
             if (bytes_received > 0)
             {
-                buffer[bytes_received] = '\0';
-                const std::string request(buffer.data());
+                td.buffer[bytes_received] = '\0';
+                const std::string request(td.buffer.data());
 
                 static const std::map<std::string, std::function<void()>> commands = {
                     {"GET /connect", cmds::client::connection::connect},
@@ -77,13 +78,11 @@ namespace server
 
         void *thread(void *arg)
         {
-            OrbisNetSockaddr server_addr, client_addr;
-            socklen_t client_addr_len = sizeof(client_addr);
+            td.port = 1337;
 
             while (!unload)
             {
-                daemon_sock = sceNetSocket("daemon_sock",
-                                           ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
+                daemon_sock = sceNetSocket("daemon_sock", ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
 
                 if (daemon_sock < 0)
                 {
@@ -92,13 +91,13 @@ namespace server
                     continue;
                 }
 
-                memset(&server_addr, 0, sizeof(server_addr));
-                server_addr.len = sizeof(server_addr);
-                server_addr.sa_family = ORBIS_NET_AF_INET;
-                *(uint16_t *)server_addr.sa_data = sceNetHtons(DAEMON_PORT);
-                memset(server_addr.sa_data + 2, 0, 4);
+                memset(&td.server_addr, 0, sizeof(td.server_addr));
+                td.server_addr.len = sizeof(td.server_addr);
+                td.server_addr.sa_family = ORBIS_NET_AF_INET;
+                *(uint16_t *)td.server_addr.sa_data = sceNetHtons(DAEMON_PORT);
+                memset(td.server_addr.sa_data + 2, 0, 4);
 
-                if (sceNetBind(daemon_sock, &server_addr, sizeof(server_addr)) < 0)
+                if (sceNetBind(daemon_sock, &td.server_addr, sizeof(td.server_addr)) < 0)
                 {
                     log_message("Daemon failed to bind server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(daemon_sock);
@@ -120,7 +119,7 @@ namespace server
 
                 while (!unload)
                 {
-                    client_sock = sceNetAccept(daemon_sock, &client_addr, &client_addr_len);
+                    client_sock = sceNetAccept(daemon_sock, &td.client_addr, &td.client_addr_len);
                     if (client_sock < 0)
                     {
                         log_message("Failed to accept client connection");
