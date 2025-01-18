@@ -69,7 +69,7 @@ namespace OrbisControlAPI
         {
             try
             {
-                var response = Client.GetStringAsync(url + "fw").Result;
+                var response = Client.GetStringAsync(url + "get_firmware").Result;
                 float.TryParse(response, out _firmware);
             }
             catch
@@ -99,10 +99,10 @@ namespace OrbisControlAPI
 
             try
             {
-                var response = Client.GetStringAsync(url + "temp?type=cpu").Result;
+                var response = Client.GetStringAsync(url + "get_temperature?type=cpu").Result;
                 int.TryParse(response, out _cpuTemp);
 
-                var _response = Client.GetStringAsync(url + "temp?type=soc").Result;
+                var _response = Client.GetStringAsync(url + "get_temperature?type=soc").Result;
                 int.TryParse(_response, out _socTemp);
             }
             catch { return; }
@@ -112,7 +112,7 @@ namespace OrbisControlAPI
         {
             try
             {
-                _sysType = Client.GetStringAsync(url + "sys_type").Result;
+                _sysType = Client.GetStringAsync(url + "get_sys_type").Result;
             }
             catch { return; }
         }

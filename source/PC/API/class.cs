@@ -147,7 +147,7 @@ namespace OrbisControlAPI
 
             try
             {
-                var url = $"http://{_ipAddress}:1337/notify?type={type}&msg={msg}";
+                var url = $"http://{_ipAddress}:1337/send_notify?type={type}&msg={msg}";
                 Client.GetStringAsync(url).Wait();
             }
             catch
@@ -162,7 +162,7 @@ namespace OrbisControlAPI
 
             try
             {
-                var url = $"http://{_ipAddress}:1337/setTempLimit?limit={limit}";
+                var url = $"http://{_ipAddress}:1337/set_temp_limit?limit={limit}";
                 Client.GetStringAsync(url).Wait();
             }
             catch
@@ -177,7 +177,7 @@ namespace OrbisControlAPI
 
             try
             {
-                var url = $"http://{_ipAddress}:1337/beep?type={(int)type}";
+                var url = $"http://{_ipAddress}:1337/execute_buzzer?type={(int)type}";
                 Client.GetStringAsync(url).Wait();
             }
             catch

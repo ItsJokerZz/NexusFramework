@@ -29,27 +29,27 @@ namespace server
                     {"GET /version", []()
                      { handle_command(cmds::client::connection::version, client_sock, connected); }},
 
-                    {"GET /fw", []()
+                    {"GET /get_firmware", []()
                      { handle_command(cmds::client::sys_info::get_fw, client_sock, connected); }},
-                    {"GET /sys_type", []()
+                    {"GET /get_sys_type", []()
                      { handle_command(cmds::client::sys_info::sys_type, client_sock, connected); }},
-                    {"GET /temp", []()
+                    {"GET /get_temperature", []()
                      { handle_command(cmds::client::sys_info::get_temp, client_sock, connected); }},
 
-                    {"GET /notify", []()
+                    {"GET /send_notify", []()
                      { handle_command(cmds::client::sys_control::notify, client_sock, connected); }},
-                    {"GET /temp_limit", []()
+                    {"GET /set_temp_limit", []()
                      { handle_command(cmds::client::sys_control::temp_limit, client_sock, connected); }},
-                    {"GET /beep", []()
+                    {"GET /execute_buzzer", []()
                      { handle_command(cmds::client::sys_control::beep, client_sock, connected); }},
 
-                    {"GET /proc_list", []()
+                    {"GET /get_proc_list", []()
                      { handle_command(cmds::client::proc_list, client_sock, connected); }},
-                    {"GET /exec_prx", []() // check if attached for app
+                    {"GET /exec_prx", []()
                      { handle_command(cmds::client::exec_prx, client_sock, connected); }},
-                    {"GET /find_proc_id", []() // check if attached for app
-                     { handle_command(cmds::client::find_procID, client_sock, connected); }},
-                    {"GET /load_plugin", []() // check if attached for app
+                    {"GET /find_pid_by_name", []()
+                     { handle_command(cmds::client::find_pid_by_name, client_sock, connected); }},
+                    {"GET /load_plugin", []()
                      { handle_command(cmds::client::load_plugin, client_sock, connected); }},
                 };
 

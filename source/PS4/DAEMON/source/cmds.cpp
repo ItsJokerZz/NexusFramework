@@ -313,7 +313,7 @@ namespace cmds
             free(procs);
         }
 
-        void find_procID()
+        void find_pid_by_name()
         {
             int procID;
 
