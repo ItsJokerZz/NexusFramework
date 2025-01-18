@@ -5,7 +5,7 @@ echo "Building DAEMON..."
 echo "-----------------------------------------------------------------------------"
 
 cd DAEMON
-make
+make master
 cd ..
 
 BUILD=$(cat DAEMON/build/.number)

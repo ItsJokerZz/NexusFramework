@@ -85,10 +85,10 @@ incrementBuild:
 
 clean:
 	rm -f $(INTDIR)/$(PROJDIR).oelf $(OBJS) \
-    $(TARGET) $(TARGETSTUB) $(INTDIR)/$(PROJDIR).elf
+	$(TARGET) $(INTDIR)/$(PROJDIR).elf
 
 target: $(TARGET)
 
-stubs: $(TARGETSTUB)
+all: incrementBuild target
 
-all: incrementBuild target stubs
+master: clean all

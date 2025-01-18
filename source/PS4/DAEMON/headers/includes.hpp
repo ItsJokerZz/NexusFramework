@@ -1,7 +1,7 @@
 #pragma once
 
+// Standard Libraries
 #include <iostream>
-#include <unordered_map>
 #include <string>
 #include <chrono>
 #include <ctime>
@@ -11,26 +11,30 @@
 #include <vector>
 #include <utility>
 #include <algorithm>
+#include <unordered_map>
 
+// System Libraries
 #include <sys/socket.h>
 
+// Orbis SDK
 #include <orbis/Net.h>
 #include <orbis/Http.h>
 #include <orbis/libkernel.h>
 #include <orbis/SystemService.h>
 #include <orbis/Sysmodule.h>
 
+// External Libraries
 #include <libjbc.h>
 #include <GoldHEN.h>
 
+// JSON Library
 #include "nlohmann/json.hpp"
 
+// Project-specific Includes
 #include "definitions.hpp"
 #include "server_utils.hpp"
 #include "system_utils.hpp"
-
 #include "client_cmds.hpp"
 #include "daemon_cmds.hpp"
-
 #include "daemon_server.hpp"
 #include "relay_server.hpp"

@@ -1,9 +1,5 @@
 #pragma once
 
-#include <chrono>
-#include <ctime>
-#include <cstdio>
-
 #define log_message(fmt, ...)                                                                    \
     do                                                                                           \
     {                                                                                            \
