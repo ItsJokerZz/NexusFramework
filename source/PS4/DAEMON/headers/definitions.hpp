@@ -12,6 +12,7 @@ enum ErrorCode
     INVALID_CMD = 0,
     NOT_CONNECTED = 1,
     NOT_ATTACHED = 2,
+    ERROR_COUNT
 };
 
 namespace std {
@@ -23,7 +24,7 @@ namespace std {
     };
 }
 
-extern std::unordered_map<ErrorCode, std::string> errors;
+extern std::unordered_map<ErrorCode, std::string> error_messages;
 
 extern bool unload, connected, attached;
 

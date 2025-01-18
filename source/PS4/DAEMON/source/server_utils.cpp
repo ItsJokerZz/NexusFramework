@@ -166,16 +166,12 @@ void send_formatted_response(const char *message, int socket, bool *toggle)
 
 void send_error_response(ErrorCode error_code, int socket, bool *toggle)
 {
-    std::string message = errors.count(error_code) ? errors[error_code] : "Unknown error.";
+    std::string message = (error_code >= 0 && error_code < ERROR_COUNT) ? error_messages[error_code] : "Unknown error.";
 
-    std::string log_string = "{\n"
-                             "    \"ERROR\": {\n"
-                             "        \"code\": " +
-                             std::to_string(static_cast<int>(error_code)) + ",\n"
-                                                                            "        \"msg\": \"" +
-                             message + "\"\n"
-                                       "    }\n"
-                                       "}";
+    nlohmann::json response = {
+        {"ERROR", {{"code", static_cast<int>(error_code)}, {"msg", message.empty() ? "Unknown error." : message}}}};
+
+    std::string log_string = response.dump(4); // 4 is for pretty printing with an indent of 4 spaces
 
     send_formatted_response(log_string.c_str(), socket, toggle);
 }

@@ -90,4 +90,4 @@ target: $(TARGET)
 
 stubs: $(TARGETSTUB)
 
-all: incrementBuild clean target stubs
+all: incrementBuild target stubs

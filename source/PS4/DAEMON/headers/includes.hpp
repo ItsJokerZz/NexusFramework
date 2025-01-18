@@ -23,6 +23,8 @@
 #include <libjbc.h>
 #include <GoldHEN.h>
 
+#include "nlohmann/json.hpp"
+
 #include "definitions.hpp"
 #include "server_utils.hpp"
 #include "system_utils.hpp"

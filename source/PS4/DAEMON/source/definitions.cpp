@@ -1,11 +1,9 @@
 #include "../headers/includes.hpp"
 
-std::unordered_map<ErrorCode, std::string> errors = {
+std::unordered_map<ErrorCode, std::string> error_messages = {
     {INVALID_CMD, "The requested command could not be found. Please check and try again."},
     {NOT_CONNECTED, "Not connected to the server. Please connect or check your connection."},
-    {NOT_ATTACHED, "Not attached to process. Open an app, attach, and proceed to try again!"}
-    // Add more error codes and messages as needed
-};
+    {NOT_ATTACHED, "Not attached to process. Open an app, attach, and proceed to try again!"}};
 
 bool isDaemon = false,
      unload = false,

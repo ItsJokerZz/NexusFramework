@@ -256,13 +256,8 @@ namespace cmds
                 }
                 else
                 {
-                    if (exec_path.empty() || prx_path.empty())
-                    {
-                        send_error_response("failed", server::daemon::client_sock, &connected);
-                        return;
-                    }
-
                     int prx_handle = sys_sdk_proc_prx_load(const_cast<char *>(exec_path.c_str()), const_cast<char *>(prx_path.c_str()));
+
                     if (prx_handle >= 0)
                     {
                         // Notify user about PRX loading success
@@ -270,20 +265,16 @@ namespace cmds
                         snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", prx_path.c_str());
                         sys_utils::text_notify(222, notify_msg);
 
-                        // Prepare the log response for successful PRX loading
-                        std::string log_string = "{\n"
-                                                 "    \"DATA\": {\n"
-                                                 "        \"" +
-                                                 prx_path + "\": " + std::to_string(prx_handle) + "\n"
-                                                                                                  "    }\n"
-                                                                                                  "}";
+                        // Create a JSON response using nlohmann::json
+                        nlohmann::json response = {
+                            {"DATA", {{prx_path, prx_handle}}}};   // Pretty print response
+                        std::string log_string = response.dump(4); // 4 is for pretty printing with an indent of 4 spaces
 
                         // Send formatted success response
                         send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
                     }
                     else
                     {
-                        // PRX loading failed
                         send_error_response("failed", server::daemon::client_sock, &connected);
                     }
                 }
@@ -294,8 +285,7 @@ namespace cmds
                 uint64_t num = 0;
                 struct proc_list_entry *procs = nullptr;
 
-                std::string log_string = "{\n"
-                                         "    \"DATA\": {\n";
+                nlohmann::json response = {{"DATA", nlohmann::json::object()}};
 
                 if (sys_utils::sys_proc_list(nullptr, &num) != 0 || num == 0)
                     return;
@@ -303,7 +293,7 @@ namespace cmds
                 procs = (struct proc_list_entry *)malloc(sizeof(struct proc_list_entry) * num);
                 if (!procs)
                 {
-                    send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
+                    send_formatted_response(response.dump(4).c_str(), server::daemon::client_sock, &connected);
                     return;
                 }
 
@@ -324,23 +314,13 @@ namespace cmds
 
                 std::sort(sorted_procs.begin(), sorted_procs.end());
 
-                for (size_t i = 0; i < sorted_procs.size(); i++)
+                for (const auto &proc : sorted_procs)
                 {
-                    log_string += "        " + std::to_string(sorted_procs[i].first) + ": \"" + sorted_procs[i].second + "\"";
-
-                    if (i < sorted_procs.size() - 1)
-                    {
-                        log_string += ",\n";
-                    }
+                    response["DATA"][std::to_string(proc.first)] = proc.second;
                 }
 
-                log_string += "\n"
-                              "    }\n"
-                              "}";
-
-                send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
-
-                log_message("%s", log_string.c_str());
+                send_formatted_response(response.dump(4).c_str(), server::daemon::client_sock, &connected);
+                log_message("%s", response.dump(4).c_str());
 
                 free(procs);
             }
@@ -360,9 +340,13 @@ namespace cmds
 
                 std::string proc_name(name, end);
 
-                char response[BUFFER_SIZE];
-                snprintf(response, sizeof(response), "%d", sys_utils::find_process_pid(proc_name.c_str(), &procID));
-                send_formatted_response(response, server::daemon::client_sock, &connected);
+                int pid = sys_utils::find_process_pid(proc_name.c_str(), &procID);
+
+                // Create a JSON response using nlohmann::json
+                nlohmann::json response = {{"pid", pid}};
+                std::string log_string = response.dump(4); // 4 is for pretty printing with an indent of 4 spaces
+
+                send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
             }
 
             void load_plugin()
@@ -372,11 +356,7 @@ namespace cmds
                     if (perform_get_request("load_plugin") != NULL)
                     {
                         // Directly pass the address of 'attached' to handle_command without lambda
-                        handle_command([]
-                                       {
-                                           // Lambda body can remain empty or you can add logic if needed
-                                       },
-                                       server::daemon::client_sock, attached); // Pass 'attached' as a pointer to handle_command
+                        handle_command([]() {}, server::daemon::client_sock, attached); // Pass 'attached' as a pointer to handle_command
                     }
                 }
 
