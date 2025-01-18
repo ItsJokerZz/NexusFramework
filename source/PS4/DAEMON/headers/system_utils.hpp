@@ -12,10 +12,10 @@ namespace sys_utils
     extern int find_pid_by_name(const char *proc_name, int *pid);
     extern int find_name_of_pid(int pid, char *proc_name);
 
-    extern const char *get_username(OrbisUserServiceUserId = -1);
+    extern const char *get_username();
     extern const char *get_console_type();
     extern const char *get_fw_version();
-    
+
     extern uint32_t get_cpu_temperature();
     extern uint32_t get_soc_temperature();
 

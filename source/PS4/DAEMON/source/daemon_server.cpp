@@ -26,7 +26,7 @@ namespace server
                      { handle_command(cmds::client::connection::disconnect); }},
                     {"GET /attach", []()
                      { handle_command(cmds::client::connection::attach); }},
-                    {"GET /get_api_version", []()
+                    {"GET /get_prx_version", []()
                      { handle_command(cmds::client::connection::version); }},
 
                     {"GET /get_fw_version", []()
