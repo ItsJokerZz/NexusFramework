@@ -109,7 +109,9 @@
             this.settings_b = new System.Windows.Forms.Button();
             this.button10 = new System.Windows.Forms.Button();
             this.logo = new System.Windows.Forms.PictureBox();
-            this.button2 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.textBox11 = new System.Windows.Forms.TextBox();
+            this.textBox12 = new System.Windows.Forms.TextBox();
             this.consoles_p.SuspendLayout();
             this.pages.SuspendLayout();
             this.memory_p.SuspendLayout();
@@ -220,7 +222,7 @@
             this.pages.Controls.Add(this.system_p);
             this.pages.Location = new System.Drawing.Point(292, 171);
             this.pages.Name = "pages";
-            this.pages.Size = new System.Drawing.Size(530, 307);
+            this.pages.Size = new System.Drawing.Size(530, 227);
             this.pages.TabIndex = 6;
             // 
             // memory_p
@@ -1033,20 +1035,44 @@
             this.logo.TabIndex = 14;
             this.logo.TabStop = false;
             // 
-            // button2
+            // button3
             // 
-            this.button2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
-            this.button2.FlatAppearance.BorderSize = 0;
-            this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button2.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button2.ForeColor = System.Drawing.Color.White;
-            this.button2.Location = new System.Drawing.Point(598, 124);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(156, 23);
-            this.button2.TabIndex = 17;
-            this.button2.Text = "Load OCAPI into Game";
-            this.button2.UseVisualStyleBackColor = false;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            this.button3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
+            this.button3.FlatAppearance.BorderSize = 0;
+            this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button3.Font = new System.Drawing.Font("Consolas", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button3.ForeColor = System.Drawing.Color.White;
+            this.button3.Location = new System.Drawing.Point(752, 0);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(82, 24);
+            this.button3.TabIndex = 18;
+            this.button3.Text = "Test";
+            this.button3.UseVisualStyleBackColor = false;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // textBox11
+            // 
+            this.textBox11.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.textBox11.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBox11.Font = new System.Drawing.Font("Consolas", 8F);
+            this.textBox11.ForeColor = System.Drawing.Color.White;
+            this.textBox11.Location = new System.Drawing.Point(587, 0);
+            this.textBox11.Name = "textBox11";
+            this.textBox11.Size = new System.Drawing.Size(159, 20);
+            this.textBox11.TabIndex = 19;
+            // 
+            // textBox12
+            // 
+            this.textBox12.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.textBox12.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBox12.Font = new System.Drawing.Font("Consolas", 8F);
+            this.textBox12.ForeColor = System.Drawing.Color.White;
+            this.textBox12.Location = new System.Drawing.Point(292, 404);
+            this.textBox12.Multiline = true;
+            this.textBox12.Name = "textBox12";
+            this.textBox12.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.textBox12.Size = new System.Drawing.Size(530, 79);
+            this.textBox12.TabIndex = 20;
             // 
             // app
             // 
@@ -1054,7 +1080,9 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(75)))), ((int)(((byte)(75)))), ((int)(((byte)(75)))));
             this.ClientSize = new System.Drawing.Size(834, 516);
-            this.Controls.Add(this.button2);
+            this.Controls.Add(this.textBox12);
+            this.Controls.Add(this.textBox11);
+            this.Controls.Add(this.button3);
             this.Controls.Add(this.button10);
             this.Controls.Add(this.settings_b);
             this.Controls.Add(this.logo);
@@ -1195,7 +1223,9 @@
         private System.Windows.Forms.TextBox textBox7;
         private System.Windows.Forms.Button button9;
         private System.Windows.Forms.Button button10;
-        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.TextBox textBox11;
+        private System.Windows.Forms.TextBox textBox12;
     }
 }
 

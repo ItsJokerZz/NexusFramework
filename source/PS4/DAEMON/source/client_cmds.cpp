@@ -106,6 +106,10 @@ namespace cmds
                 send_response(message, server::daemon::client_sock, &connected);
             }
 
+            void get_user()
+            {
+                send_response(sys_utils::get_username(), server::daemon::client_sock, &connected); // Pass the username to send_response
+            }
         }
 
         namespace sys_control
@@ -216,7 +220,7 @@ namespace cmds
 
         namespace process
         {
-            void exec_prx()
+            void execute_prx()
             {
                 auto extract_param = [](const char *key) -> std::string
                 {
@@ -286,7 +290,7 @@ namespace cmds
                 }
             }
 
-            void proc_list()
+            void get_proc_list()
             {
                 uint64_t num = 0;
                 struct proc_list_entry *procs = nullptr;
@@ -344,6 +348,43 @@ namespace cmds
 
                 // Create and send JSON response using helper function
                 nlohmann::json response = {{"pid", pid}};
+                send_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
+            }
+
+            void find_name_of_pid()
+            {
+                int pid = 0;
+
+                // Extract the pid from the input buffer
+                const char *pid_str = strstr(server::daemon::buffer.data(), "pid=");
+                if (!pid_str)
+                    return;
+
+                pid_str += 4;        // Skip the "pid=" part
+                pid = atoi(pid_str); // Convert to integer
+
+                if (pid == 0)
+                {
+                    nlohmann::json error_response = {{"error", "Invalid pid."}};
+                    send_response(create_json_response(error_response).c_str(), server::daemon::client_sock, &connected);
+                    return;
+                }
+
+                // Call the function to find the process name by pid
+                char proc_name[ORBIS_USER_SERVICE_MAX_USER_NAME_LENGTH + 1];
+                int ret = sys_utils::find_name_of_pid(pid, proc_name);
+
+                // Create and send JSON response based on the result
+                nlohmann::json response;
+                if (ret == 1)
+                {
+                    response = {{"name", proc_name}};
+                }
+                else
+                {
+                    response = {{"error", "Process not found."}};
+                }
+
                 send_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
             }
 

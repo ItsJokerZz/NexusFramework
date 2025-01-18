@@ -40,6 +40,87 @@ namespace sys_utils
     return 0;
   }
 
+  int find_name_of_pid(int pid, char *proc_name)
+  {
+    struct proc_list_entry *proc_list;
+    uint64_t pnum;
+
+    // Get the number of processes
+    if (sys_proc_list(NULL, &pnum))
+      return 0;
+
+    // Allocate memory for the process list
+    proc_list = (struct proc_list_entry *)malloc(pnum * sizeof(struct proc_list_entry));
+
+    if (!proc_list)
+      return 0;
+
+    // Get the process list
+    if (sys_proc_list(proc_list, &pnum))
+    {
+      free(proc_list);
+      return 0;
+    }
+
+    // Search for the process by pid
+    for (size_t i = 0; i < pnum; i++)
+    {
+      if (proc_list[i].pid == pid)
+      {
+        // Copy the process name into the provided buffer
+        strncpy(proc_name, proc_list[i].p_comm, 32);
+        proc_name[31] = '\0'; // Ensure null termination
+        free(proc_list);
+        return 1;
+      }
+    }
+
+    free(proc_list);
+    return 0;
+  }
+
+  const char *get_username(OrbisUserServiceUserId userId)
+  {
+    int ret;
+
+    // Load the required system module
+    sceSysmoduleLoadModuleInternal(ORBIS_SYSMODULE_INTERNAL_USER_SERVICE);
+    sceKernelLoadStartModule("/system/common/lib/libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
+
+    // Initialize user service with appropriate parameters
+    OrbisUserServiceInitializeParams param;
+    param.priority = ORBIS_KERNEL_PRIO_FIFO_LOWEST;
+
+    ret = sceUserServiceInitialize(&param);
+    if (ret != 0 && ret != 0x80960003) // Check for initialization failure
+    {
+      log_message("Error: Failed to initialize UserService. Error code: %d", ret);
+      return "USER";
+    }
+
+    // Get the initial user
+    ret = sceUserServiceGetInitialUser(&userId);
+    if (ret != 0)
+    {
+      log_message("Error: Failed to get initial user.");
+      return "USER";
+    }
+
+    // Create a static buffer for the username
+    static char username[ORBIS_USER_SERVICE_MAX_USER_NAME_LENGTH + 1];
+
+    // Retrieve the username
+    ret = sceUserServiceGetUserName(userId, username, sizeof(username));
+    if (ret != 0)
+    {
+      log_message("Error: Failed to get username.");
+      return "USER";
+    }
+
+    // Return the retrieved username
+    return username;
+  }
+
   const char *get_console_type()
   {
     int32_t cex = sceKernelIsCEX();
@@ -88,8 +169,11 @@ namespace sys_utils
     if (sceKernelGetSystemSwVersion(&versionInfo) < 0)
       return NULL;
 
-    snprintf(versionString, sizeof(versionString),
-             "%s", versionInfo.VersionString);
+    int major, minor;
+    if (sscanf(versionInfo.VersionString, "%02d.%02d", &major, &minor) == 2)
+      snprintf(versionString, sizeof(versionString), "%02d.%02d", major, minor);
+    else
+      return NULL;
 
     return versionString;
   }
@@ -145,4 +229,5 @@ namespace sys_utils
   {
     sceKernelIccSetBuzzer(type);
   }
+
 }

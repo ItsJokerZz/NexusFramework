@@ -8,9 +8,10 @@ TARGET        := OrbisControl.prx
 VERSION_FILE  := $(INTDIR)/.version
 BUILD_FILE    := $(INTDIR)/.number
 
-LIBS          := -lc -lc++ -lkernel -lGoldHEN_Hook \
-                 -lSceSystemService -lSceSysmodule \
-                 -lSceNet -lSceHttp -lSceSysUtil
+LIBS          := -lc -lc++ -lkernel -lGoldHEN_Hook   \
+                 -lSceSystemService -lSceSysmodule   \
+                 -lSceUserService -lSceNet -lSceHttp \
+				 -lSceSysUtil -lSceSysmodule
 
 CPPFILES      := $(wildcard $(PROJDIR)/*.cpp)
 OBJS          := $(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES))

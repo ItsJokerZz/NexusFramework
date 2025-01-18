@@ -252,9 +252,11 @@ namespace CM
             }
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void button3_Click(object sender, EventArgs e)
         {
-            api.TEST();
+            textBox12.Text += $"{textBox11.Text}:" + Environment.NewLine;
+            textBox12.Text += api.TEST(textBox11.Text) + Environment.NewLine;
+            textBox12.Text += Environment.NewLine;
         }
     }
 }

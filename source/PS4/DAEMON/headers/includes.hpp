@@ -20,6 +20,7 @@
 #include <orbis/Net.h>
 #include <orbis/Http.h>
 #include <orbis/libkernel.h>
+#include <orbis/UserService.h>
 #include <orbis/SystemService.h>
 #include <orbis/Sysmodule.h>
 

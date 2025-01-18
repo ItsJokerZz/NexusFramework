@@ -234,18 +234,20 @@ namespace OrbisControlAPI
 
 
 
-        public void TEST()
+        public string TEST(string func)
         {
+            string response = null;
+
             try
             {
-                var url = $"http://{_ipAddress}:1337/test";
-                Client.GetStringAsync(url).Wait();
+                var url = $"http://{_ipAddress}:1337/{func}";
+                response = Client.GetStringAsync(url).Result;
             }
             catch
             {
-                return;
+                return null;
             }
+            return response;
         }
-
     }
 }

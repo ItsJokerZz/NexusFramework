@@ -7,10 +7,12 @@
 namespace sys_utils
 {
     extern std::string console_type;
-    
+
     extern int sys_proc_list(struct proc_list_entry *procs, uint64_t *num);
     extern int find_process_pid(const char *proc_name, int *pid);
+    extern int find_name_of_pid(int pid, char *proc_name);
 
+    extern const char *get_username(OrbisUserServiceUserId = 0);
     extern const char *get_console_type();
     extern int32_t get_system_language_id();
     extern const char *get_system_language();

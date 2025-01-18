@@ -19,6 +19,7 @@ namespace cmds
             void sys_type();
             void get_fw();
             void get_temp();
+            void get_user();
 
         }
 
@@ -32,9 +33,10 @@ namespace cmds
 
         namespace process
         {
-            void exec_prx();
-            void proc_list();
+            void execute_prx();
+            void get_proc_list();
             void find_pid_by_name();
+            void find_name_of_pid();
             void load_plugin();
 
         }

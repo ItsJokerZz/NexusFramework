@@ -35,6 +35,8 @@ namespace server
                      { handle_command(cmds::client::sys_info::sys_type, client_sock, connected); }},
                     {"GET /get_temperature", []()
                      { handle_command(cmds::client::sys_info::get_temp, client_sock, connected); }},
+                    {"GET /get_username", []()
+                     { handle_command(cmds::client::sys_info::get_user, client_sock, connected); }},
 
                     {"GET /send_notify", []()
                      { handle_command(cmds::client::sys_control::notify, client_sock, connected); }},
@@ -44,11 +46,13 @@ namespace server
                      { handle_command(cmds::client::sys_control::ring_buzzer, client_sock, connected); }},
 
                     {"GET /get_proc_list", []()
-                     { handle_command(cmds::client::process::proc_list, client_sock, connected); }},
-                    {"GET /exec_prx", []()
-                     { handle_command(cmds::client::process::exec_prx, client_sock, connected); }},
+                     { handle_command(cmds::client::process::get_proc_list, client_sock, connected); }},
+                    {"GET /execute_module", []()
+                     { handle_command(cmds::client::process::execute_prx, client_sock, connected); }},
                     {"GET /find_pid_by_name", []()
                      { handle_command(cmds::client::process::find_pid_by_name, client_sock, connected); }},
+                    {"GET /find_name_of_pid", []()
+                     { handle_command(cmds::client::process::find_name_of_pid, client_sock, connected); }},
                     {"GET /load_plugin", []()
                      { handle_command(cmds::client::process::load_plugin, client_sock, connected); }},
                 };
