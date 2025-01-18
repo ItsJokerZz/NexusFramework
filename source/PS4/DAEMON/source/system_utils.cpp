@@ -80,14 +80,17 @@ namespace sys_utils
     return "NULL";
   }
 
-  const char *get_fw_version()
+  const char *get_fw_version(void)
   {
     static char versionString[0x1C];
     OrbisKernelSwVersion versionInfo;
+
     if (sceKernelGetSystemSwVersion(&versionInfo) < 0)
       return NULL;
-    strncpy(versionString, versionInfo.VersionString, 5);
-    versionString[5] = '\0';
+
+    snprintf(versionString, sizeof(versionString),
+             "%s", versionInfo.VersionString);
+
     return versionString;
   }
 
