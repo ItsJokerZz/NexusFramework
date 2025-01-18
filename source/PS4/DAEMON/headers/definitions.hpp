@@ -7,12 +7,12 @@
 
 #define RESPONSE_OK "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s"
 
-
 enum ErrorCode
 {
     INVALID_CMD = 0,
     NOT_CONNECTED = 1,
     NOT_ATTACHED = 2,
+    UNKNOWN_ERROR = 3,
     ERROR_COUNT
 };
 
@@ -21,20 +21,7 @@ struct ErrorMessage
     const char *message;
 };
 
-namespace std
-{
-    template <>
-    struct hash<ErrorCode>
-    {
-        size_t operator()(const ErrorCode &code) const
-        {
-            return hash<int>()(static_cast<int>(code)); // Convert enum to int and hash it
-        }
-    };
-}
-
-// Declare error_messages as an unordered_map with ErrorCode keys and ErrorMessage values
-extern std::unordered_map<ErrorCode, ErrorMessage> error_messages;
+extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
 
 extern bool unload, connected, attached;
 

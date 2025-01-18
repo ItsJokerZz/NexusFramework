@@ -1,9 +1,11 @@
 #include "../headers/includes.hpp"
 
-std::unordered_map<ErrorCode, ErrorMessage> error_messages = {
-    {INVALID_CMD, {"The requested command could not be found. Please check and try again."}},
-    {NOT_CONNECTED, {"Not connected to the server. Please connect or check your connection."}},
-    {NOT_ATTACHED, {"Not attached to process. Open an app, attach, and proceed to try again!"}}};
+std::array<ErrorMessage, ERROR_COUNT> error_messages = {{
+    {"The requested command could not be found. Please check and try again."},  // INVALID_CMD
+    {"Not connected to the server. Please connect or check your connection."},  // NOT_CONNECTED
+    {"Not attached to process. Open an app, attach, and proceed to try again."}, // NOT_ATTACHED
+    {"An unknown error has occured performing the current command, try again."} // UNKNOWN_ERROR
+}};
 
 bool isDaemon = false,
      unload = false,

@@ -176,28 +176,15 @@ void send_formatted_response(const char *message, int socket, bool *toggle)
 
 void send_error_response(ErrorCode error_code, int socket, bool *toggle)
 {
-    // Default message if not found
-    const char *message = "Unknown error.";
+    const char *message = error_messages[3].message;
 
-    // Find the error message by error_code
-    for (const auto &error : error_messages)
-    {
-        if (error.first == error_code) // `error.first` is the ErrorCode
-        {
-            message = error.second.message; // `error.second.message` is the message string
-            
-            break;
-        }
-    }
+    if (error_code >= 0 && error_code < ERROR_COUNT)
+        message = error_messages[error_code].message; // Access message using error_code
 
-    // Create the error data
     nlohmann::json error_data = {
         {"ERROR", {{"CODE", static_cast<int>(error_code)}, {"MSG", message}}}};
 
-    // Generate the JSON response with the error data inside "DATA"
     std::string log_string = create_json_response(error_data);
-
-    // Send the formatted response
     send_formatted_response(log_string.c_str(), socket, toggle);
 }
 
