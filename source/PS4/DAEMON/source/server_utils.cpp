@@ -1,5 +1,11 @@
 #include "../headers/includes.hpp"
 
+bool is_relay_running()
+{
+    char *response = perform_get_request("ping");
+    return (response != NULL && strcmp(response, "true") == 0);
+}
+
 char *perform_get_request(const char *cmd)
 {
     static char buffer[BUFFER_SIZE];
@@ -93,12 +99,6 @@ char *perform_get_request(const char *cmd)
     sceHttpTerm(httpCtxId);
 
     return buffer;
-}
-
-bool is_relay_running()
-{
-    char *response = perform_get_request("ping");
-    return (response != NULL && strcmp(response, "true") == 0);
 }
 
 char *decode_url(const char *url)
@@ -207,8 +207,8 @@ void handle_command(void (*func)(), int socket, bool &toggle)
     else
     {
         if (socket == server::daemon::client_sock)
-            send_error_response(ErrorCode::NOT_CONNECTED, socket, &toggle);
+            send_error_response(NOT_CONNECTED, socket, &toggle);
         else if (socket == server::relay::daemon_sock)
-            send_error_response(ErrorCode::NOT_ATTACHED, socket, &toggle);
+            send_error_response(NOT_ATTACHED, socket, &toggle);
     }
 }

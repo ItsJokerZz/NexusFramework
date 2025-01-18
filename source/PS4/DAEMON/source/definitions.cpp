@@ -5,7 +5,7 @@ std::array<ErrorMessage, ERROR_COUNT> error_messages = {{
     {"Not connected to the server. Please connect or check your connection."},   // NOT_CONNECTED (1)
     {"Not attached to process. Open an app, attach, and proceed to try again."}, // NOT_ATTACHED (2)
     {"An unknown error has occured performing the current command, try again."}, // UNKNOWN_ERROR (3)
-    {"Invalid paramaters passed, please check documentation, and try again."}    // INVALID_ARGS (4)
+    {"Invalid or missing paramaters passed, please check the documentation."}    // INVALID_ARGS (4)
 }};
 
 bool isDaemon = false,

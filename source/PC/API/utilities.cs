@@ -69,7 +69,7 @@ namespace OrbisControlAPI
         {
             try
             {
-                var response = Client.GetStringAsync(url + "get_firmware").Result;
+                var response = Client.GetStringAsync(url + "get_fw_version").Result;
                 float.TryParse(response, out _firmware);
             }
             catch

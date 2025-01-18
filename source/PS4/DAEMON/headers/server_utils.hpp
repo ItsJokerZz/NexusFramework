@@ -48,8 +48,9 @@ struct proc_list_entry
     int pid;
 } __attribute__((packed));
 
-extern char *perform_get_request(const char *cmd);
 extern bool is_relay_running();
+
+extern char *perform_get_request(const char *cmd);
 extern char *decode_url(const char *url);
 extern std::string generate_json(const std::unordered_map<std::string, nlohmann::json> &data_entries);
 

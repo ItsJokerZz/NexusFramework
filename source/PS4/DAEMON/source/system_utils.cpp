@@ -131,30 +131,6 @@ namespace sys_utils
     return console_type.c_str();
   }
 
-  int32_t get_system_language_id()
-  {
-    int32_t languageID = -1;
-    sceSystemServiceParamGetInt(ORBIS_SYSTEM_SERVICE_PARAM_ID_LANG, &languageID);
-    return languageID;
-  }
-
-  const char *get_system_language()
-  {
-    static const char *languages[] = {
-        "jp", "en-US", "fr", "es", "de", "it", "nl", "pt-PT",
-        "ru", "ko", "zh-TW", "zh-CN", "fi", "sv", "da", "no",
-        "pl", "pt-BR", "en-GB", "tr", "es-LA", "ar", "fr-CA", "cs",
-        "hu", "el", "ro", "th", "vi", "id"};
-
-    int32_t langID = get_system_language_id();
-    if (langID >= ORBIS_SYSTEM_PARAM_LANG_JAPANESE &&
-        langID <= ORBIS_SYSTEM_PARAM_LANG_INDONESIAN)
-    {
-      return languages[langID];
-    }
-    return "NULL";
-  }
-
   const char *get_fw_version(void)
   {
     static char versionString[0x1C];

@@ -29,7 +29,7 @@ namespace server
                     {"GET /version", []()
                      { handle_command(cmds::client::connection::version, client_sock, connected); }},
 
-                    {"GET /get_firmware", []()
+                    {"GET /get_fw_version", []()
                      { handle_command(cmds::client::sys_info::get_fw, client_sock, connected); }},
                     {"GET /get_sys_type", []()
                      { handle_command(cmds::client::sys_info::sys_type, client_sock, connected); }},
@@ -47,12 +47,12 @@ namespace server
 
                     {"GET /get_proc_list", []()
                      { handle_command(cmds::client::process::get_proc_list, client_sock, connected); }},
+                    {"GET /get_pid_by_name", []()
+                     { handle_command(cmds::client::process::find_pid_by_name, client_sock, connected); }},
+                    {"GET /get_name_of_pid", []()
+                     { handle_command(cmds::client::process::find_name_of_pid, client_sock, connected); }},
                     {"GET /load_module", []()
                      { handle_command(cmds::client::process::load_module, client_sock, connected); }},
-                    {"GET /find_pid_by_name", []()
-                     { handle_command(cmds::client::process::find_pid_by_name, client_sock, connected); }},
-                    {"GET /find_name_of_pid", []()
-                     { handle_command(cmds::client::process::find_name_of_pid, client_sock, connected); }},
                     {"GET /load_plugin", []()
                      { handle_command(cmds::client::process::load_plugin, client_sock, connected); }},
                 };

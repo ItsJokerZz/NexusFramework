@@ -1056,9 +1056,9 @@
             this.textBox11.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.textBox11.Font = new System.Drawing.Font("Consolas", 8F);
             this.textBox11.ForeColor = System.Drawing.Color.White;
-            this.textBox11.Location = new System.Drawing.Point(587, 0);
+            this.textBox11.Location = new System.Drawing.Point(437, 0);
             this.textBox11.Name = "textBox11";
-            this.textBox11.Size = new System.Drawing.Size(159, 20);
+            this.textBox11.Size = new System.Drawing.Size(309, 20);
             this.textBox11.TabIndex = 19;
             // 
             // textBox12
