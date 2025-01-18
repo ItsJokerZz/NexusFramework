@@ -220,59 +220,40 @@ namespace cmds
         {
             void exec_prx()
             {
-                // Extract the 'path' argument
-                const char *prx_start = strstr(server::daemon::buffer.data(), "path=");
-                if (!prx_start)
+                auto extract_param = [](const char *key) -> std::string
                 {
-                    send_formatted_response("failed", server::daemon::client_sock, &connected);
-                    return;
-                }
+                    const char *start = strstr(server::daemon::buffer.data(), key);
+                    if (!start)
+                        return "";
 
-                prx_start += 5; // Move past "path="
-                const char *end = strchr(prx_start, ' ');
-                if (!end)
-                    end = prx_start + strlen(prx_start);
+                    start += strlen(key);
+                    const char *end = strchr(start, ' ');
+                    if (!end)
+                        end = start + strlen(start);
 
-                std::string prx_path(prx_start, end);
+                    return std::string(start, end);
+                };
 
-                // Check if the relay is running
+                std::string prx_path = extract_param("path=");
+                std::string exec_path = extract_param("exec=");
+
                 if (is_relay_running())
                 {
-                    // Relay is running, only need 'path'
-                    if (!prx_path.empty())
+                    if (prx_path.empty())
+                        send_formatted_response("failed", server::daemon::client_sock, &connected);
+                    else
                     {
                         char request[BUFFER_SIZE];
                         snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
                         char *response = perform_get_request(request);
-                        if (response)
-                        {
-                            send_formatted_response(response, server::daemon::client_sock, &connected);
-                        }
-                    }
-                    else
-                    {
-                        send_formatted_response("failed", server::daemon::client_sock, &connected);
+                        send_formatted_response(response ? response : "failed", server::daemon::client_sock, &connected);
                     }
                 }
                 else
                 {
-                    // Relay is not running, need both 'exec' and 'path'
-                    const char *exec_start = strstr(server::daemon::buffer.data(), "exec=");
-                    if (!exec_start)
-                    {
+                    if (exec_path.empty() || prx_path.empty())
                         send_formatted_response("failed", server::daemon::client_sock, &connected);
-                        return;
-                    }
-
-                    exec_start += 5; // Move past "exec="
-                    const char *exec_end = strchr(exec_start, ' ');
-                    if (!exec_end)
-                        exec_end = exec_start + strlen(exec_start);
-
-                    std::string exec_path(exec_start, exec_end);
-
-                    // Load the PRX if exec path and prx path are valid
-                    if (!exec_path.empty() && !prx_path.empty())
+                    else
                     {
                         int prx_handle = sys_sdk_proc_prx_load(const_cast<char *>(exec_path.c_str()), const_cast<char *>(prx_path.c_str()));
                         if (prx_handle >= 0)
@@ -284,17 +265,11 @@ namespace cmds
                             send_formatted_response(prx_path.c_str(), server::daemon::client_sock, &connected);
                         }
                         else
-                        {
                             send_formatted_response("failed", server::daemon::client_sock, &connected);
-                        }
-                    }
-                    else
-                    {
-                        send_formatted_response("failed", server::daemon::client_sock, &connected);
                     }
                 }
             }
-            
+
             void proc_list()
             {
                 uint64_t num = 0;
