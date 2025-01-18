@@ -102,8 +102,8 @@ namespace sys_utils
     close(fd);
   }
 
-  void beep(BeepType type)
+  void ring_buzzer(int type)
   {
-    sceKernelIccSetBuzzer(static_cast<int>(type));
+    sceKernelIccSetBuzzer(type);
   }
 }

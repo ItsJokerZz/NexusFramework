@@ -23,7 +23,7 @@ namespace CM
             memory_b.Click += (s, e) => ChangePage(s, memory_p);
             settings_b.Click += (s, e) => ChangePage(s, memory_p);
 
-            radioButton4.CheckedChanged += (s, e) => api.Beep(BeepType.Stop);
+            radioButton4.CheckedChanged += (s, e) => api.Beep(BuzzType.Stop);
 
             label9.Text = $"OCAPI Version: {api.Version}";
         }
@@ -119,7 +119,7 @@ namespace CM
                     sysInfo_t.Enabled = true;
                 });
 
-                api.Beep(BeepType.Single);
+                api.Beep(BuzzType.Single);
             }
         }
 
@@ -140,9 +140,9 @@ namespace CM
 
             if (!unloading)
             {
-                api.Beep(BeepType.Double);
+                api.Beep(BuzzType.Double);
                 api.Disconnect();
-            } else api.Beep(BeepType.Triple);
+            } else api.Beep(BuzzType.Triple);
         }
 
         private string GetConsolePrefix(TreeNode node)
@@ -207,10 +207,10 @@ namespace CM
 
         private void button6_Click(object sender, EventArgs e)
         {
-            if (radioButton1.Checked) api.Beep(BeepType.Single);
-            if (radioButton2.Checked) api.Beep(BeepType.Double);
-            if (radioButton3.Checked) api.Beep(BeepType.Triple);
-            if (radioButton4.Checked) api.Beep(BeepType.Continuous);
+            if (radioButton1.Checked) api.Beep(BuzzType.Single);
+            if (radioButton2.Checked) api.Beep(BuzzType.Double);
+            if (radioButton3.Checked) api.Beep(BuzzType.Triple);
+            if (radioButton4.Checked) api.Beep(BuzzType.Continuous);
         }
 
         private void button7_Click(object sender, EventArgs e)

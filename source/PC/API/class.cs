@@ -21,7 +21,7 @@ namespace OrbisControlAPI
         public bool Connected => _connected;
 
         public enum Temp { getCPU, getSOC, SetTreshold }
-        public enum BeepType { Stop, Single, Double, Triple, Continuous }
+        public enum BuzzType { Continuous = -1, Stop, Single, Double, Triple }
         public enum ConsoleType { CEX, KIT, TEST }
 
 
@@ -171,13 +171,13 @@ namespace OrbisControlAPI
             }
         }
 
-        public void Beep(BeepType type)
+        public void Beep(BuzzType type)
         {
             if (!_connected) return;
 
             try
             {
-                var url = $"http://{_ipAddress}:1337/execute_buzzer?type={(int)type}";
+                var url = $"http://{_ipAddress}:1337/ring_buzzer?type={(int)type}";
                 Client.GetStringAsync(url).Wait();
             }
             catch

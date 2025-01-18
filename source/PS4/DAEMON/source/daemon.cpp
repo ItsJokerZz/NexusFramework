@@ -40,17 +40,17 @@ namespace server
                      { handle_command(cmds::client::sys_control::notify, client_sock, connected); }},
                     {"GET /set_temp_limit", []()
                      { handle_command(cmds::client::sys_control::temp_limit, client_sock, connected); }},
-                    {"GET /execute_buzzer", []()
-                     { handle_command(cmds::client::sys_control::beep, client_sock, connected); }},
+                    {"GET /ring_buzzer", []()
+                     { handle_command(cmds::client::sys_control::ring_buzzer, client_sock, connected); }},
 
                     {"GET /get_proc_list", []()
-                     { handle_command(cmds::client::proc_list, client_sock, connected); }},
+                     { handle_command(cmds::client::process::proc_list, client_sock, connected); }},
                     {"GET /exec_prx", []()
-                     { handle_command(cmds::client::exec_prx, client_sock, connected); }},
+                     { handle_command(cmds::client::process::exec_prx, client_sock, connected); }},
                     {"GET /find_pid_by_name", []()
-                     { handle_command(cmds::client::find_pid_by_name, client_sock, connected); }},
+                     { handle_command(cmds::client::process::find_pid_by_name, client_sock, connected); }},
                     {"GET /load_plugin", []()
-                     { handle_command(cmds::client::load_plugin, client_sock, connected); }},
+                     { handle_command(cmds::client::process::load_plugin, client_sock, connected); }},
                 };
 
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;

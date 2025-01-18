@@ -26,14 +26,18 @@ namespace cmds
         {
             void notify();
             void temp_limit();
-            void beep();
+            void ring_buzzer();
 
         }
+        
+        namespace process
+        {
+            void exec_prx();
+            void proc_list();
+            void find_pid_by_name();
+            void load_plugin();
 
-        void exec_prx();
-        void proc_list();
-        void find_pid_by_name();
-        void load_plugin();
+        }
 
     }
 

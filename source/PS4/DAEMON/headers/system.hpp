@@ -6,14 +6,6 @@
 
 namespace sys_utils {
     extern std::string console_type;
-    
-    enum class BeepType {
-        Stop = 0,
-        Single = 1,
-        Double = 2,
-        Triple = 3,
-        Continuous = 4
-    };
 
     extern const char* get_console_type();
     extern int32_t get_system_language_id();
@@ -25,7 +17,7 @@ namespace sys_utils {
     void text_notify(int type, const char* _msg);
     void image_notify(const char* IconUri, const char* text);
     void set_temperature_limit(uint8_t limit = 60);
-    void beep(BeepType type);
+    void ring_buzzer(int type);
 }
 
 extern "C"

@@ -171,9 +171,9 @@ namespace cmds
                 send_formatted_response("done", server::daemon::client_sock, &connected);
             }
 
-            void beep()
+            void ring_buzzer()
             {
-                int type = -1;
+                int type = 0;
                 const char *start = strstr(server::daemon::buffer.data(), "type=");
                 if (start)
                 {
@@ -186,29 +186,28 @@ namespace cmds
                     }
                 }
 
-                using BeepType = sys_utils::BeepType;
-                switch (static_cast<BeepType>(type))
+                switch (type)
                 {
-                case BeepType::Stop:
-                    sys_utils::beep(BeepType::Stop);
+                case -1: // continuous
+                    sys_utils::ring_buzzer(6);
                     break;
-                case BeepType::Single:
-                    sys_utils::beep(BeepType::Single);
+                case 0: // stop
+                    sys_utils::ring_buzzer(0);
                     break;
-                case BeepType::Double:
-                    sys_utils::beep(BeepType::Single);
+                case 1: // single
+                    sys_utils::ring_buzzer(1);
+                    break;
+                case 2: // double
+                    sys_utils::ring_buzzer(1);
                     sceKernelUsleep(125000);
-                    sys_utils::beep(BeepType::Single);
+                    sys_utils::ring_buzzer(1);
                     break;
-                case BeepType::Triple:
-                    sys_utils::beep(BeepType::Single);
+                case 3: // triple
+                    sys_utils::ring_buzzer(1);
                     sceKernelUsleep(125000);
-                    sys_utils::beep(BeepType::Single);
+                    sys_utils::ring_buzzer(1);
                     sceKernelUsleep(125000);
-                    sys_utils::beep(BeepType::Single);
-                    break;
-                case BeepType::Continuous:
-                    sys_utils::beep(BeepType::Continuous);
+                    sys_utils::ring_buzzer(1);
                     break;
                 }
 
@@ -217,141 +216,185 @@ namespace cmds
 
         }
 
-        void exec_prx()
+        namespace process
         {
-            const char *prx_start = strstr(server::daemon::buffer.data(), "path=");
-            if (!prx_start)
+            void exec_prx()
             {
-                send_formatted_response("failed", server::daemon::client_sock, &connected);
-                return;
+                // Extract the 'path' argument
+                const char *prx_start = strstr(server::daemon::buffer.data(), "path=");
+                if (!prx_start)
+                {
+                    send_formatted_response("failed", server::daemon::client_sock, &connected);
+                    return;
+                }
+
+                prx_start += 5; // Move past "path="
+                const char *end = strchr(prx_start, ' ');
+                if (!end)
+                    end = prx_start + strlen(prx_start);
+
+                std::string prx_path(prx_start, end);
+
+                // Check if the relay is running
+                if (is_relay_running())
+                {
+                    // Relay is running, only need 'path'
+                    if (!prx_path.empty())
+                    {
+                        char request[BUFFER_SIZE];
+                        snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
+                        char *response = perform_get_request(request);
+                        if (response)
+                        {
+                            send_formatted_response(response, server::daemon::client_sock, &connected);
+                        }
+                    }
+                    else
+                    {
+                        send_formatted_response("failed", server::daemon::client_sock, &connected);
+                    }
+                }
+                else
+                {
+                    // Relay is not running, need both 'exec' and 'path'
+                    const char *exec_start = strstr(server::daemon::buffer.data(), "exec=");
+                    if (!exec_start)
+                    {
+                        send_formatted_response("failed", server::daemon::client_sock, &connected);
+                        return;
+                    }
+
+                    exec_start += 5; // Move past "exec="
+                    const char *exec_end = strchr(exec_start, ' ');
+                    if (!exec_end)
+                        exec_end = exec_start + strlen(exec_start);
+
+                    std::string exec_path(exec_start, exec_end);
+
+                    // Load the PRX if exec path and prx path are valid
+                    if (!exec_path.empty() && !prx_path.empty())
+                    {
+                        int prx_handle = sys_sdk_proc_prx_load(const_cast<char *>(exec_path.c_str()), const_cast<char *>(prx_path.c_str()));
+                        if (prx_handle >= 0)
+                        {
+                            char notify_msg[BUFFER_SIZE];
+                            snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", prx_path.c_str());
+                            sys_utils::text_notify(222, notify_msg);
+
+                            send_formatted_response(prx_path.c_str(), server::daemon::client_sock, &connected);
+                        }
+                        else
+                        {
+                            send_formatted_response("failed", server::daemon::client_sock, &connected);
+                        }
+                    }
+                    else
+                    {
+                        send_formatted_response("failed", server::daemon::client_sock, &connected);
+                    }
+                }
             }
-
-            prx_start += 5;
-            const char *end = strchr(prx_start, ' ');
-            if (!end)
+            
+            void proc_list()
             {
-                end = prx_start + strlen(prx_start);
-            }
+                uint64_t num = 0;
+                struct proc_list_entry *procs = nullptr;
 
-            std::string prx_path(prx_start, end);
+                std::string log_string = "{\n"
+                                         "    \"DATA\": {\n";
 
-            if (is_relay_running())
-            {
-                // If relay is running, just send the path
-                char request[BUFFER_SIZE];
-                snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
+                if (sys_proc_list(nullptr, &num) != 0 || num == 0)
+                    return;
 
-                char *response = perform_get_request(request);
-                if (response)
-                    send_formatted_response(response, server::daemon::client_sock, &connected);
-            }
-            else
-            {
-                char notify_msg[BUFFER_SIZE];
-                snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", prx_path.c_str());
-                sys_utils::text_notify(222, notify_msg);
-                send_formatted_response(prx_path.c_str(), server::daemon::client_sock, &connected);
-            }
-        }
+                procs = (struct proc_list_entry *)malloc(sizeof(struct proc_list_entry) * num);
+                if (!procs)
+                {
+                    send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
+                    return;
+                }
 
-        void proc_list()
-        {
-            uint64_t num = 0;
-            struct proc_list_entry *procs = nullptr;
+                if (sys_proc_list(procs, &num) != 0)
+                {
+                    free(procs);
+                    return;
+                }
 
-            std::string log_string = "{\n"
-                                     "    \"DATA\": {\n";
+                // Use a vector to sort the processes by their PID
+                std::vector<std::pair<int, std::string>> sorted_procs;
+                for (uint64_t i = 0; i < num; i++)
+                {
+                    if (procs[i].p_comm[sizeof(procs[i].p_comm) - 1] != '\0')
+                        procs[i].p_comm[sizeof(procs[i].p_comm) - 1] = '\0';
 
-            if (sys_proc_list(nullptr, &num) != 0 || num == 0)
-                return;
+                    sorted_procs.push_back({procs[i].pid, procs[i].p_comm});
+                }
 
-            procs = (struct proc_list_entry *)malloc(sizeof(struct proc_list_entry) * num);
-            if (!procs)
-            {
+                // Sort by the PID (first element of the pair)
+                std::sort(sorted_procs.begin(), sorted_procs.end());
+
+                // Construct the JSON output with sorted processes
+                for (size_t i = 0; i < sorted_procs.size(); i++)
+                {
+                    log_string += "        \"" + std::to_string(sorted_procs[i].first) + "\": \"" + sorted_procs[i].second + "\"";
+
+                    if (i < sorted_procs.size() - 1)
+                    {
+                        log_string += ",\n"; // Add a comma for all but the last item
+                    }
+                }
+
+                log_string += "\n"
+                              "    }\n"
+                              "}";
+
                 send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
-                return;
-            }
 
-            if (sys_proc_list(procs, &num) != 0)
-            {
+                log_message("%s", log_string.c_str());
+
                 free(procs);
-                return;
             }
 
-            // Use a vector to sort the processes by their PID
-            std::vector<std::pair<int, std::string>> sorted_procs;
-            for (uint64_t i = 0; i < num; i++)
+            void find_pid_by_name()
             {
-                if (procs[i].p_comm[sizeof(procs[i].p_comm) - 1] != '\0')
-                    procs[i].p_comm[sizeof(procs[i].p_comm) - 1] = '\0';
+                int procID;
 
-                sorted_procs.push_back({procs[i].pid, procs[i].p_comm});
-            }
-
-            // Sort by the PID (first element of the pair)
-            std::sort(sorted_procs.begin(), sorted_procs.end());
-
-            // Construct the JSON output with sorted processes
-            for (size_t i = 0; i < sorted_procs.size(); i++)
-            {
-                log_string += "        \"" + std::to_string(sorted_procs[i].first) + "\": \"" + sorted_procs[i].second + "\"";
-
-                if (i < sorted_procs.size() - 1)
+                const char *name = strstr(server::daemon::buffer.data(), "name=");
+                if (!name)
                 {
-                    log_string += ",\n"; // Add a comma for all but the last item
+                    send_formatted_response("failed", server::daemon::client_sock, &connected);
+                    return;
                 }
+
+                name += 5;
+                const char *end = strchr(name, ' ');
+                if (!end)
+                    end = name + strlen(name);
+
+                std::string proc_name(name, end);
+
+                find_process_pid(proc_name.c_str(), &procID);
+
+                send_formatted_response(std::to_string(procID).c_str(), server::daemon::client_sock, &connected);
             }
 
-            log_string += "\n"
-                          "    }\n"
-                          "}";
-
-            send_formatted_response(log_string.c_str(), server::daemon::client_sock, &connected);
-
-            log_message("%s", log_string.c_str());
-
-            free(procs);
-        }
-
-        void find_pid_by_name()
-        {
-            int procID;
-
-            const char *name = strstr(server::daemon::buffer.data(), "name=");
-            if (!name)
+            void load_plugin()
             {
-                send_formatted_response("failed", server::daemon::client_sock, &connected);
-                return;
-            }
-
-            name += 5;
-            const char *end = strchr(name, ' ');
-            if (!end)
-                end = name + strlen(name);
-
-            std::string proc_name(name, end);
-
-            find_process_pid(proc_name.c_str(), &procID);
-
-            send_formatted_response(std::to_string(procID).c_str(), server::daemon::client_sock, &connected);
-        }
-
-        void load_plugin()
-        {
-            if (is_relay_running())
-            {
-                if (perform_get_request("load_plugin") != NULL)
+                if (is_relay_running())
                 {
-                    // Directly pass the address of 'attached' to handle_command without lambda
-                    handle_command([]
-                                   {
-                                       // Lambda body can remain empty or you can add logic if needed
-                                   },
-                                   server::daemon::client_sock, attached); // Pass 'attached' as a pointer to handle_command
+                    if (perform_get_request("load_plugin") != NULL)
+                    {
+                        // Directly pass the address of 'attached' to handle_command without lambda
+                        handle_command([]
+                                       {
+                                           // Lambda body can remain empty or you can add logic if needed
+                                       },
+                                       server::daemon::client_sock, attached); // Pass 'attached' as a pointer to handle_command
+                    }
                 }
+
+                send_formatted_response("done", server::daemon::client_sock, &connected);
             }
 
-            send_formatted_response("done", server::daemon::client_sock, &connected);
         }
     }
 
