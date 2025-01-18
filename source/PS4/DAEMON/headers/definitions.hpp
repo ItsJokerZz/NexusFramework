@@ -1,5 +1,6 @@
 #pragma once
 
+#define DAEMON "NPXS21002"
 #define DAEMON_PORT 1337
 #define RELAYS_PORT 8008
 #define BUFFER_SIZE 4096

@@ -48,7 +48,7 @@ namespace OrbisControlAPI
 
         public void InjectPayload(string ip)
         {
-            if (IsPortOpen(ip, 1337, TimeSpan.FromSeconds(1)) == true) return;
+           // if (IsPortOpen(ip, 1337, TimeSpan.FromSeconds(1)) == true) return;
 
             try
             {

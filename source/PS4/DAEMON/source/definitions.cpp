@@ -15,15 +15,16 @@ bool isDaemon = false,
 
 int32_t module_start(int64_t args, const void *argp)
 {
-
     struct proc_info info;
     sys_sdk_proc_info(&info);
 
     std::string titleId = info.titleid;
 
-    if (titleId == "NPXS21002")
+    if (titleId == DAEMON)
     {
         sceSysmoduleLoadModuleInternal(ORBIS_SYSMODULE_INTERNAL_USER_SERVICE);
+        sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
+
         sceUserServiceInitialize2();
 
         isDaemon = true;

@@ -79,14 +79,24 @@ namespace sys_utils
 
   const char *get_username(OrbisUserServiceUserId userId)
   {
-    OrbisUserServiceLoginUserIdList idList = {};
-    sceUserServiceGetLoginUserIdList(&idList);
-
     static char username[ORBIS_USER_SERVICE_MAX_USER_NAME_LENGTH + 1];
-    if (sceUserServiceGetUserName(idList.userId[0], username, sizeof(username)) != 0)
-      return "USER";
+    OrbisUserServiceLoginUserIdList idList = {};
 
-    return username;
+    // Try to get the initial user
+    if (sceUserServiceGetInitialUser(&userId) == 0 && userId != -1)
+    {
+      if (sceUserServiceGetUserName(userId, username, sizeof(username)) == 0)
+        return username; // Return the username if found
+    }
+
+    // Try to get the login user list if no initial user found
+    if (sceUserServiceGetLoginUserIdList(&idList) == 0)
+    {
+      if (sceUserServiceGetUserName(idList.userId[0], username, sizeof(username)) == 0)
+        return username; // Return the username for the first user in the list
+    }
+
+    return "USER 0"; // Return default value if no user found
   }
 
   const char *get_console_type()
