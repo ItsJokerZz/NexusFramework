@@ -48,6 +48,7 @@ struct proc_list_entry
     int pid;
 } __attribute__((packed));
 
+extern std::string extract_param(const char *key, std::array<char, BUFFER_SIZE> buffer);
 extern char *perform_get_request(const char *command);
 extern bool is_relay_running();
 extern char *decode_url(const char *url);

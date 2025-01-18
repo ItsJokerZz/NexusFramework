@@ -222,63 +222,70 @@ namespace cmds
         {
             void load_module()
             {
-                auto extract_param = [](const char *key) -> std::string
+                char request[BUFFER_SIZE];
+
+                std::string prx_path = extract_param("path=", server::daemon::buffer);
+                std::string exec_path = extract_param("exec=", server::daemon::buffer);
+
+                auto load_prx = [](const std::string &exec_path, const std::string &prx_path) -> bool
                 {
-                    const char *start = strstr(server::daemon::buffer.data(), key);
-                    if (!start)
-                        return "";
-
-                    start += strlen(key);
-                    const char *end = strchr(start, ' ');
-                    if (!end)
-                        end = start + strlen(start);
-
-                    return std::string(start, end);
-                };
-
-                std::string prx_path = extract_param("path=");
-                std::string exec_path = extract_param("exec=");
-
-                if (is_relay_running())
-                {                    
-                    if (prx_path.empty())
-                        send_error_response(INVALID_ARGS);
-                    else
-                    {
-                        char request[BUFFER_SIZE];
-                        snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
-                        char *response = perform_get_request(request);
-
-                        send_response(response);
-                    }
-                }
-                else
-                {
-                    if (exec_path.empty() || prx_path.empty())
-                    {
-                        send_error_response(INVALID_ARGS); // Send error if either param is missing
-                        return;
-                    }
-
                     int prx_handle = sys_sdk_proc_prx_load(const_cast<char *>(exec_path.c_str()), const_cast<char *>(prx_path.c_str()));
-
                     if (prx_handle >= 0)
                     {
-                        // Notify user about PRX loading success
                         char notify_msg[BUFFER_SIZE];
                         snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", prx_path.c_str());
                         sys_utils::text_notify(222, notify_msg);
 
-                        // Create and send JSON response using helper function
                         nlohmann::json response = {{prx_path, prx_handle}};
-                        std::string log_string = generate_json(response);
+                        send_response(generate_json(response).c_str());
 
-                        send_response(log_string.c_str());
+                        return true;
                     }
                     else
                     {
                         send_error_response(UNKNOWN_ERROR);
+                        return false;
                     }
+                };
+
+                if (is_relay_running())
+                {
+                    if (!exec_path.empty() || !prx_path.empty())
+                    {
+                        if (!exec_path.empty() && !prx_path.empty())
+                        {
+                            if (exec_path.empty() || prx_path.empty())
+                                send_error_response(INVALID_ARGS);
+                            else
+                                load_prx(exec_path, prx_path);
+
+                            return;
+                        }
+                        else if (!prx_path.empty() && exec_path.empty())
+                            snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
+
+                        send_response(perform_get_request(request));
+                    }
+                    else
+                        send_error_response(INVALID_ARGS);
+                }
+                else
+                {
+                    if (exec_path.empty() && !prx_path.empty())
+                    {
+                        if (!attached)
+                            send_error_response(NOT_ATTACHED);
+                        else
+                        {
+                            char request[BUFFER_SIZE];
+                            snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
+                            send_response(perform_get_request(request));
+                        }
+                    }
+                    else if (!exec_path.empty() && !prx_path.empty())
+                        load_prx(exec_path, prx_path);
+                    else
+                        send_error_response(INVALID_ARGS);
                 }
             }
 

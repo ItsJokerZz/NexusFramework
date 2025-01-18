@@ -1,5 +1,18 @@
 #include "../headers/includes.hpp"
 
+std::string extract_param(const char *key, std::array<char, BUFFER_SIZE> buffer)
+{
+    const char *start = strstr(buffer.data(), key);
+    if (!start)
+        return "";
+
+    start += strlen(key);
+
+    const char *end = strchr(start, ' ') ?: start + strlen(start);
+
+    return std::string(start, end);
+}
+
 char *perform_get_request(const char *command)
 {
     static char buffer[BUFFER_SIZE];
