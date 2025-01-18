@@ -48,15 +48,14 @@ struct proc_list_entry
     int pid;
 } __attribute__((packed));
 
+extern char *perform_get_request(const char *command);
 extern bool is_relay_running();
-
-extern char *perform_get_request(const char *cmd);
 extern char *decode_url(const char *url);
 extern std::string generate_json(const std::unordered_map<std::string, nlohmann::json> &data_entries);
 
-void send_response(const char *msg, int socket, bool *toggle);
-void send_response(const nlohmann::json &response_data, int socket, bool *toggle);
-void send_error_response(ErrorCode error_code, int socket, bool *toggle);
-void send_error_response(const std::string &message, int socket, bool *toggle);
+void send_response(const char *message);
+void send_response(const nlohmann::json &response_data);
+void send_error_response(ErrorCode error_code);
+void send_error_response(const std::string &message);
 
 void handle_command(void (*func)());

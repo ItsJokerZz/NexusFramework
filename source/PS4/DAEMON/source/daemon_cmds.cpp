@@ -6,7 +6,7 @@ namespace cmds
     {
         void ping()
         {
-            send_response("true", server::relay::daemon_sock, &attached);
+            send_response("true");
         }
 
         void attach()
@@ -14,7 +14,7 @@ namespace cmds
             attached = true;
 
             sys_utils::text_notify(222, "[OCAPI] Attached!");
-            send_response("done", server::relay::daemon_sock, &attached);
+            send_response("done");
         }
 
         void exec_prx()
@@ -59,7 +59,7 @@ namespace cmds
 
             char response[BUFFER_SIZE];
             snprintf(response, sizeof(response), "%i,%d,%s", pid, result, path);
-            send_response(response, server::relay::daemon_sock, &attached);
+            send_response(response);
 
             int32_t ret;
             int32_t (*module_start_ret)(size_t, const void *);
@@ -115,7 +115,7 @@ namespace cmds
             if (!plugin)
             {
                 log_message("No plugin provided to load");
-                send_error_response("failed", server::relay::daemon_sock, &attached);
+                send_error_response("failed");
                 return;
             }
 
@@ -130,20 +130,20 @@ namespace cmds
             {
                 log_message("Plugin %s not found", plugin);
                 free((void *)plugin);
-                send_error_response("failed", server::relay::daemon_sock, &attached);
+                send_error_response("failed");
                 return;
             }
             else if (result < 0)
             {
                 log_message("Error loading Plugin %s! Error code 0x%08x (%i)", plugin, result, result);
                 free((void *)plugin);
-                send_error_response("failed", server::relay::daemon_sock, &attached);
+                send_error_response("failed");
                 return;
             }
 
             char response[BUFFER_SIZE];
             snprintf(response, sizeof(response), "%i,%d,%s", pid, result, plugin);
-            send_response(response, server::relay::daemon_sock, &attached);
+            send_response(response);
 
             int32_t ret;
             int32_t (*plugin_load_ret)(void);

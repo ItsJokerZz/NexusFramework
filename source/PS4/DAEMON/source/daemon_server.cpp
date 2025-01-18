@@ -68,7 +68,7 @@ namespace server
                 if (it != commands.end())
                     it->second();
                 else
-                    send_error_response(INVALID_CMD, server::daemon::client_sock, &connected);
+                    send_error_response(INVALID_CMD);
             }
             sceNetSocketClose(client_sock);
 
