@@ -52,8 +52,6 @@ struct proc_list_entry
     int pid;
 } __attribute__((packed));
 
-extern int sys_proc_list(struct proc_list_entry *procs, uint64_t *num);
-extern int find_process_pid(const char *proc_name, int *pid);
 extern char *perform_get_request(const char *cmd);
 extern bool is_relay_running();
 extern char *decode_url(const char *url);

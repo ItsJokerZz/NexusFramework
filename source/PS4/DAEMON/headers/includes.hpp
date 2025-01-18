@@ -23,12 +23,12 @@
 #include <libjbc.h>
 #include <GoldHEN.h>
 
-#include "defs.hpp"
-#include "utils.hpp"
-#include "system.hpp"
+#include "definitions.hpp"
+#include "server_utils.hpp"
+#include "system_utils.hpp"
 
 #include "client_cmds.hpp"
 #include "daemon_cmds.hpp"
 
-#include "daemon.hpp"
-#include "relay.hpp"
+#include "daemon_server.hpp"
+#include "relay_server.hpp"

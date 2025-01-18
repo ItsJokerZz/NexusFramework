@@ -1,41 +1,5 @@
 #include "../headers/includes.hpp"
 
-int sys_proc_list(struct proc_list_entry *procs, uint64_t *num)
-{
-    return orbis_syscall(107 + 90, procs, num);
-}
-
-int find_process_pid(const char *proc_name, int *pid)
-{
-    struct proc_list_entry *proc_list;
-    uint64_t pnum;
-
-    if (sys_proc_list(NULL, &pnum))
-        return 0;
-
-    proc_list = (struct proc_list_entry *)malloc(pnum * sizeof(struct proc_list_entry));
-
-    if (!proc_list)
-        return 0;
-
-    if (sys_proc_list(proc_list, &pnum))
-    {
-        free(proc_list);
-        return 0;
-    }
-
-    for (size_t i = 0; i < pnum; i++)
-        if (strncmp(proc_list[i].p_comm, proc_name, 32) == 0)
-        {
-            *pid = proc_list[i].pid;
-            free(proc_list);
-            return 1;
-        }
-
-    free(proc_list);
-    return 0;
-}
-
 char *perform_get_request(const char *cmd)
 {
     static char buffer[BUFFER_SIZE];

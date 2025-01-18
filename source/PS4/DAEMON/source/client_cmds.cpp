@@ -297,7 +297,7 @@ namespace cmds
                 std::string log_string = "{\n"
                                          "    \"DATA\": {\n";
 
-                if (sys_proc_list(nullptr, &num) != 0 || num == 0)
+                if (sys_utils::sys_proc_list(nullptr, &num) != 0 || num == 0)
                     return;
 
                 procs = (struct proc_list_entry *)malloc(sizeof(struct proc_list_entry) * num);
@@ -307,7 +307,7 @@ namespace cmds
                     return;
                 }
 
-                if (sys_proc_list(procs, &num) != 0)
+                if (sys_utils::sys_proc_list(procs, &num) != 0)
                 {
                     free(procs);
                     return;
@@ -361,7 +361,7 @@ namespace cmds
                 std::string proc_name(name, end);
 
                 char response[BUFFER_SIZE];
-                snprintf(response, sizeof(response), "%d", find_process_pid(proc_name.c_str(), &procID));
+                snprintf(response, sizeof(response), "%d", sys_utils::find_process_pid(proc_name.c_str(), &procID));
                 send_formatted_response(response, server::daemon::client_sock, &connected);
             }
 
