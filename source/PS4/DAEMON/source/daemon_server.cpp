@@ -47,8 +47,8 @@ namespace server
 
                     {"GET /get_proc_list", []()
                      { handle_command(cmds::client::process::get_proc_list, client_sock, connected); }},
-                    {"GET /execute_module", []()
-                     { handle_command(cmds::client::process::execute_prx, client_sock, connected); }},
+                    {"GET /load_module", []()
+                     { handle_command(cmds::client::process::load_module, client_sock, connected); }},
                     {"GET /find_pid_by_name", []()
                      { handle_command(cmds::client::process::find_pid_by_name, client_sock, connected); }},
                     {"GET /find_name_of_pid", []()

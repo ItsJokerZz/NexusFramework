@@ -220,7 +220,7 @@ namespace cmds
 
         namespace process
         {
-            void execute_prx()
+            void load_module()
             {
                 auto extract_param = [](const char *key) -> std::string
                 {
@@ -279,7 +279,7 @@ namespace cmds
 
                         // Create and send JSON response using helper function
                         nlohmann::json response = {{prx_path, prx_handle}};
-                        std::string log_string = create_json_response(response);
+                        std::string log_string = generate_json(response);
 
                         send_response(log_string.c_str(), server::daemon::client_sock, &connected);
                     }
@@ -324,7 +324,7 @@ namespace cmds
                 for (const auto &proc : sorted_procs)
                     response[std::to_string(proc.first)] = proc.second;
 
-                send_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
+                send_response(generate_json(response).c_str(), server::daemon::client_sock, &connected);
 
                 free(procs);
             }
@@ -344,11 +344,11 @@ namespace cmds
 
                 std::string proc_name(name, end);
 
-                int pid = sys_utils::find_process_pid(proc_name.c_str(), &procID);
+                int pid = sys_utils::find_pid_by_name(proc_name.c_str(), &procID);
 
                 // Create and send JSON response using helper function
                 nlohmann::json response = {{"pid", pid}};
-                send_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
+                send_response(generate_json(response).c_str(), server::daemon::client_sock, &connected);
             }
 
             void find_name_of_pid()
@@ -366,7 +366,7 @@ namespace cmds
                 if (pid == 0)
                 {
                     nlohmann::json error_response = {{"error", "Invalid pid."}};
-                    send_response(create_json_response(error_response).c_str(), server::daemon::client_sock, &connected);
+                    send_response(generate_json(error_response).c_str(), server::daemon::client_sock, &connected);
                     return;
                 }
 
@@ -385,7 +385,7 @@ namespace cmds
                     response = {{"error", "Process not found."}};
                 }
 
-                send_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
+                send_response(generate_json(response).c_str(), server::daemon::client_sock, &connected);
             }
 
             void load_plugin()
