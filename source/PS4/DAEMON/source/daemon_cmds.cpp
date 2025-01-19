@@ -182,7 +182,31 @@ namespace cmds
 
         void rw_proc_mem()
         {
-            send_response("done");
+            int pid = -1;
+            char buffer[128];
+
+            sys_utils::find_pid_by_procName("default.elf", &pid);
+
+            std::pair<const char *, const char *>
+                games[] = {
+                    {reinterpret_cast<const char *>(0xB06FDA), "IW6SP"},
+                    {reinterpret_cast<const char *>(0xC251D7), "IW6MP"}};
+
+            for (const auto &game : games)
+            {
+                sys_proc_rw_args args;
+                args.pid = pid;
+                args.address = reinterpret_cast<uint64_t>(game.first);
+                args.data = static_cast<void *>(buffer);
+                args.length = sizeof(buffer);
+                args.write = 0;
+
+                if (sys_utils::sys_proc_rw(args) == 0)
+                    log_message("%s -> IsMultiplayer%sfound!", game.second,
+                     std::strcmp(buffer, "IsMultiplayer") == 0 ? " " : " NOT ");
+                else
+                    log_message("Error reading memory for game %s", game.second);
+            }
         }
 
     }

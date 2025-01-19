@@ -13,17 +13,21 @@ bool isDaemon = false, unload = false, connected = false, attached = false;
 
 int32_t module_start(int64_t args, const void *argp)
 {
-    pthread_t thread;
+    pthread_t web_thread;
+    pthread_t rpc_thread;
 
     struct proc_info info;
     sys_sdk_proc_info(&info);
 
     if (strcmp(info.titleid, DAEMON) == 0)
-        pthread_create(&thread, nullptr, server::daemon::thread, nullptr);
+    {
+        pthread_create(&web_thread, nullptr, server::daemon::thread, nullptr);
+        pthread_create(&rpc_thread, nullptr, nullptr, nullptr); // add soon :D
+    }
     else
-        pthread_create(&thread, nullptr, server::relay::thread, nullptr);
+        pthread_create(&web_thread, nullptr, server::relay::thread, nullptr);
 
-    pthread_detach(thread);
+    pthread_detach(web_thread);
 
     return 0;
 }
