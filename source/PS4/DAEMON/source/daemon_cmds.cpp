@@ -181,7 +181,8 @@ namespace cmds
         }
 
         void rw_proc_mem()
-        {
+        {                         send_response("done");
+
         }
 
     }
