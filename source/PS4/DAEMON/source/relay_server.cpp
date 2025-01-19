@@ -36,7 +36,7 @@ namespace server
                     {"GET /ping", cmds::daemon::ping_relay},
                     {"GET /attach", cmds::daemon::attach_relay},
                     {"GET /exec_prx", cmds::daemon::load_module},
-                    {"GET /load_plugin", cmds::daemon::start_plugin}};
+                    {"GET /load_plugin", cmds::daemon::start_plugin},
                     {"GET /rw_memory", cmds::daemon::rw_proc_mem}};
 
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
