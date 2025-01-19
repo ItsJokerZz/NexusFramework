@@ -191,6 +191,8 @@ namespace cmds
 
             for (const auto &game : games)
             {
+                char logBuffer[256];
+
                 proc_rw args;
                 args.address = reinterpret_cast<uint64_t>(game.first);
                 args.data = static_cast<void *>(buffer);
@@ -198,10 +200,16 @@ namespace cmds
                 args.write_flags = 0;
 
                 if (sys_sdk_proc_rw(&args) == 0)
-                    log_message("%s -> IsMultiplayer%sfound!", game.second,
-                                std::strcmp(buffer, "IsMultiplayer") == 0 ? " " : " NOT ");
+                {
+                    snprintf(logBuffer, sizeof(logBuffer), "%s -> IsMultiplayer%sfound!", game.second,
+                             std::strcmp(buffer, "IsMultiplayer") == 0 ? " " : " NOT ");
+                    sys_utils::text_notify(222, logBuffer);
+                }
                 else
-                    log_message("Error reading memory for game %s", game.second);
+                {
+                    snprintf(logBuffer, sizeof(logBuffer), "Error reading memory for game %s", game.second);
+                    sys_utils::text_notify(222, logBuffer);
+                }
             }
         }
 
