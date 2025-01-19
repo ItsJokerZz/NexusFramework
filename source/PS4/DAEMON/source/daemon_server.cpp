@@ -5,7 +5,7 @@ namespace server
     namespace daemon
     {
         std::array<char, BUFFER_SIZE> buffer{};
-        int daemon_sock, client_sock;
+        int daemon_sock = -1, client_sock = -1;
 
         void *process(void *arg)
         {
@@ -62,7 +62,8 @@ namespace server
                     {"GET /load_plugin", []()
                      { handle_command(cmds::client::process::load_plugin); }},
                     {"GET /rw_memory", []()
-                     { handle_command(cmds::client::process::rw_proc_mem); }}};
+                     { handle_command(cmds::client::process::rw_proc_mem); }},
+                };
 
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
                 CommandIter it = std::find_if(commands.begin(), commands.end(),

@@ -5,7 +5,7 @@ namespace server
     namespace relay
     {
         std::array<char, BUFFER_SIZE> buffer{};
-        int relay_sock, daemon_sock;
+        int relay_sock = -1, daemon_sock = -1;
 
         void *process(void *arg)
         {

@@ -9,10 +9,7 @@ std::array<ErrorMessage, ERROR_COUNT> error_messages = {{
     {"Invalid parameters provided. Please verify and retry."},
 }};
 
-bool isDaemon = false,
-     unload = false,
-     connected = false,
-     attached = false;
+bool isDaemon = false, unload = false, connected = false, attached = false;
 
 int32_t module_start(int64_t args, const void *argp)
 {

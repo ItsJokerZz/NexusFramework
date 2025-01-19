@@ -1,9 +1,5 @@
 #pragma once
 
-#include <string>
-#include <cstdint>
-#include <memory>
-
 struct proc_list_entry
 {
     char p_comm[32];
