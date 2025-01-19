@@ -9,11 +9,6 @@ namespace sys_utils
     return orbis_syscall(107 + 90, procs, num);
   }
 
-  int sys_proc_rw(struct sys_proc_rw_args uap)
-  {
-    return orbis_syscall(108 + 90, uap.pid, uap.address, uap.data, uap.length, uap.write);
-  }
-
   int find_pid_by_procName(const char *proc_name, int *pid)
   {
     struct proc_list_entry *proc_list;

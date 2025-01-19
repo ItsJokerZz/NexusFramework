@@ -182,10 +182,7 @@ namespace cmds
 
         void rw_proc_mem()
         {
-            int pid = -1;
             char buffer[128];
-
-            sys_utils::find_pid_by_procName("default.elf", &pid);
 
             std::pair<const char *, const char *>
                 games[] = {
@@ -194,16 +191,15 @@ namespace cmds
 
             for (const auto &game : games)
             {
-                sys_proc_rw_args args;
-                args.pid = pid;
+                proc_rw args;
                 args.address = reinterpret_cast<uint64_t>(game.first);
                 args.data = static_cast<void *>(buffer);
                 args.length = sizeof(buffer);
-                args.write = 0;
+                args.write_flags = 0;
 
-                if (sys_utils::sys_proc_rw(args) == 0)
+                if (sys_sdk_proc_rw(&args) == 0)
                     log_message("%s -> IsMultiplayer%sfound!", game.second,
-                     std::strcmp(buffer, "IsMultiplayer") == 0 ? " " : " NOT ");
+                                std::strcmp(buffer, "IsMultiplayer") == 0 ? " " : " NOT ");
                 else
                     log_message("Error reading memory for game %s", game.second);
             }
