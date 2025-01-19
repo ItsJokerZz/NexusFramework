@@ -425,6 +425,8 @@ namespace cmds
                 send_response("done");
             }
 
+            void rw_proc_mem() {}
+
         }
     }
 }

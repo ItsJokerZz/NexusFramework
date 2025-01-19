@@ -42,12 +42,6 @@ asm("orbis_syscall:\n"
     "retq\n");
 int orbis_syscall(int num, ...);
 
-struct proc_list_entry
-{
-    char p_comm[32];
-    int pid;
-} __attribute__((packed));
-
 extern std::string extract_param(const char *key, std::array<char, BUFFER_SIZE> buffer);
 extern char *perform_get_request(const char *command);
 extern bool is_relay_running();

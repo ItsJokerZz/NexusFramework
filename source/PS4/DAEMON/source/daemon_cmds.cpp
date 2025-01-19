@@ -180,7 +180,9 @@ namespace cmds
             free((void *)plugin);
         }
 
-        void rw_proc_mem() {}
+        void rw_proc_mem()
+        {
+        }
 
     }
 }

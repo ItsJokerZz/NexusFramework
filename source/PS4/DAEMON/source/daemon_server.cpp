@@ -61,7 +61,8 @@ namespace server
                      { handle_command(cmds::client::process::load_module); }},
                     {"GET /load_plugin", []()
                      { handle_command(cmds::client::process::load_plugin); }},
-                };
+                    {"GET /rw_memory", []()
+                     { handle_command(cmds::client::process::rw_proc_mem); }}};
 
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
                 CommandIter it = std::find_if(commands.begin(), commands.end(),

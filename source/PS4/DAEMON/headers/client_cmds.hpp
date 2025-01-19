@@ -29,6 +29,7 @@ namespace cmds
             void temp_limit();
             void set_power_state();
             void ring_buzzer();
+        
         }
 
         namespace process
@@ -38,7 +39,8 @@ namespace cmds
             void find_pid_by_name();
             void find_name_of_pid();
             void load_plugin();
-
+            void rw_proc_mem();
+        
         }
     }
 }
