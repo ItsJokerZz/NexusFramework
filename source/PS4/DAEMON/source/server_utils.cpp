@@ -1,103 +1,96 @@
 #include "../headers/includes.hpp"
 
-char *perform_get_request(const char *cmd)
+std::string extract_param(const char *key, std::array<char, BUFFER_SIZE> buffer)
+{
+    const char *start = strstr(buffer.data(), key);
+    if (!start)
+        return "";
+
+    start += strlen(key);
+
+    const char *end = strchr(start, ' ') ?: start + strlen(start);
+
+    return std::string(start, end);
+}
+
+char *perform_get_request(const char *command)
 {
     static char buffer[BUFFER_SIZE];
+    int httpCtxId = 0, tmplId = 0, connId = 0, reqId = 0, bytesRead = 0;
+    char userAgent[64], url[256];
 
-    int httpCtxId = 0;
-    int tmplId = 0;
-    int connId = 0;
-    int reqId = 0;
-    int bytesRead = 0;
-
-    char userAgent[64];
-    char url[256];
-
-    // Initialize HTTP context
-    httpCtxId = sceHttpInit(0, 0, 1024 * 1024); // Keep httpCtxId here
+    httpCtxId = sceHttpInit(0, 0, 1024 * 1024);
     if (httpCtxId < 0)
     {
         log_message("Failed to initialize HTTP. Error code: %d", httpCtxId);
         return NULL;
     }
 
-    // Format the User-Agent string
     snprintf(userAgent, sizeof(userAgent), "OCAPIv%.2fb%d", VERSION, BUILD);
-
-    // Create the HTTP template using the context ID
     tmplId = sceHttpCreateTemplate(httpCtxId, userAgent, 1, 0);
     if (tmplId < 0)
     {
         log_message("Failed to create HTTP template. Error code: %d", tmplId);
-        sceHttpTerm(httpCtxId); // Cleanup HTTP context if template creation fails
+        sceHttpTerm(httpCtxId);
         return NULL;
     }
 
-    // Create the HTTP connection
     connId = sceHttpCreateConnection(tmplId, "127.0.0.1", "http", RELAYS_PORT, 1);
     if (connId < 0)
     {
         log_message("Failed to create HTTP connection. Error code: %d", connId);
-        sceHttpDeleteTemplate(tmplId); // Cleanup template
-        sceHttpTerm(httpCtxId);        // Cleanup HTTP context
+        sceHttpDeleteTemplate(tmplId);
+        sceHttpTerm(httpCtxId);
         return NULL;
     }
 
-    // Format the URL path (only the path, without the protocol and host)
-    snprintf(url, sizeof(url), "/%s", cmd);
-
-    // Create the HTTP request
+    snprintf(url, sizeof(url), "/%s", command);
     reqId = sceHttpCreateRequest(connId, ORBIS_METHOD_GET, url, 0);
     if (reqId < 0)
     {
         log_message("Failed to create HTTP request. Error code: %d", reqId);
-        sceHttpDeleteConnection(connId); // Cleanup connection
-        sceHttpDeleteTemplate(tmplId);   // Cleanup template
-        sceHttpTerm(httpCtxId);          // Cleanup HTTP context
+        sceHttpDeleteConnection(connId);
+        sceHttpDeleteTemplate(tmplId);
+        sceHttpTerm(httpCtxId);
         return NULL;
     }
 
-    // Send the HTTP request (no data body for GET)
     int sendRequestResult = sceHttpSendRequest(reqId, NULL, 0);
-    if (sendRequestResult < 0 && strcmp(cmd, "attach") != 0)
+    if (sendRequestResult < 0 && strcmp(command, "attach") != 0)
     {
         log_message("Failed to send HTTP request. Error code: %d", sendRequestResult);
-        sceHttpDeleteRequest(reqId);     // Cleanup request
-        sceHttpDeleteConnection(connId); // Cleanup connection
-        sceHttpDeleteTemplate(tmplId);   // Cleanup template
-        sceHttpTerm(httpCtxId);          // Cleanup HTTP context
+        sceHttpDeleteRequest(reqId);
+        sceHttpDeleteConnection(connId);
+        sceHttpDeleteTemplate(tmplId);
+        sceHttpTerm(httpCtxId);
         return NULL;
     }
 
-    // Read the HTTP response
     bytesRead = sceHttpReadData(reqId, buffer, sizeof(buffer));
     if (bytesRead < 0)
     {
         log_message("Failed to read HTTP response. Error code: %d", bytesRead);
-        sceHttpDeleteRequest(reqId);     // Cleanup request
-        sceHttpDeleteConnection(connId); // Cleanup connection
-        sceHttpDeleteTemplate(tmplId);   // Cleanup template
-        sceHttpTerm(httpCtxId);          // Cleanup HTTP context
+        sceHttpDeleteRequest(reqId);
+        sceHttpDeleteConnection(connId);
+        sceHttpDeleteTemplate(tmplId);
+        sceHttpTerm(httpCtxId);
         return NULL;
     }
 
     buffer[bytesRead] = '\0';
-
-    // Process the response (strip headers)
     char *bodyStart = strstr(buffer, "\r\n\r\n");
     if (bodyStart != NULL)
     {
-        bodyStart += 4; // Skip the headers
+        bodyStart += 4;
         size_t bodyLength = bytesRead - (bodyStart - buffer);
         memmove(buffer, bodyStart, bodyLength);
-        buffer[bodyLength] = '\0'; // Null-terminate the body
+        buffer[bodyLength] = '\0';
     }
 
-    // Cleanup only if they were successfully created
-    sceHttpDeleteRequest(reqId);     // Cleanup request
-    sceHttpDeleteConnection(connId); // Cleanup connection
-    sceHttpDeleteTemplate(tmplId);   // Cleanup template
-    sceHttpTerm(httpCtxId);          // Cleanup HTTP context
+    sceHttpDeleteRequest(reqId);
+    sceHttpDeleteConnection(connId);
+    sceHttpDeleteTemplate(tmplId);
+    sceHttpTerm(httpCtxId);
 
     return buffer;
 }
@@ -141,7 +134,7 @@ char *decode_url(const char *url)
     return decoded;
 }
 
-std::string create_json_response(const std::unordered_map<std::string, nlohmann::json> &data_entries)
+std::string generate_json(const std::unordered_map<std::string, nlohmann::json> &data_entries)
 {
     nlohmann::json response = {{"DATA", nlohmann::json::object()}};
 
@@ -151,10 +144,13 @@ std::string create_json_response(const std::unordered_map<std::string, nlohmann:
     return response.dump(4);
 }
 
-void send_response(const char *msg, int socket, bool *toggle)
+void send_response(const char *message)
 {
     char response[BUFFER_SIZE];
-    int message_length = snprintf(response, sizeof(response), RESPONSE_OK, (int)strlen(msg), msg);
+    int socket = (server::daemon::client_sock != -1) ? server::daemon::client_sock : server::relay::daemon_sock;
+    bool *toggle = (server::daemon::client_sock != -1) ? &connected : &attached;
+
+    int message_length = snprintf(response, sizeof(response), RESPONSE_OK, (int)strlen(message), message);
 
     if (message_length >= sizeof(response))
     {
@@ -165,45 +161,36 @@ void send_response(const char *msg, int socket, bool *toggle)
     ssize_t bytes_sent = sceNetSend(socket, response, strlen(response), 0);
 
     if (bytes_sent < 0 || bytes_sent < strlen(response))
-    {
-        *toggle = false; // This will now update the original variable
-    }
+        *toggle = false;
 }
 
-void send_response(const nlohmann::json &response_data, int socket, bool *toggle)
+void send_response(const nlohmann::json &response_data)
 {
-    // Create a map to hold the "RESPONSE" key and associated JSON data
     std::unordered_map<std::string, nlohmann::json> data_entries = {
-        {"RESPONSE", response_data} // The "RESPONSE" key holds the JSON data
-    };
+        {"RESPONSE", response_data}};
 
-    // Generate the final JSON response string
-    std::string log_string = create_json_response(data_entries);
-
-    // Call send_response with the formatted JSON string
-    send_response(log_string.c_str(), socket, toggle);
+    std::string log_string = generate_json(data_entries);
+    send_response(log_string.c_str()); // Call send_response
 }
 
-void send_error_response(ErrorCode error_code, int socket, bool *toggle)
+void send_error_response(ErrorCode error_code)
 {
+    int socket = (server::daemon::client_sock != -1) ? server::daemon::client_sock : server::relay::daemon_sock;
+    bool *toggle = (server::daemon::client_sock != -1) ? &connected : &attached;
+
     const char *message = error_messages[UNKNOWN_ERROR].message;
 
     if (error_code >= 0 && error_code < ERROR_COUNT)
         message = error_messages[error_code].message;
 
-    nlohmann::json error_data =
-        {{std::to_string(error_code), message}};
-
-    std::unordered_map<std::string, nlohmann::json>
-        data_entries = {{"ERROR", error_data}};
-
-    std::string log_string = create_json_response(data_entries);
-    send_response(log_string.c_str(), socket, toggle);
+    nlohmann::json error_data = {{std::to_string(error_code), message}};
+    std::unordered_map<std::string, nlohmann::json> data_entries = {{"ERROR", error_data}};
+    std::string log_string = generate_json(data_entries);
+    send_response(log_string.c_str()); // Call send_response
 }
 
-void send_error_response(const std::string &message, int socket, bool *toggle)
+void send_error_response(const std::string &message)
 {
-    // Create the JSON response with a default error code (0) and provided message
     std::string log_string = "{\n"
                              "    \"ERROR\": {\n"
                              "        \"msg\": \"" +
@@ -211,18 +198,16 @@ void send_error_response(const std::string &message, int socket, bool *toggle)
                                        "    }\n"
                                        "}";
 
-    send_response(log_string.c_str(), socket, toggle);
+    send_response(log_string.c_str()); // Call send_response
 }
 
-void handle_command(void (*func)(), int socket, bool &toggle)
+void handle_command(void (*func)())
 {
-    if (toggle)
+    int socket = (server::daemon::client_sock != -1) ? server::daemon::client_sock : server::relay::daemon_sock;
+    bool *toggle = (server::daemon::client_sock != -1) ? &connected : &attached;
+
+    if (*toggle)
         func();
     else
-    {
-        if (socket == server::daemon::client_sock)
-            send_error_response(ErrorCode::NOT_CONNECTED, socket, &toggle);
-        else if (socket == server::relay::daemon_sock)
-            send_error_response(ErrorCode::NOT_ATTACHED, socket, &toggle);
-    }
+        send_error_response(toggle == &connected ? NOT_CONNECTED : NOT_ATTACHED); // Modifying toggle
 }

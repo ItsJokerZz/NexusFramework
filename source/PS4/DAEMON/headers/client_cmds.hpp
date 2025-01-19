@@ -27,13 +27,13 @@ namespace cmds
         {
             void notify();
             void temp_limit();
+            void set_power_state();
             void ring_buzzer();
-
         }
 
         namespace process
         {
-            void execute_prx();
+            void load_module();
             void get_proc_list();
             void find_pid_by_name();
             void find_name_of_pid();

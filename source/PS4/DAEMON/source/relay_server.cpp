@@ -22,7 +22,7 @@ namespace server
                 static const std::map<std::string, std::function<void()>> commands = {
                     {"GET /test", []()
                      {
-                         send_response("done", server::relay::daemon_sock, &attached);
+                         send_response("done");
                          if (!attached && strcmp(perform_get_request("attach"), "done") == 0)
                              attached = true;
                      }},
@@ -44,7 +44,7 @@ namespace server
                 if (it != commands.end())
                     it->second();
                 else
-                    send_error_response(INVALID_CMD, server::daemon::daemon_sock, &attached);
+                    send_error_response(INVALID_CMD);
             }
             sceNetSocketClose(daemon_sock);
 

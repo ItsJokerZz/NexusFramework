@@ -9,18 +9,18 @@ namespace cmds
             void version()
             {
                 std::string message = std::to_string(VERSION);
-                send_response(message.c_str(), server::daemon::client_sock, &connected);
+                send_response(message.c_str());
             }
 
             void connect()
             {
-                send_response("true", server::daemon::client_sock, &connected);
+                send_response("true");
                 connected = true;
             }
 
             void unload()
             {
-                send_response("done", server::daemon::client_sock, &connected);
+                send_response("done");
                 if (server::daemon::daemon_sock >= 0)
                 {
                     sceNetSocketClose(server::daemon::daemon_sock);
@@ -36,7 +36,7 @@ namespace cmds
 
             void disconnect()
             {
-                send_response("done", server::daemon::client_sock, &connected);
+                send_response("done");
                 if (server::daemon::client_sock >= 0)
                 {
                     sceNetSocketClose(server::daemon::client_sock);
@@ -56,7 +56,7 @@ namespace cmds
                         attached = true;
                 }
 
-                send_response("done", server::daemon::client_sock, &connected);
+                send_response("done");
             }
 
         }
@@ -65,12 +65,12 @@ namespace cmds
         {
             void sys_type()
             {
-                send_response(sys_utils::get_console_type(), server::daemon::client_sock, &connected);
+                send_response(sys_utils::get_console_type());
             }
 
             void get_fw()
             {
-                send_response(sys_utils::get_fw_version(), server::daemon::client_sock, &connected);
+                send_response(sys_utils::get_fw_version());
             }
 
             void get_temp()
@@ -103,12 +103,12 @@ namespace cmds
 
                 char message[BUFFER_SIZE];
                 snprintf(message, sizeof(message), "%i", tempValue);
-                send_response(message, server::daemon::client_sock, &connected);
+                send_response(message);
             }
 
             void get_user()
             {
-                send_response(sys_utils::get_username(), server::daemon::client_sock, &connected); // Pass the username to send_response
+                send_response(sys_utils::get_username()); // Pass the username to send_response
             }
         }
 
@@ -150,7 +150,7 @@ namespace cmds
                 }
 
                 sys_utils::text_notify(type, msg.empty() ? nullptr : msg.c_str());
-                send_response("done", server::daemon::client_sock, &connected);
+                send_response("done");
             }
 
             void temp_limit()
@@ -170,8 +170,10 @@ namespace cmds
                 }
 
                 sys_utils::set_temperature_limit(temp);
-                send_response("done", server::daemon::client_sock, &connected);
+                send_response("done");
             }
+
+            void set_power_state() {};
 
             void ring_buzzer()
             {
@@ -213,80 +215,79 @@ namespace cmds
                     break;
                 }
 
-                send_response("done", server::daemon::client_sock, &connected);
+                send_response("done");
             }
 
         }
 
         namespace process
         {
-            void execute_prx()
+            void load_module()
             {
-                auto extract_param = [](const char *key) -> std::string
+                char request[BUFFER_SIZE];
+
+                std::string prx_path = extract_param("path=", server::daemon::buffer);
+                std::string exec_path = extract_param("exec=", server::daemon::buffer);
+
+                auto load_prx = [](const std::string &exec_path, const std::string &prx_path) -> bool
                 {
-                    const char *start = strstr(server::daemon::buffer.data(), key);
-                    if (!start)
-                        return "";
-
-                    start += strlen(key);
-                    const char *end = strchr(start, ' ');
-                    if (!end)
-                        end = start + strlen(start);
-
-                    return std::string(start, end);
-                };
-
-                std::string prx_path = extract_param("path=");
-                std::string exec_path = extract_param("exec=");
-
-                if (is_relay_running())
-                {
-                    if (!attached)
-                    {
-                        send_error_response(NOT_ATTACHED, server::daemon::client_sock, &connected);
-                        return;
-                    }
-
-                    if (prx_path.empty())
-                    {
-                        send_error_response(INVALID_ARGS, server::daemon::client_sock, &connected);
-                    }
-                    else
-                    {
-                        char request[BUFFER_SIZE];
-                        snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
-                        char *response = perform_get_request(request);
-
-                        send_response(response, server::daemon::client_sock, &connected);
-                    }
-                }
-                else
-                {
-                    if (exec_path.empty() || prx_path.empty())
-                    {
-                        send_error_response(INVALID_ARGS, server::daemon::client_sock, &connected); // Send error if either param is missing
-                        return;
-                    }
-
                     int prx_handle = sys_sdk_proc_prx_load(const_cast<char *>(exec_path.c_str()), const_cast<char *>(prx_path.c_str()));
-
                     if (prx_handle >= 0)
                     {
-                        // Notify user about PRX loading success
                         char notify_msg[BUFFER_SIZE];
                         snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", prx_path.c_str());
                         sys_utils::text_notify(222, notify_msg);
 
-                        // Create and send JSON response using helper function
                         nlohmann::json response = {{prx_path, prx_handle}};
-                        std::string log_string = create_json_response(response);
+                        send_response(generate_json(response).c_str());
 
-                        send_response(log_string.c_str(), server::daemon::client_sock, &connected);
+                        return true;
                     }
                     else
                     {
-                        send_error_response(UNKNOWN_ERROR, server::daemon::client_sock, &connected);
+                        send_error_response(UNKNOWN_ERROR);
+                        return false;
                     }
+                };
+
+                if (is_relay_running())
+                {
+                    if (!exec_path.empty() || !prx_path.empty())
+                    {
+                        if (!exec_path.empty() && !prx_path.empty())
+                        {
+                            if (exec_path.empty() || prx_path.empty())
+                                send_error_response(INVALID_ARGS);
+                            else
+                                load_prx(exec_path, prx_path);
+
+                            return;
+                        }
+                        else if (!prx_path.empty() && exec_path.empty())
+                            snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
+
+                        send_response(perform_get_request(request));
+                    }
+                    else
+                        send_error_response(INVALID_ARGS);
+                }
+                else
+                {
+                    if (exec_path.empty() && !prx_path.empty())
+                    {
+                        if (!attached)
+                            send_error_response(NOT_ATTACHED);
+                        else
+                        {
+                            char request[BUFFER_SIZE];
+                            snprintf(request, sizeof(request), "exec_prx?path=%s", prx_path.c_str());
+                            send_response(perform_get_request(request));
+                        }
+                    }
+                    else if (!exec_path.empty() && !prx_path.empty())
+                        load_prx(exec_path, prx_path);
+                    else
+                        send_error_response(INVALID_ARGS);
                 }
             }
 
@@ -324,7 +325,7 @@ namespace cmds
                 for (const auto &proc : sorted_procs)
                     response[std::to_string(proc.first)] = proc.second;
 
-                send_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
+                send_response(generate_json(response).c_str());
 
                 free(procs);
             }
@@ -348,7 +349,7 @@ namespace cmds
 
                 // Create and send JSON response using helper function
                 nlohmann::json response = {{"pid", pid}};
-                send_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
+                send_response(generate_json(response).c_str());
             }
 
             void find_name_of_pid()
@@ -366,7 +367,7 @@ namespace cmds
                 if (pid == 0)
                 {
                     nlohmann::json error_response = {{"error", "Invalid pid."}};
-                    send_response(create_json_response(error_response).c_str(), server::daemon::client_sock, &connected);
+                    send_response(generate_json(error_response).c_str());
                     return;
                 }
 
@@ -385,7 +386,7 @@ namespace cmds
                     response = {{"error", "Process not found."}};
                 }
 
-                send_response(create_json_response(response).c_str(), server::daemon::client_sock, &connected);
+                send_response(generate_json(response).c_str());
             }
 
             void load_plugin()
@@ -393,13 +394,10 @@ namespace cmds
                 if (is_relay_running())
                 {
                     if (perform_get_request("load_plugin") != NULL)
-                    {
-                        // Directly pass the address of 'attached' to handle_command without lambda
-                        handle_command([]() {}, server::daemon::client_sock, attached); // Pass 'attached' as a pointer to handle_command
-                    }
+                        handle_command([]() {}); // Pass 'attached' as a pointer to handle_command
                 }
 
-                send_response("done", server::daemon::client_sock, &connected);
+                send_response("done");
             }
 
         }

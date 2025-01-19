@@ -26,6 +26,10 @@ struct ErrorMessage
     const char *message;
 };
 
+extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
+
+extern bool unload, connected, attached;
+
 enum power_state
 {
     DO_NOTHING = -1,
@@ -33,10 +37,6 @@ enum power_state
     RESTART = 30,
     RESTMODE = 1,
 };
-
-extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
-
-extern bool unload, connected, attached;
 
 extern int32_t module_start(int64_t args, const void *argp);
 extern "C" int32_t __wrap__init(size_t args, const void *argp);
