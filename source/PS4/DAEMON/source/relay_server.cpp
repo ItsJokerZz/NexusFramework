@@ -33,10 +33,10 @@ namespace server
                          if (!attached && strcmp(perform_get_request("attach"), "done") == 0)
                              attached = true;
                      }},
-                    {"GET /ping", cmds::daemon::ping},
-                    {"GET /attach", cmds::daemon::attach},
-                    {"GET /exec_prx", cmds::daemon::exec_prx},
-                    {"GET /load_plugin", cmds::daemon::load_plugin}};
+                    {"GET /ping", cmds::daemon::ping_relay},
+                    {"GET /attach", cmds::daemon::attach_relay},
+                    {"GET /exec_prx", cmds::daemon::load_module},
+                    {"GET /load_plugin", cmds::daemon::start_plugin}};
 
                 typedef std::map<std::string, std::function<void()>>::const_iterator CommandIter;
                 CommandIter it = std::find_if(commands.begin(), commands.end(),

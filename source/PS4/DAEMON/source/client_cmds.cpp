@@ -370,7 +370,7 @@ namespace cmds
 
                 std::string proc_name(name, end);
 
-                int pid = sys_utils::find_pid_by_name(proc_name.c_str(), &procID);
+                int pid = sys_utils::find_pid_by_procName(proc_name.c_str(), &procID);
 
                 // Create and send JSON response using helper function
                 nlohmann::json response = {{"pid", pid}};
@@ -398,7 +398,7 @@ namespace cmds
 
                 // Call the function to find the process name by pid
                 char proc_name[ORBIS_USER_SERVICE_MAX_USER_NAME_LENGTH + 1];
-                int ret = sys_utils::find_name_of_pid(pid, proc_name);
+                int ret = sys_utils::find_procName_of_pid(pid, proc_name);
 
                 // Create and send JSON response based on the result
                 nlohmann::json response;

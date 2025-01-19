@@ -9,7 +9,7 @@ namespace sys_utils
     return orbis_syscall(107 + 90, procs, num);
   }
 
-  int find_pid_by_name(const char *proc_name, int *pid)
+  int find_pid_by_procName(const char *proc_name, int *pid)
   {
     struct proc_list_entry *proc_list;
     uint64_t pnum;
@@ -40,7 +40,7 @@ namespace sys_utils
     return 0;
   }
 
-  int find_name_of_pid(int pid, char *proc_name)
+  int find_procName_of_pid(int pid, char *proc_name)
   {
     struct proc_list_entry *proc_list;
     uint64_t pnum;
@@ -75,6 +75,11 @@ namespace sys_utils
 
     free(proc_list);
     return 0;
+  }
+
+  int sys_proc_rw(uint64_t pid, uint64_t address, void *data, uint64_t length, uint64_t write)
+  {
+    return syscall(108 + 90, pid, address, data, length, write);
   }
 
   const char *get_username(OrbisUserServiceUserId userId)

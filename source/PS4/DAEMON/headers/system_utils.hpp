@@ -9,8 +9,9 @@ namespace sys_utils
     extern std::string console_type;
 
     extern int sys_proc_list(struct proc_list_entry *procs, uint64_t *num);
-    extern int find_pid_by_name(const char *proc_name, int *pid);
-    extern int find_name_of_pid(int pid, char *proc_name);
+    extern int find_pid_by_procName(const char *proc_name, int *pid);
+    extern int find_procName_of_pid(int pid, char *proc_name);
+    extern int sys_proc_rw(uint64_t pid, uint64_t address, void *data, uint64_t length, uint64_t write);
 
     extern const char *get_username(OrbisUserServiceUserId userId = 0);
     extern const char *get_console_type();

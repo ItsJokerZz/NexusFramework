@@ -4,12 +4,12 @@ namespace cmds
 {
     namespace daemon
     {
-        void ping()
+        void ping_relay()
         {
             send_response("true");
         }
 
-        void attach()
+        void attach_relay()
         {
             attached = true;
 
@@ -17,7 +17,7 @@ namespace cmds
             send_response("done");
         }
 
-        void exec_prx()
+        void load_module()
         {
             const char *path = nullptr;
             const char *start = strstr(server::relay::buffer.data(), "path=");
@@ -96,7 +96,7 @@ namespace cmds
             free((void *)path);
         }
 
-        void load_plugin()
+        void start_plugin()
         {
             const char *plugin = nullptr;
             const char *start = strstr(server::relay::buffer.data(), "plugin=");
@@ -179,6 +179,8 @@ namespace cmds
 
             free((void *)plugin);
         }
+
+        void rw_proc_mem() {}
 
     }
 }

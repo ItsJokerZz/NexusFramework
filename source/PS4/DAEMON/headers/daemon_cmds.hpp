@@ -4,10 +4,10 @@ namespace cmds
 {
     namespace daemon
     {
-        void ping();
-        void attach();
-        void exec_prx();
-        void load_plugin();
-
+        void ping_relay();
+        void attach_relay();
+        void load_module();
+        void start_plugin();
+        void rw_proc_mem();
     }
 }
