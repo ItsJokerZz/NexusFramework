@@ -32,13 +32,13 @@ $(TARGET): $(INTDIR) $(OBJS) incrementBuild
 	-out=$(INTDIR)/$(PROJDIR).oelf --lib=$(TARGET) --paid 0x3800000000000011
 
 $(INTDIR)/%.o: $(PROJDIR)/%.c
-	$(CC) $(CFLAGS) -D VERSION=$(VERSION) -D BUILD=$(BUILD)+1 -o $@ $<
+	$(CC) $(CFLAGS) -D BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
 $(INTDIR)/%.o: $(PROJDIR)/%.cpp
-	$(CCX) $(CXXFLAGS) -D VERSION=$(VERSION) -D BUILD=$(BUILD)+1 -o $@ $<
+	$(CCX) $(CXXFLAGS) -D BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
 $(INTDIR)/%.o: $(COMMONDIR)/%.cpp
-	$(CCX) $(CXXFLAGS) -D VERSION=$(VERSION) -D BUILD=$(BUILD)+1  -o $@ $<
+	$(CCX) $(CXXFLAGS) -D BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
 _unused       := $(shell mkdir -p $(INTDIR))
 UNAME_S       := $(shell uname -s)

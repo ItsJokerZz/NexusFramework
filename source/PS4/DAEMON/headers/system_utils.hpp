@@ -22,7 +22,9 @@ namespace sys_utils
     void text_notify(int type, const char *_msg);
     void image_notify(const char *IconUri, const char *text);
     void set_temperature_limit(uint8_t limit = 60);
+    void change_power_state(power_state state = DO_NOTHING);
     void ring_buzzer(int type);
+
 }
 
 extern "C"

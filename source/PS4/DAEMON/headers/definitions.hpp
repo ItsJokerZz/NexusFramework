@@ -5,22 +5,11 @@
 #define RELAYS_PORT 8008
 
 #define RETRY_DELAY_SECONDS 30
-#define CONNECTION_RETRY_MINUTES 5
+#define RETRY_DELAY_MINUTES 5
 
 #define BUFFER_SIZE 4096
 
 #define RESPONSE_OK "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s"
-
-struct threadData
-{
-    std::array<char, BUFFER_SIZE> buffer{};
-    pthread_t server_thread = 0, client_thread = 0;
-    OrbisNetSockaddr server_addr{}, client_addr{};
-
-    socklen_t client_addr_len = sizeof(OrbisNetSockaddr);
-    int port = -1, server_socket = -1, client_socket = -1;
-    std::map<std::string, std::function<void()>> commands{};
-};
 
 enum ErrorCode
 {
@@ -35,6 +24,14 @@ enum ErrorCode
 struct ErrorMessage
 {
     const char *message;
+};
+
+enum power_state
+{
+    DO_NOTHING = -1,
+    POWER_OFF = 31,
+    RESTART = 30,
+    RESTMODE = 1,
 };
 
 extern std::array<ErrorMessage, ERROR_COUNT> error_messages;

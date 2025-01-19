@@ -177,6 +177,14 @@ namespace sys_utils
     close(fd);
   }
 
+  void change_power_state(power_state state)
+  {
+    if (state == DO_NOTHING)
+      return;
+
+    orbis_syscall(37, 1, (int)state);
+  }
+
   void ring_buzzer(int type)
   {
     sceKernelIccSetBuzzer(type);

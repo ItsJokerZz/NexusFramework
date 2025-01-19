@@ -33,13 +33,12 @@ namespace cmds
 
         namespace process
         {
-            void load_module();
+            void execute_prx();
             void get_proc_list();
             void find_pid_by_name();
             void find_name_of_pid();
             void load_plugin();
 
         }
-
     }
 }

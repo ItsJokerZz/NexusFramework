@@ -5,7 +5,7 @@ std::array<ErrorMessage, ERROR_COUNT> error_messages = {{
     {"Not connected to the server. Please connect or check your connection."},   // NOT_CONNECTED (1)
     {"Not attached to process. Open an app, attach, and proceed to try again."}, // NOT_ATTACHED (2)
     {"An unknown error has occured performing the current command, try again."}, // UNKNOWN_ERROR (3)
-    {"Invalid or missing paramaters passed, please check the documentation."}    // INVALID_ARGS (4)
+    {"Invalid paramaters passed, please check documentation, and try again."}    // INVALID_ARGS (4)
 }};
 
 bool isDaemon = false,
@@ -15,24 +15,17 @@ bool isDaemon = false,
 
 int32_t module_start(int64_t args, const void *argp)
 {
+    pthread_t thread;
+
     struct proc_info info;
     sys_sdk_proc_info(&info);
 
-    std::string titleId = info.titleid;
-
-    if (titleId == DAEMON)
-    {
-        sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
-
-        sceUserServiceInitialize2();
-
-        isDaemon = true;
-    }
-
-    if (isDaemon)
-        server::daemon::start();
+    if (strcmp(info.titleid, DAEMON) == 0)
+        pthread_create(&thread, nullptr, server::daemon::thread, nullptr);
     else
-        server::relay::start();
+        pthread_create(&thread, nullptr, server::relay::thread, nullptr);
+
+    pthread_detach(thread);
 
     return 0;
 }

@@ -6,21 +6,19 @@ namespace cmds
     {
         void ping()
         {
-            send_response("true");
+            send_response("true", server::relay::daemon_sock, &attached);
         }
 
         void attach()
         {
-            attached = true;
-
             sys_utils::text_notify(222, "[OCAPI] Attached!");
-            send_response("done");
+            send_response("done", server::relay::daemon_sock, &attached);
         }
 
         void exec_prx()
         {
             const char *path = nullptr;
-            const char *start = strstr(server::relay::td.buffer.data(), "path=");
+            const char *start = strstr(server::relay::buffer.data(), "path=");
 
             if (start)
             {
@@ -59,7 +57,7 @@ namespace cmds
 
             char response[BUFFER_SIZE];
             snprintf(response, sizeof(response), "%i,%d,%s", pid, result, path);
-            send_response(response);
+            send_response(response, server::relay::daemon_sock, &attached);
 
             int32_t ret;
             int32_t (*module_start_ret)(size_t, const void *);
@@ -99,7 +97,7 @@ namespace cmds
         void load_plugin()
         {
             const char *plugin = nullptr;
-            const char *start = strstr(server::relay::td.buffer.data(), "plugin=");
+            const char *start = strstr(server::relay::buffer.data(), "plugin=");
 
             if (start)
             {
@@ -115,7 +113,7 @@ namespace cmds
             if (!plugin)
             {
                 log_message("No plugin provided to load");
-                send_error_response("failed");
+                send_error_response("failed", server::relay::daemon_sock, &attached);
                 return;
             }
 
@@ -130,20 +128,20 @@ namespace cmds
             {
                 log_message("Plugin %s not found", plugin);
                 free((void *)plugin);
-                send_error_response("failed");
+                send_error_response("failed", server::relay::daemon_sock, &attached);
                 return;
             }
             else if (result < 0)
             {
                 log_message("Error loading Plugin %s! Error code 0x%08x (%i)", plugin, result, result);
                 free((void *)plugin);
-                send_error_response("failed");
+                send_error_response("failed", server::relay::daemon_sock, &attached);
                 return;
             }
 
             char response[BUFFER_SIZE];
             snprintf(response, sizeof(response), "%i,%d,%s", pid, result, plugin);
-            send_response(response);
+            send_response(response, server::relay::daemon_sock, &attached);
 
             int32_t ret;
             int32_t (*plugin_load_ret)(void);
