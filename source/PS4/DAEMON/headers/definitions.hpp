@@ -13,6 +13,7 @@
 
 enum ErrorCode
 {
+    NO_COMMAND,
     INVALID_CMD,
     NOT_CONNECTED,
     NOT_ATTACHED,

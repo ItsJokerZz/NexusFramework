@@ -156,24 +156,49 @@ namespace cmds
             void temp_limit()
             {
                 uint8_t temp = 0;
-                const char *start = strstr(server::daemon::buffer.data(), "limit=");
-                if (start)
-                {
-                    start += 6;
-                    char *end = strchr(start, '&');
-                    if (end)
-                        *end = '\0';
-                    sscanf(start, "%hhu", &temp);
-                    start = end ? strchr(end + 1, '=') : NULL;
-                    if (start)
-                        start += 1;
-                }
 
-                sys_utils::set_temperature_limit(temp);
-                send_response("done");
+                std::string limit_str = extract_param("limit=", server::daemon::buffer);
+
+                if (!limit_str.empty())
+                {
+                    if (sscanf(limit_str.c_str(), "%hhu", &temp) != 1)
+                    {
+                        send_error_response(INVALID_ARGS);
+
+                        return;
+                    }
+
+                    // if (sys_utils::set_temperature_limit(temp))
+                    send_response("done");
+                    // else
+                    //  send_error_response(UNKNOWN_ERROR);
+                }
+                else
+                    send_error_response(INVALID_ARGS);
             }
 
-            void set_power_state() {};
+            void set_power_state()
+            {
+                int state = 0;
+
+                std::string state_str = extract_param("state=", server::daemon::buffer);
+
+                if (!state_str.empty())
+                {
+                    if (sscanf(state_str.c_str(), "%i", &state) != 1)
+                    {
+                        send_error_response(INVALID_ARGS);
+
+                        return;
+                    }
+
+                    sys_utils::set_power_state((power_state)state);
+
+                    send_response("done");
+                }
+                else
+                    send_error_response(INVALID_ARGS);
+            };
 
             void ring_buzzer()
             {

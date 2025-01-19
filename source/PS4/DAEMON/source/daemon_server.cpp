@@ -19,6 +19,13 @@ namespace server
                 buffer[bytes_received] = '\0';
                 const std::string request(buffer.data());
 
+                // Check if the request starts with "GET / HTTP/1.1"
+                if (request.substr(0, 14) == "GET / HTTP/1.1")
+                {
+                    send_error_response(NO_COMMAND);
+                    return nullptr; // No need to process further if it's a favicon or empty request
+                }
+
                 static const std::map<std::string, std::function<void()>> commands = {
                     {"GET /connect", cmds::client::connection::connect},
                     {"GET /unload", cmds::client::connection::unload},
@@ -28,7 +35,6 @@ namespace server
                      { handle_command(cmds::client::connection::attach); }},
                     {"GET /get_prx_version", []()
                      { handle_command(cmds::client::connection::version); }},
-
                     {"GET /get_fw_version", []()
                      { handle_command(cmds::client::sys_info::get_fw); }},
                     {"GET /get_sys_type", []()
@@ -37,7 +43,6 @@ namespace server
                      { handle_command(cmds::client::sys_info::get_temp); }},
                     {"GET /get_username", []()
                      { handle_command(cmds::client::sys_info::get_user); }},
-
                     {"GET /send_notify", []()
                      { handle_command(cmds::client::sys_control::notify); }},
                     {"GET /set_temp_limit", []()
@@ -46,14 +51,12 @@ namespace server
                      { handle_command(cmds::client::sys_control::set_power_state); }},
                     {"GET /ring_buzzer", []()
                      { handle_command(cmds::client::sys_control::ring_buzzer); }},
-
                     {"GET /get_proc_list", []()
                      { handle_command(cmds::client::process::get_proc_list); }},
                     {"GET /get_pid_by_name", []()
                      { handle_command(cmds::client::process::find_pid_by_name); }},
                     {"GET /get_name_of_pid", []()
                      { handle_command(cmds::client::process::find_name_of_pid); }},
-
                     {"GET /load_module", []()
                      { handle_command(cmds::client::process::load_module); }},
                     {"GET /load_plugin", []()
@@ -72,6 +75,7 @@ namespace server
                 else
                     send_error_response(INVALID_CMD);
             }
+
             sceNetSocketClose(client_sock);
 
             return nullptr;
@@ -105,7 +109,6 @@ namespace server
                     log_message("Daemon failed to bind server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(daemon_sock);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
-
                     continue;
                 }
 
@@ -114,7 +117,6 @@ namespace server
                     log_message("Daemon failed to listen on server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(daemon_sock);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
-
                     continue;
                 }
 
@@ -126,7 +128,6 @@ namespace server
                     if (client_sock < 0)
                     {
                         log_message("Failed to accept client connection");
-
                         continue;
                     }
 

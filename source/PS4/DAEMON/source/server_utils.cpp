@@ -191,14 +191,11 @@ void send_error_response(ErrorCode error_code)
 
 void send_error_response(const std::string &message)
 {
-    std::string log_string = "{\n"
-                             "    \"ERROR\": {\n"
-                             "        \"msg\": \"" +
-                             message + "\"\n"
-                                       "    }\n"
-                                       "}";
+    nlohmann::json error_response;
+    error_response["ERROR"]["msg"] = message;
 
-    send_response(log_string.c_str()); // Call send_response
+    std::string log_string = error_response.dump(4); // Pretty print with 4 spaces
+    send_response(log_string.c_str());               // Call send_response
 }
 
 void handle_command(void (*func)())

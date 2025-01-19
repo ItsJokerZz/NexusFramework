@@ -1,11 +1,12 @@
 #include "../headers/includes.hpp"
 
 std::array<ErrorMessage, ERROR_COUNT> error_messages = {{
-    {"The requested command could not be found. Please check and try again."},   // INVALID_CMD (0)
-    {"Not connected to the server. Please connect or check your connection."},   // NOT_CONNECTED (1)
-    {"Not attached to process. Open an app, attach, and proceed to try again."}, // NOT_ATTACHED (2)
-    {"An unknown error has occured performing the current command, try again."}, // UNKNOWN_ERROR (3)
-    {"Invalid paramaters passed, please check documentation, and try again."}    // INVALID_ARGS (4)
+    {"Server is running, but no command was passed. Please check."},
+    {"Command not found. Please check and try again."},
+    {"Not connected to the server. Check your connection."},
+    {"Not attached to process. Open an app and attach."},
+    {"An unknown error occurred. Please try again later."},
+    {"Invalid parameters provided. Please verify and retry."},
 }};
 
 bool isDaemon = false,

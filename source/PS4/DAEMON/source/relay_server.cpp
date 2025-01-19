@@ -19,6 +19,13 @@ namespace server
                 buffer[bytes_received] = '\0';
                 const std::string request(buffer.data());
 
+                // Check if the request starts with "GET / HTTP/1.1"
+                if (request.substr(0, 14) == "GET / HTTP/1.1")
+                {
+                    send_error_response(NO_COMMAND);
+                    return nullptr; // No need to process further if it's a favicon or empty request
+                }
+
                 static const std::map<std::string, std::function<void()>> commands = {
                     {"GET /test", []()
                      {
@@ -26,9 +33,6 @@ namespace server
                          if (!attached && strcmp(perform_get_request("attach"), "done") == 0)
                              attached = true;
                      }},
-
-                    // maybe try to find a way to make this work with handle_command,
-                    // because the attached bool isnt updating between the relay and daemon
                     {"GET /ping", cmds::daemon::ping},
                     {"GET /attach", cmds::daemon::attach},
                     {"GET /exec_prx", cmds::daemon::exec_prx},
@@ -41,11 +45,13 @@ namespace server
                                                   return request.find(pair.first) != std::string::npos;
                                               });
 
+                // If no command was matched, send an error response
                 if (it != commands.end())
                     it->second();
                 else
                     send_error_response(INVALID_CMD);
             }
+
             sceNetSocketClose(daemon_sock);
 
             return nullptr;
@@ -65,7 +71,6 @@ namespace server
                 {
                     log_message("Relay failed to create server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
-
                     continue;
                 }
 
@@ -80,7 +85,6 @@ namespace server
                     log_message("Relay failed to bind server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(relay_sock);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
-
                     continue;
                 }
 
@@ -89,7 +93,6 @@ namespace server
                     log_message("Relay failed to listen on server socket, retrying in %d seconds...", RETRY_DELAY_SECONDS);
                     sceNetSocketClose(relay_sock);
                     sceKernelSleep(RETRY_DELAY_SECONDS);
-
                     continue;
                 }
 
@@ -101,7 +104,6 @@ namespace server
                     if (daemon_sock < 0)
                     {
                         log_message("Failed to accept daemon connection");
-
                         continue;
                     }
 
