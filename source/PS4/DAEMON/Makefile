@@ -2,7 +2,7 @@ TOOLCHAIN     := $(OO_PS4_TOOLCHAIN)
 PROJDIR       := source
 INTDIR        := build
 
-VERSION       := 0.47
+VERSION       := 0.48
 TARGET        := OrbisControl.prx
 
 VERSION_FILE  := $(INTDIR)/.version
@@ -24,10 +24,10 @@ CXXFLAGS      := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1 \
                  -std=c++11 -Iinclude -DFMT_HEADER_ONLY
 
 LDFLAGS       := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr \
-                 -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o --wrap=_init --wrap=_fini
+                 -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o --wrap=_init
 
 $(TARGET): $(INTDIR) $(OBJS) incrementBuild
-	$(LD) $(OBJS) -o $(INTDIR)/$(PROJDIR).elf $(LDFLAGS) -e __wrap__init
+	$(LD) $(OBJS) -o $(INTDIR)/$(PROJDIR).elf $(LDFLAGS) -e module_start
 	$(TOOLCHAIN)/bin/$(CDIR)/create-fself -in=$(INTDIR)/$(PROJDIR).elf \
 	-out=$(INTDIR)/$(PROJDIR).oelf --lib=$(TARGET) --paid 0x3800000000000011
 

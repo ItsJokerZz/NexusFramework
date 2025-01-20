@@ -31,9 +31,4 @@ struct ErrorMessage
 extern pthread_t daemon_thread, relay_thread;
 extern bool isDaemon, unloaded, connected, attached;
 extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
-
-extern "C"
-{
-    int32_t __wrap__init(size_t args, const void *argp);
-    int32_t __wrap__fini(size_t args, const void *argp);
-}
+extern "C" int32_t __wrap__init(size_t args, const void *argp);
