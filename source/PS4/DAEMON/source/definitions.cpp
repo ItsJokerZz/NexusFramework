@@ -9,17 +9,27 @@ std::array<ErrorMessage, ERROR_COUNT> error_messages = {{
     {"Invalid parameters provided. Please verify and retry."},
 }};
 
-bool isDaemon = false, unload = false, connected = false, attached = false;
+bool isDaemon = false, unload = false,
+     connected = false, attached = false;
+
+pthread_t daemon_thread = -1, relay_thread = -1;
 
 int32_t module_start(int64_t args, const void *argp)
 {
     sys_utils::text_notify(222, "[OCAPI] Daemon server started!");
 
-    pthread_t thread;
-    pthread_create(&thread, nullptr, server::daemon::thread, nullptr);
-    pthread_detach(thread);
+    if (daemon_thread == -1)
+    {
+        if (pthread_create(&daemon_thread, nullptr, server::daemon::thread, nullptr) != 0)
+        {
+            sys_utils::text_notify(222, "[OCAPI] Failed to create daemon thread!");
 
-    // start rpc server as well
+            return -1;
+        }
+
+        pthread_detach(daemon_thread);
+    }
+
     return 0;
 }
 
@@ -27,20 +37,45 @@ int32_t plugin_load(int64_t args, const void *argp)
 {
     sys_utils::text_notify(222, "[OCAPI] App relay server started!");
 
-    pthread_t thread;
-    pthread_create(&thread, nullptr, server::relay::thread, nullptr);
-    pthread_detach(thread);
+    if (relay_thread == -1)
+    {
+        if (pthread_create(&relay_thread, nullptr, server::relay::thread, nullptr) != 0)
+        {
+            sys_utils::text_notify(222, "[OCAPI] Failed to create relay thread!");
+
+            return -1;
+        }
+
+        pthread_detach(relay_thread);
+    }
 
     return 0;
 }
 
-extern "C" int32_t __wrap__init(size_t args, const void *argp)
+extern "C"
 {
-    struct proc_info info;
-    sys_sdk_proc_info(&info);
+    int32_t __wrap__init(size_t args, const void *argp)
+    {
+        struct proc_info info;
+        sys_sdk_proc_info(&info);
 
-    if (strcmp(info.titleid, DAEMON) == 0)
-        return module_start(args, argp);
-    else
-        return plugin_load(args, argp);
+        if (strcmp(info.titleid, DAEMON) == 0)
+            return module_start(args, argp);
+        else
+            return plugin_load(args, argp);
+    }
+
+    int32_t __wrap__fini(size_t args, const void *argp)
+    {
+        sys_utils::text_notify(222, "_fini(size_t, const void *);");
+
+        auto stopUnloadModule = [](size_t args, const void *argp)
+        {
+            sys_utils::text_notify(222, "[OCAPI] Unloaded!");
+
+            return sceKernelStopUnloadModule(args, 0, NULL, 0, NULL, NULL);
+        };
+
+        return stopUnloadModule(args, argp);
+    }
 }

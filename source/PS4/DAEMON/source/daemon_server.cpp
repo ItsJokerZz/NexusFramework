@@ -6,6 +6,7 @@ namespace server
     {
         std::array<char, BUFFER_SIZE> buffer{};
         int daemon_sock = -1, client_sock = -1;
+        pthread_t client_thread = -1;
 
         void *process(void *arg)
         {
@@ -133,7 +134,6 @@ namespace server
                         continue;
                     }
 
-                    pthread_t client_thread;
                     pthread_create(&client_thread, NULL, process, &client_sock);
                     pthread_detach(client_thread);
                 }

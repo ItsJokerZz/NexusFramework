@@ -40,7 +40,7 @@ enum power_state
     RESTMODE = 1,
 };
 
-
 extern int32_t module_start(int64_t args, const void *argp);
 extern int32_t plugin_load(int64_t args, const void *argp);
 extern "C" int32_t __wrap__init(size_t args, const void *argp);
+extern "C" int32_t __wrap__fini(size_t args, const void *argp);
