@@ -38,7 +38,5 @@ int _main(void) {
 
   _fini(prx_id, NULL);
 
-  unloadModule(prx_id);
-
   return 0;
 }

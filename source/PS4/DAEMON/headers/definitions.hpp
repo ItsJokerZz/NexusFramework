@@ -12,8 +12,6 @@
 
 #define RESPONSE_OK "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s"
 
-extern bool unload, connected, attached;
-
 enum ErrorCode
 {
     NO_COMMAND,
@@ -30,7 +28,12 @@ struct ErrorMessage
     const char *message;
 };
 
+extern pthread_t daemon_thread, relay_thread;
+extern bool unload, connected, attached;
 extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
 
-extern "C" int32_t __wrap__init(size_t args, const void *argp);
-extern "C" int32_t __wrap__fini(size_t args, const void *argp);
+extern "C"
+{
+    int32_t __wrap__init(size_t args, const void *argp);
+    int32_t __wrap__fini(size_t args, const void *argp);
+}

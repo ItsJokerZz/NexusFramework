@@ -9,52 +9,44 @@ std::array<ErrorMessage, ERROR_COUNT> error_messages = {{
     {"Invalid parameters provided. Please verify and retry."},
 }};
 
-bool
-    isDaemon = false,
-    unload = false,
-    connected = false,
-    attached = false;
-
-pthread_t
-    daemon_thread = -1,
-    relay_thread = -1;
+pthread_t daemon_thread = -1, relay_thread = -1;
+bool unload = false, connected = false, attached = false;
 
 extern "C"
 {
-    int32_t __wrap__init(size_t args, const void *argp)
+
+    extern "C"
     {
-        struct proc_info info;
-        sys_sdk_proc_info(&info);
-
-        auto startServer = [&info](bool isDaemonProcess)
+        int32_t __wrap__init(size_t, const void *)
         {
-            const char *msg = isDaemonProcess ? "[OCAPI] Daemon server started!" : "[OCAPI] App relay server started!";
+            struct proc_info info;
+            sys_sdk_proc_info(&info);
 
-            sys_utils::text_notify(222, msg);
+            bool isDaemon = (strcmp(info.titleid, DAEMON) == 0);
+            
+            pthread_t *thread = isDaemon ? &daemon_thread : &relay_thread;
+            void *(*thread_func)(void *) = isDaemon
+                                               ? (void *(*)(void *))server::daemon::thread
+                                               : (void *(*)(void *))server::relay::thread;
 
-            pthread_t *thread = isDaemonProcess ? &daemon_thread : &relay_thread;
-
-            if (*thread == -1)
-            {
-                if (pthread_create(thread, nullptr, isDaemonProcess ? server::daemon::thread : server::relay::thread, nullptr) != 0)
-                {
-                    sys_utils::text_notify(222, isDaemonProcess ? "[OCAPI] Failed to create daemon thread!" : "[OCAPI] Failed to create relay thread!");
-
-                    return -1;
-                }
-
+            if (*thread == -1 && pthread_create(thread, nullptr, thread_func, nullptr) == 0)
                 pthread_detach(*thread);
-            }
-            return 0;
-        };
 
-        return startServer(strcmp(info.titleid, DAEMON) == 0);
+            std::string msg = isDaemon
+                                  ? "[OCAPI] Daemon server started!"
+                                  : "[OCAPI] Relay server started";
+
+            sys_utils::text_notify(222, msg.c_str());
+
+            return 0;
+        }
     }
 
-    int32_t __wrap__fini(size_t args, const void *argp)
+    int32_t __wrap__fini(size_t, const void *)
     {
-        sys_utils::text_notify(222, "[OCAPI] Unloaded!");
+        sys_utils::text_notify(222, "Unloaded!");
+        sceKernelStopUnloadModule(0, 0, NULL, 0, NULL, NULL);
 
-        return sceKernelStopUnloadModule(args, 0, nullptr, 0, nullptr, nullptr);
+        return 0;
     }
 }
