@@ -13,26 +13,34 @@ bool isDaemon = false, unload = false, connected = false, attached = false;
 
 int32_t module_start(int64_t args, const void *argp)
 {
-    pthread_t web_thread;
-    pthread_t rpc_thread;
+    sys_utils::text_notify(222, "[OCAPI] Daemon server started!");
 
-    struct proc_info info;
-    sys_sdk_proc_info(&info);
+    pthread_t thread;
+    pthread_create(&thread, nullptr, server::daemon::thread, nullptr);
+    pthread_detach(thread);
 
-    if (strcmp(info.titleid, DAEMON) == 0)
-    {
-        pthread_create(&web_thread, nullptr, server::daemon::thread, nullptr);
-        pthread_create(&rpc_thread, nullptr, nullptr, nullptr); // add soon :D
-    }
-    else
-        pthread_create(&web_thread, nullptr, server::relay::thread, nullptr);
+    // start rpc server as well
+    return 0;
+}
 
-    pthread_detach(web_thread);
+int32_t plugin_load(int64_t args, const void *argp)
+{
+    sys_utils::text_notify(222, "[OCAPI] App relay server started!");
+
+    pthread_t thread;
+    pthread_create(&thread, nullptr, server::relay::thread, nullptr);
+    pthread_detach(thread);
 
     return 0;
 }
 
 extern "C" int32_t __wrap__init(size_t args, const void *argp)
 {
-    return module_start(args, argp);
+    struct proc_info info;
+    sys_sdk_proc_info(&info);
+
+    if (strcmp(info.titleid, DAEMON) == 0)
+        return module_start(args, argp);
+    else
+        return plugin_load(args, argp);
 }

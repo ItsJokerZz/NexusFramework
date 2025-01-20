@@ -17,7 +17,7 @@ int _main(void) {
   initSysUtil();
   initPthread();
 
-  if (loadModule("/data/OrbisControl.prx", &prx_id) != 0)
+  if (loadModule("/data/GoldHEN/plugins/OrbisControl.prx", &prx_id) != 0)
     return -1;
 
   if (sceKernelDlsym(prx_id, "__wrap__init", (void **)&_init) < 0 || _init == NULL)
