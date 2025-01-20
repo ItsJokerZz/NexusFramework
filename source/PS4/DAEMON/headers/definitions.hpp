@@ -29,7 +29,7 @@ struct ErrorMessage
 };
 
 extern pthread_t daemon_thread, relay_thread;
-extern bool unload, connected, attached;
+extern bool isDaemon, unloaded, connected, attached;
 extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
 
 extern "C"

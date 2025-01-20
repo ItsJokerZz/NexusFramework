@@ -64,7 +64,7 @@ namespace server
             OrbisNetSockaddr server_addr, daemon_addr;
             socklen_t daemon_addr_len = sizeof(daemon_addr);
 
-            while (!unload)
+            while (!unloaded)
             {
                 relay_sock = sceNetSocket("relay_sock",
                                           ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
@@ -100,7 +100,7 @@ namespace server
 
                 log_message("Relay has started a server listening on port 8008.");
 
-                while (!unload)
+                while (!unloaded)
                 {
                     daemon_sock = sceNetAccept(relay_sock, &daemon_addr, &daemon_addr_len);
                     if (daemon_sock < 0)

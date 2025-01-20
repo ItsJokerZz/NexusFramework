@@ -89,7 +89,7 @@ namespace server
             OrbisNetSockaddr server_addr, client_addr;
             socklen_t client_addr_len = sizeof(client_addr);
 
-            while (!unload)
+            while (!unloaded)
             {
                 daemon_sock = sceNetSocket("daemon_sock",
                                            ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
@@ -125,7 +125,7 @@ namespace server
 
                 log_message("Daemon has started a server listening on port 1337.");
 
-                while (!unload)
+                while (!unloaded)
                 {
                     client_sock = sceNetAccept(daemon_sock, &client_addr, &client_addr_len);
                     if (client_sock < 0)

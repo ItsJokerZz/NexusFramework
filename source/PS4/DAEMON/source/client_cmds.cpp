@@ -26,12 +26,14 @@ namespace cmds
                     sceNetSocketClose(server::daemon::daemon_sock);
                     server::daemon::daemon_sock = -1;
                 }
+                
                 if (server::daemon::client_sock >= 0)
                 {
                     sceNetSocketClose(server::daemon::client_sock);
                     server::daemon::client_sock = -1;
                 }
-                ::unload = true;
+
+                unloaded = true;
             }
 
             void disconnect()
