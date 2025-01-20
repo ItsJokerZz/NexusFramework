@@ -7,15 +7,12 @@ int64_t sceKernelDlsym(int64_t moduleHandle, const char *functionName, void *des
 }
 
 int _main(void) {
-  int prx_id;
-
   initKernel();
   initLibc();
-  jailbreak();
-  initSysUtil();
-  initPthread();
 
-  if (loadModule("/data/GoldHEN/plugins/OrbisControl.prx", &prx_id) != 0)
+  int prx_id;
+
+  if (loadModule("/user/data/GoldHEN/plugins/OrbisControl.prx", &prx_id) != 0)
     return -1;
 
   if (sceKernelDlsym(prx_id, "__wrap__init", (void **)&__wrap__init) < 0 || __wrap__init == NULL)
