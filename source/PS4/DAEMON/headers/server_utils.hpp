@@ -42,6 +42,14 @@ asm("orbis_syscall:\n"
     "retq\n");
 int orbis_syscall(int num, ...);
 
+enum power_state
+{
+    DO_NOTHING = -1,
+    POWER_OFF = 31,
+    RESTART = 30,
+    RESTMODE = 1,
+};
+
 extern std::string extract_param(const char *key, std::array<char, BUFFER_SIZE> buffer);
 extern char *perform_get_request(const char *command);
 extern bool is_relay_running();
