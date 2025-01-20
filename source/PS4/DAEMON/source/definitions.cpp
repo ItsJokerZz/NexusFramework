@@ -27,24 +27,20 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
                                  (isDaemon ? "Daemon server started!" : "Relay server started"))
                                     .c_str());
 
-    if (thread == -1)
+    if (thread == -1 && pthread_create(&thread, nullptr, thread_func, nullptr) != 0)
     {
-        if (pthread_create(&thread, nullptr, thread_func, nullptr) != 0)
-        {
-            sys_utils::text_notify(222, (std::string("[OCAPI] Failed to create ") +
-                                         (isDaemon ? "daemon" : "relay") + " thread!")
-                                            .c_str());
+        sys_utils::text_notify(222, (std::string("[OCAPI] Failed to create ") +
+                                     (isDaemon ? "daemon" : "relay") + " thread!")
+                                        .c_str());
 
-            return 1;
-        }
-
-        pthread_detach(thread);
+        return 1;
     }
+
+    pthread_detach(thread);
 
     if (isDaemon)
     {
-        sceKernelLoadStartModule("libSceUserService.sprx",
-                                 0, NULL, 0, NULL, NULL);
+        sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
 
         sceUserServiceInitialize2();
 
