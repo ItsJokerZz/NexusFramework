@@ -32,7 +32,7 @@ struct ErrorMessage
 
 extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
 
-extern bool isDaemon, unloaded, connected, attached;
+extern bool DEBUG, isDaemon, unloaded, connected, attached;
 
 struct serverData
 {
@@ -62,13 +62,13 @@ struct serverData
   {
     struct daemon
     {
-      pthread_t main = -1;
+      pthread_t server = -1;
       pthread_t client = -1;
     } daemon;
 
     struct relay
     {
-      pthread_t main = -1;
+      pthread_t server = -1;
       pthread_t client = -1;
     } relay;
 
@@ -76,3 +76,6 @@ struct serverData
 };
 
 extern serverData data;
+
+extern uint16_t port;
+extern std::string name;

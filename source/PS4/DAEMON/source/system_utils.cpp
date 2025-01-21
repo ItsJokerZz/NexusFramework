@@ -2,7 +2,7 @@
 
 namespace sys_utils
 {
-  std::string console_type = "RETAIL";
+  std::string console_type;
 
   std::string get_title_id()
   {
@@ -15,7 +15,8 @@ namespace sys_utils
       std::string entry_name = entry->d_name;
       std::regex pattern("^[A-Za-z0-9]{4}[0-9]{5}$");
 
-      if (std::regex_match(entry_name, pattern) && entry_name.substr(0, 4) != "NPXS")
+      if (std::regex_match(entry_name, pattern) &&
+          entry_name.substr(0, 4) != "NPXS")
       {
         title_id = entry_name;
 
@@ -128,12 +129,10 @@ namespace sys_utils
   {
     if (sceKernelIsDevKit())
       console_type = "KIT";
-    if (sceKernelIsTestKit())
+    else if (sceKernelIsTestKit())
       console_type = "TEST";
-
-    // if (sceKernelIsCEX())
-    // console_type = "RETAIL";
-
+    else // if (sceKernelIsCEX())
+      console_type = "CEX";
     return console_type.c_str();
   }
 
@@ -210,4 +209,4 @@ namespace sys_utils
 
   void ring_buzzer(int type) { sceKernelIccSetBuzzer(type); }
 
-} // namespace sys_utils
+}

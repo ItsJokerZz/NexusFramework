@@ -1,7 +1,8 @@
 #include "../headers/includes.hpp"
 
 std::string extract_param(const char *key,
-                          std::array<char, BUFFER_SIZE> buffer) {
+                          std::array<char, BUFFER_SIZE> buffer)
+{
   const char *start = strstr(buffer.data(), key);
   if (!start)
     return "";
@@ -13,27 +14,31 @@ std::string extract_param(const char *key,
   return std::string(start, end);
 }
 
-char *perform_get_request(const char *command) {
+char *perform_get_request(const char *command)
+{
   static char buffer[BUFFER_SIZE];
   int httpCtxId = 0, tmplId = 0, connId = 0, reqId = 0, bytesRead = 0;
   char userAgent[64], url[256];
 
   httpCtxId = sceHttpInit(0, 0, 1024 * 1024);
-  if (httpCtxId < 0) {
+  if (httpCtxId < 0)
+  {
     log_message("Failed to initialize HTTP. Error code: %d", httpCtxId);
     return NULL;
   }
 
   snprintf(userAgent, sizeof(userAgent), "OCAPIv%.2fb%d", VERSION, BUILD);
   tmplId = sceHttpCreateTemplate(httpCtxId, userAgent, 1, 0);
-  if (tmplId < 0) {
+  if (tmplId < 0)
+  {
     log_message("Failed to create HTTP template. Error code: %d", tmplId);
     sceHttpTerm(httpCtxId);
     return NULL;
   }
 
   connId = sceHttpCreateConnection(tmplId, "127.0.0.1", "http", RELAYS_PORT, 1);
-  if (connId < 0) {
+  if (connId < 0)
+  {
     log_message("Failed to create HTTP connection. Error code: %d", connId);
     sceHttpDeleteTemplate(tmplId);
     sceHttpTerm(httpCtxId);
@@ -42,7 +47,8 @@ char *perform_get_request(const char *command) {
 
   snprintf(url, sizeof(url), "/%s", command);
   reqId = sceHttpCreateRequest(connId, ORBIS_METHOD_GET, url, 0);
-  if (reqId < 0) {
+  if (reqId < 0)
+  {
     log_message("Failed to create HTTP request. Error code: %d", reqId);
     sceHttpDeleteConnection(connId);
     sceHttpDeleteTemplate(tmplId);
@@ -51,7 +57,8 @@ char *perform_get_request(const char *command) {
   }
 
   int sendRequestResult = sceHttpSendRequest(reqId, NULL, 0);
-  if (sendRequestResult < 0 && strcmp(command, "attach") != 0) {
+  if (sendRequestResult < 0 && strcmp(command, "attach") != 0)
+  {
     log_message("Failed to send HTTP request. Error code: %d",
                 sendRequestResult);
     sceHttpDeleteRequest(reqId);
@@ -62,7 +69,8 @@ char *perform_get_request(const char *command) {
   }
 
   bytesRead = sceHttpReadData(reqId, buffer, sizeof(buffer));
-  if (bytesRead < 0) {
+  if (bytesRead < 0)
+  {
     log_message("Failed to read HTTP response. Error code: %d", bytesRead);
     sceHttpDeleteRequest(reqId);
     sceHttpDeleteConnection(connId);
@@ -73,7 +81,8 @@ char *perform_get_request(const char *command) {
 
   buffer[bytesRead] = '\0';
   char *bodyStart = strstr(buffer, "\r\n\r\n");
-  if (bodyStart != NULL) {
+  if (bodyStart != NULL)
+  {
     bodyStart += 4;
     size_t bodyLength = bytesRead - (bodyStart - buffer);
     memmove(buffer, bodyStart, bodyLength);
@@ -88,7 +97,8 @@ char *perform_get_request(const char *command) {
   return buffer;
 }
 
-bool is_port_open(int port) {
+bool is_port_open(int port)
+{
   int sock =
       sceNetSocket("ping.server", ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
 
@@ -104,7 +114,8 @@ bool is_port_open(int port) {
 
   int result = sceNetConnect(sock, &server_addr, sizeof(server_addr));
 
-  if (result == 0) {
+  if (result == 0)
+  {
     sceNetSocketClose(sock);
     return true;
   }
@@ -113,7 +124,8 @@ bool is_port_open(int port) {
   return false;
 }
 
-char *decode_url(const char *url) {
+char *decode_url(const char *url)
+{
   size_t len = strlen(url);
   char *decoded = (char *)malloc(len + 1);
 
@@ -121,16 +133,21 @@ char *decode_url(const char *url) {
     return NULL;
 
   char *d = decoded;
-  for (const char *s = url; *s; ++s) {
-    if (*s == '%') {
-      if (isxdigit(s[1]) && isxdigit(s[2])) {
+  for (const char *s = url; *s; ++s)
+  {
+    if (*s == '%')
+    {
+      if (isxdigit(s[1]) && isxdigit(s[2]))
+      {
         int value;
         sscanf(s + 1, "%2x", &value);
         *d++ = (char)value;
         s += 2;
-      } else
+      }
+      else
         *d++ = '%';
-    } else if (*s == '+')
+    }
+    else if (*s == '+')
       *d++ = ' ';
     else
       *d++ = *s;
@@ -141,7 +158,8 @@ char *decode_url(const char *url) {
 }
 
 std::string generate_json(
-    const std::unordered_map<std::string, nlohmann::json> &data_entries) {
+    const std::unordered_map<std::string, nlohmann::json> &data_entries)
+{
   nlohmann::json response = {{"DATA", nlohmann::json::object()}};
 
   for (const auto &pair : data_entries)
@@ -150,7 +168,8 @@ std::string generate_json(
   return response.dump(4);
 }
 
-void send_response(const char *message) {
+void send_response(const char *message)
+{
   char response[BUFFER_SIZE];
 
   int socket =
@@ -160,7 +179,8 @@ void send_response(const char *message) {
   int message_length = snprintf(response, sizeof(response), RESPONSE_OK,
                                 (int)strlen(message), message);
 
-  if (message_length >= sizeof(response)) {
+  if (message_length >= sizeof(response))
+  {
     message_length = sizeof(response) - 1;
     response[message_length] = '\0';
   }
@@ -171,7 +191,8 @@ void send_response(const char *message) {
     *toggle = false;
 }
 
-void send_response(const nlohmann::json &response_data) {
+void send_response(const nlohmann::json &response_data)
+{
   std::unordered_map<std::string, nlohmann::json> data_entries = {
       {"RESPONSE", response_data}};
 
@@ -179,7 +200,8 @@ void send_response(const nlohmann::json &response_data) {
   send_response(log_string.c_str()); // Call send_response
 }
 
-void send_error_response(ErrorCode error_code) {
+void send_error_response(ErrorCode error_code)
+{
   bool *toggle = isDaemon ? &connected : &attached;
 
   const char *message = error_messages[UNKNOWN_ERROR].message;
@@ -194,7 +216,8 @@ void send_error_response(ErrorCode error_code) {
   send_response(log_string.c_str()); // Call send_response
 }
 
-void send_error_response(const std::string &message) {
+void send_error_response(const std::string &message)
+{
   nlohmann::json error_response;
   error_response["ERROR"]["msg"] = message;
 

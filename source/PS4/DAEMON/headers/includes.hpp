@@ -1,7 +1,8 @@
 #pragma once
 
-#include <regex>
+#include <cstdint>
 #include <dirent.h>
+#include <regex>
 
 #include <GoldHEN.h>
 

@@ -9,6 +9,13 @@ std::array<ErrorMessage, ERROR_COUNT> error_messages = {{
     {"Invalid parameters provided. Please verify and retry."},
 }};
 
-bool isDaemon = false, unloaded = false, connected = false, attached = false;
+bool DEBUG = true,
+     isDaemon = false,
+     unloaded = false,
+     connected = false,
+     attached = false;
 
 serverData data;
+
+uint16_t port = UINT16_MAX;
+std::string name = "";
