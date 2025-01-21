@@ -1,28 +1,28 @@
 #pragma once
 
 // Standard Libraries
-#include <iostream>
-#include <string>
+#include <algorithm>
 #include <chrono>
-#include <ctime>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
-#include <vector>
-#include <utility>
-#include <algorithm>
+#include <ctime>
+#include <iostream>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 // System Libraries
 #include <sys/socket.h>
 
 // Orbis SDK
-#include <orbis/Net.h>
 #include <orbis/Http.h>
-#include <orbis/libkernel.h>
-#include <orbis/UserService.h>
-#include <orbis/SystemService.h>
+#include <orbis/Net.h>
 #include <orbis/Sysmodule.h>
+#include <orbis/SystemService.h>
+#include <orbis/UserService.h>
+#include <orbis/libkernel.h>
 
 // External Libraries
 #include <GoldHEN.h>
@@ -31,9 +31,9 @@
 #include "nlohmann/json.hpp"
 
 // Project-specific Includes
-#include "global_defs.hpp"
-#include "server_utils.hpp"
-#include "system_utils.hpp"
 #include "client_cmds.hpp"
 #include "daemon_cmds.hpp"
+#include "global_defs.hpp"
 #include "orbis_control.hpp"
+#include "server_utils.hpp"
+#include "system_utils.hpp"
