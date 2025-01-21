@@ -31,8 +31,9 @@
 #include "nlohmann/json.hpp"
 
 // Project-specific Includes
-#include "definitions.hpp"
+#include "global_defs.hpp"
 #include "server_utils.hpp"
 #include "system_utils.hpp"
 #include "client_cmds.hpp"
 #include "daemon_cmds.hpp"
+#include "orbis_control.hpp"

@@ -4,11 +4,10 @@
 #define DAEMON_PORT 1337
 #define RELAYS_PORT 5000
 #define RPC_PORT 7000
-
-#define RETRY_DELAY_SECONDS 30
-#define RETRY_DELAY_MINUTES 5
-
 #define BUFFER_SIZE 4096
+
+#define RETRY_DELAY_SECONDS 5
+#define MAX_RETRY_ATTEMPTS 10
 
 #define RESPONSE_OK "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s"
 
@@ -31,7 +30,6 @@ struct ErrorMessage
 extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
 
 extern bool isDaemon, unloaded, connected, attached;
-extern "C" int32_t __wrap__init(size_t args, const void *argp);
 
 struct serverData
 {

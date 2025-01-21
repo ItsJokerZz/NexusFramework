@@ -25,11 +25,11 @@ void *unified_process(void *arg)
             data.buffers.daemon[bytes_received] = '\0';
             const std::string request(data.buffers.daemon.data());
 
-            // Check if the request starts with "GET / HTTP/1.1"
             if (request.substr(0, 14) == "GET / HTTP/1.1")
             {
                 send_error_response(NO_COMMAND);
-                return nullptr; // No need to process further if it's a favicon or empty request
+
+                return nullptr;
             }
 
             static const std::map<std::string, std::function<void()>> commands = {
@@ -88,7 +88,6 @@ void *unified_process(void *arg)
     }
     else
     {
-
         data.sockets.relay.client = *static_cast<int *>(arg);
         std::fill(data.buffers.relay.begin(), data.buffers.relay.end(), 0);
 
@@ -99,11 +98,11 @@ void *unified_process(void *arg)
             data.buffers.relay[bytes_received] = '\0';
             const std::string request(data.buffers.relay.data());
 
-            // Check if the request starts with "GET / HTTP/1.1"
             if (request.substr(0, 14) == "GET / HTTP/1.1")
             {
                 send_error_response(NO_COMMAND);
-                return nullptr; // No need to process further if it's a favicon or empty request
+
+                return nullptr;
             }
 
             static const std::map<std::string, std::function<void()>> commands = {
@@ -126,7 +125,6 @@ void *unified_process(void *arg)
                                               return request.find(pair.first) != std::string::npos;
                                           });
 
-            // If no command was matched, send an error response
             if (it != commands.end())
                 it->second();
             else
@@ -143,14 +141,14 @@ void *unified_thread(void *arg)
 {
     OrbisNetSockaddr server_addr, client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
-    int server_socket, client_socket;
     uint16_t port = isDaemon ? DAEMON_PORT : RELAYS_PORT;
 
-    // Use void* pointers and cast later
+    const char *socket_name = isDaemon ? "daemon.server" : "relay.server";
     void *socket_data = isDaemon ? (void *)&data.sockets.daemon : (void *)&data.sockets.relay;
     void *thread_data = isDaemon ? (void *)&data.threads.daemon : (void *)&data.threads.relay;
+    int server_socket = -1, client_socket = -1, bind_retries = 0, listen_retries = 0, accept_retries = 0;
 
-    const char *socket_name = isDaemon ? "data.sockets.daemon.server" : "data.sockets.relay.server";
+    bool retrying = false;
 
     while (!unloaded)
     {
@@ -158,7 +156,16 @@ void *unified_thread(void *arg)
 
         if (server_socket < 0)
         {
-            log_message("%s failed to create server socket, retrying in %d seconds...", isDaemon ? "Daemon" : "Relay", RETRY_DELAY_SECONDS);
+            log_message("%s failed to create server socket, retrying in %d seconds... Attempt %d/%d",
+                        isDaemon ? "Daemon" : "Relay", RETRY_DELAY_SECONDS, bind_retries + 1, MAX_RETRY_ATTEMPTS);
+
+            if (++bind_retries >= MAX_RETRY_ATTEMPTS)
+            {
+                log_message("%s failed to create server socket after %d attempts, unloading...", isDaemon ? "Daemon" : "Relay", MAX_RETRY_ATTEMPTS);
+                unloaded = true;
+                break;
+            }
+
             sceKernelSleep(RETRY_DELAY_SECONDS);
             continue;
         }
@@ -171,7 +178,14 @@ void *unified_thread(void *arg)
 
         if (sceNetBind(server_socket, &server_addr, sizeof(server_addr)) < 0)
         {
-            log_message("%s failed to bind server socket, retrying in %d seconds...", isDaemon ? "Daemon" : "Relay", RETRY_DELAY_SECONDS);
+            log_message("%s failed to bind server socket, retrying in %d seconds... Attempt %d/%d",
+                        isDaemon ? "Daemon" : "Relay", RETRY_DELAY_SECONDS, bind_retries + 1, MAX_RETRY_ATTEMPTS);
+            if (++bind_retries >= MAX_RETRY_ATTEMPTS)
+            {
+                log_message("%s failed to bind server socket after %d attempts, unloading...", isDaemon ? "Daemon" : "Relay", MAX_RETRY_ATTEMPTS);
+                unloaded = true;
+                break;
+            }
             sceNetSocketClose(server_socket);
             sceKernelSleep(RETRY_DELAY_SECONDS);
             continue;
@@ -179,7 +193,14 @@ void *unified_thread(void *arg)
 
         if (sceNetListen(server_socket, 1) < 0)
         {
-            log_message("%s failed to listen on server socket, retrying in %d seconds...", isDaemon ? "Daemon" : "Relay", RETRY_DELAY_SECONDS);
+            log_message("%s failed to listen on server socket, retrying in %d seconds... Attempt %d/%d",
+                        isDaemon ? "Daemon" : "Relay", RETRY_DELAY_SECONDS, listen_retries + 1, MAX_RETRY_ATTEMPTS);
+            if (++listen_retries >= MAX_RETRY_ATTEMPTS)
+            {
+                log_message("%s failed to listen on server socket after %d attempts, unloading...", isDaemon ? "Daemon" : "Relay", MAX_RETRY_ATTEMPTS);
+                unloaded = true;
+                break;
+            }
             sceNetSocketClose(server_socket);
             sceKernelSleep(RETRY_DELAY_SECONDS);
             continue;
@@ -190,9 +211,47 @@ void *unified_thread(void *arg)
         while (!unloaded)
         {
             client_socket = sceNetAccept(server_socket, &client_addr, &client_addr_len);
+
             if (client_socket < 0)
             {
-                log_message("Failed to accept client connection");
+                log_message("Failed to accept client connection. Closing server socket and restarting...");
+
+                if (++accept_retries >= MAX_RETRY_ATTEMPTS)
+                {
+                    log_message("Failed to accept client connection after %d attempts, unloading...", MAX_RETRY_ATTEMPTS);
+                    unloaded = true;
+                    break;
+                }
+
+                sceNetSocketClose(server_socket);
+                sceKernelSleep(RETRY_DELAY_SECONDS);
+
+                server_socket = sceNetSocket(socket_name, ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
+                if (server_socket < 0)
+                {
+                    log_message("Failed to recreate server socket, retrying...");
+                    continue;
+                }
+
+                memset(&server_addr, 0, sizeof(server_addr));
+                server_addr.len = sizeof(server_addr);
+                server_addr.sa_family = ORBIS_NET_AF_INET;
+                *(uint16_t *)server_addr.sa_data = sceNetHtons(port);
+                memset(server_addr.sa_data + 2, 0, 4);
+
+                if (sceNetBind(server_socket, &server_addr, sizeof(server_addr)) < 0)
+                {
+                    log_message("Failed to bind server socket after reset, retrying...");
+                    continue;
+                }
+
+                if (sceNetListen(server_socket, 1) < 0)
+                {
+                    log_message("Failed to listen on server socket after reset, retrying...");
+                    continue;
+                }
+
+                log_message("Server socket successfully reset and is listening again.");
                 continue;
             }
 
@@ -238,7 +297,6 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
     if (isDaemon)
     {
         sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
-
         sceUserServiceInitialize2();
 
         while (!unloaded)
