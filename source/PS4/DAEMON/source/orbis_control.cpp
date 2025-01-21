@@ -69,8 +69,7 @@ void *unified_process(void *arg) {
            []() { handle_command(cmds::client::process::load_plugin); }},
           {"GET /rw_memory",
            []() { handle_command(cmds::client::process::rw_proc_mem); }},
-          {"GET /ping",
-           []() { handle_command(cmds::client::ping); }},
+          {"GET /ping", []() { handle_command(cmds::client::ping); }},
 
       };
 
@@ -287,6 +286,14 @@ void *unified_thread(void *arg) {
 extern "C" int32_t __wrap__init(size_t args, const void *argp) {
   serverData data;
   struct proc_info info;
+
+  if (is_port_open(RELAYS_PORT) || is_port_open(DAEMON_PORT)) {
+    sys_utils::text_notify(222,
+                           (std::string("[OCAPI] Already loaded!")).c_str());
+
+    return 1;
+  }
+
   sys_sdk_proc_info(&info);
 
   isDaemon = (strcmp(info.titleid, DAEMON) == 0);
