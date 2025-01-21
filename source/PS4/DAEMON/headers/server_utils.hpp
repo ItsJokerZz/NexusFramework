@@ -60,5 +60,3 @@ void send_response(const char *message);
 void send_response(const nlohmann::json &response_data);
 void send_error_response(ErrorCode error_code);
 void send_error_response(const std::string &message);
-
-void handle_command(void (*func)());

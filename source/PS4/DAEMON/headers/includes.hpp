@@ -25,7 +25,6 @@
 #include <orbis/Sysmodule.h>
 
 // External Libraries
-#include <libjbc.h>
 #include <GoldHEN.h>
 
 // JSON Library
@@ -37,5 +36,3 @@
 #include "system_utils.hpp"
 #include "client_cmds.hpp"
 #include "daemon_cmds.hpp"
-#include "daemon_server.hpp"
-#include "relay_server.hpp"

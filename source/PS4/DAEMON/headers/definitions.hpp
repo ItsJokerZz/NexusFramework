@@ -28,7 +28,50 @@ struct ErrorMessage
     const char *message;
 };
 
-extern pthread_t daemon_thread, relay_thread;
-extern bool isDaemon, unloaded, connected, attached;
 extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
+
+extern bool isDaemon, unloaded, connected, attached;
 extern "C" int32_t __wrap__init(size_t args, const void *argp);
+
+struct serverData
+{
+    struct sockets
+    {
+        struct daemon
+        {
+            int server = -1;
+            int client = -1;
+        } daemon;
+
+        struct relay
+        {
+            int server = -1;
+            int client = -1;
+        } relay;
+
+    } sockets;
+
+    struct buffers
+    {
+        std::array<char, BUFFER_SIZE> relay = {};
+        std::array<char, BUFFER_SIZE> daemon = {};
+    } buffers;
+
+    struct threads
+    {
+        struct daemon
+        {
+            pthread_t main = -1;
+            pthread_t client = -1;
+        } daemon;
+
+        struct relay
+        {
+            pthread_t main = -1;
+            pthread_t client = -1;
+        } relay;
+
+    } threads;
+};
+
+extern serverData data;

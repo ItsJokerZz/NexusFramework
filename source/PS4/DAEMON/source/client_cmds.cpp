@@ -21,16 +21,16 @@ namespace cmds
             void unload()
             {
                 send_response("done");
-                if (server::daemon::daemon_sock >= 0)
+                if (data.sockets.daemon.server >= 0)
                 {
-                    sceNetSocketClose(server::daemon::daemon_sock);
-                    server::daemon::daemon_sock = -1;
+                    sceNetSocketClose(data.sockets.daemon.server);
+                    data.sockets.daemon.server = -1;
                 }
-                
-                if (server::daemon::client_sock >= 0)
+
+                if (data.sockets.daemon.client >= 0)
                 {
-                    sceNetSocketClose(server::daemon::client_sock);
-                    server::daemon::client_sock = -1;
+                    sceNetSocketClose(data.sockets.daemon.client);
+                    data.sockets.daemon.client = -1;
                 }
 
                 unloaded = true;
@@ -39,10 +39,10 @@ namespace cmds
             void disconnect()
             {
                 send_response("done");
-                if (server::daemon::client_sock >= 0)
+                if (data.sockets.daemon.client >= 0)
                 {
-                    sceNetSocketClose(server::daemon::client_sock);
-                    server::daemon::client_sock = -1;
+                    sceNetSocketClose(data.sockets.daemon.client);
+                    data.sockets.daemon.client = -1;
                 }
                 connected = false;
             }
@@ -78,7 +78,7 @@ namespace cmds
             void get_temp()
             {
                 char temp[BUFFER_SIZE] = {0};
-                const char *start = strstr(server::daemon::buffer.data(), "type=");
+                const char *start = strstr(data.buffers.daemon.data(), "type=");
                 if (start)
                 {
                     start += 5;
@@ -121,7 +121,7 @@ namespace cmds
                 std::string msg;
                 int type = 0;
 
-                const char *type_start = strstr(server::daemon::buffer.data(), "type=");
+                const char *type_start = strstr(data.buffers.daemon.data(), "type=");
                 if (type_start)
                 {
                     type_start += 5;
@@ -159,7 +159,7 @@ namespace cmds
             {
                 uint8_t temp = 0;
 
-                std::string limit_str = extract_param("limit=", server::daemon::buffer);
+                std::string limit_str = extract_param("limit=", data.buffers.daemon);
 
                 if (!limit_str.empty())
                 {
@@ -183,7 +183,7 @@ namespace cmds
             {
                 int state = 0;
 
-                std::string state_str = extract_param("state=", server::daemon::buffer);
+                std::string state_str = extract_param("state=", data.buffers.daemon);
 
                 if (!state_str.empty())
                 {
@@ -205,7 +205,7 @@ namespace cmds
             void ring_buzzer()
             {
                 int type = 0;
-                const char *start = strstr(server::daemon::buffer.data(), "type=");
+                const char *start = strstr(data.buffers.daemon.data(), "type=");
                 if (start)
                 {
                     start += 5;
@@ -253,8 +253,8 @@ namespace cmds
             {
                 char request[BUFFER_SIZE];
 
-                std::string prx_path = extract_param("path=", server::daemon::buffer);
-                std::string exec_path = extract_param("exec=", server::daemon::buffer);
+                std::string prx_path = extract_param("path=", data.buffers.daemon);
+                std::string exec_path = extract_param("exec=", data.buffers.daemon);
 
                 auto load_prx = [](const std::string &exec_path, const std::string &prx_path) -> bool
                 {
@@ -361,7 +361,7 @@ namespace cmds
             {
                 int procID;
 
-                const char *name = strstr(server::daemon::buffer.data(), "name=");
+                const char *name = strstr(data.buffers.daemon.data(), "name=");
                 if (!name)
                     return;
 
@@ -384,7 +384,7 @@ namespace cmds
                 int pid = 0;
 
                 // Extract the pid from the input buffer
-                const char *pid_str = strstr(server::daemon::buffer.data(), "pid=");
+                const char *pid_str = strstr(data.buffers.daemon.data(), "pid=");
                 if (!pid_str)
                     return;
 
@@ -418,13 +418,10 @@ namespace cmds
 
             void load_plugin()
             {
-                if (is_relay_running())
-                {
-                    if (perform_get_request("load_plugin") != NULL)
-                        handle_command([]() {}); // Pass 'attached' as a pointer to handle_command
-                }
-
-                send_response("done");
+                if (attached && perform_get_request("load_plugin") != NULL)
+                    send_response("done");
+                else
+                    send_error_response(NOT_ATTACHED);
             }
 
             void rw_proc_mem()

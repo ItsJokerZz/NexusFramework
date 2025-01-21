@@ -20,7 +20,7 @@ namespace cmds
         void load_module()
         {
             const char *path = nullptr;
-            const char *start = strstr(server::relay::buffer.data(), "path=");
+            const char *start = strstr(data.buffers.relay.data(), "path=");
 
             if (start)
             {
@@ -99,7 +99,7 @@ namespace cmds
         void start_plugin()
         {
             const char *plugin = nullptr;
-            const char *start = strstr(server::relay::buffer.data(), "plugin=");
+            const char *start = strstr(data.buffers.relay.data(), "plugin=");
 
             if (start)
             {
