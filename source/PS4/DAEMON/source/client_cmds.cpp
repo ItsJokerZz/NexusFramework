@@ -40,7 +40,7 @@ void disconnect() {
 void attach() {
   attached = false;
 
-  if (is_relay_running()) {
+  if (is_port_open(RELAYS_PORT)) {
     char *response = perform_get_request("attach");
     if (response != NULL && strcmp(response, "done") == 0)
       attached = true;
@@ -232,7 +232,7 @@ void load_module() {
     }
   };
 
-  if (is_relay_running()) {
+  if (is_port_open(RELAYS_PORT)) {
     if (!exec_path.empty() || !prx_path.empty()) {
       if (!exec_path.empty() && !prx_path.empty()) {
         if (exec_path.empty() || prx_path.empty())
@@ -365,5 +365,13 @@ void load_plugin() {
 void rw_proc_mem() { send_response("done"); }
 
 } // namespace process
+
+void ping() {
+  if (is_port_open(RELAYS_PORT))
+    send_response("true");
+  else
+    send_response("false");
+}
+
 } // namespace client
 } // namespace cmds

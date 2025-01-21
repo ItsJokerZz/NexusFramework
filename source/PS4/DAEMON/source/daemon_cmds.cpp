@@ -2,8 +2,6 @@
 
 namespace cmds {
 namespace daemon {
-void ping_relay() { send_response("true"); }
-
 void attach_relay() {
   attached = true;
 

@@ -52,7 +52,7 @@ enum power_state {
 extern std::string extract_param(const char *key,
                                  std::array<char, BUFFER_SIZE> buffer);
 extern char *perform_get_request(const char *command);
-extern bool is_relay_running();
+extern bool is_port_open(int port);
 extern char *decode_url(const char *url);
 extern std::string generate_json(
     const std::unordered_map<std::string, nlohmann::json> &data_entries);

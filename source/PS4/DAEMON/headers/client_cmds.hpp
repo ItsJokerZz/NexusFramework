@@ -36,5 +36,7 @@ void load_plugin();
 void rw_proc_mem();
 
 } // namespace process
+
+void ping();
 } // namespace client
 } // namespace cmds

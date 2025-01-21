@@ -1,9 +1,7 @@
 #include "../headers/includes.hpp"
 
 void handle_command(void (*func)()) {
-  int socket = (data.sockets.daemon.client != -1) ? data.sockets.daemon.client
-                                                  : data.sockets.relay.client;
-  bool *toggle = (data.sockets.daemon.client != -1) ? &connected : &attached;
+  bool *toggle = isDaemon ? &connected : &attached;
 
   if (*toggle)
     func();
@@ -71,6 +69,9 @@ void *unified_process(void *arg) {
            []() { handle_command(cmds::client::process::load_plugin); }},
           {"GET /rw_memory",
            []() { handle_command(cmds::client::process::rw_proc_mem); }},
+          {"GET /ping",
+           []() { handle_command(cmds::client::ping); }},
+
       };
 
       typedef std::map<std::string, std::function<void()>>::const_iterator
@@ -115,7 +116,6 @@ void *unified_process(void *arg) {
                  strcmp(perform_get_request("attach"), "done") == 0)
                attached = true;
            }},
-          {"GET /ping", cmds::daemon::ping_relay},
           {"GET /attach", cmds::daemon::attach_relay},
           {"GET /exec_prx", cmds::daemon::load_module},
           {"GET /load_plugin", cmds::daemon::start_plugin},

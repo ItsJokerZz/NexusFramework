@@ -88,9 +88,29 @@ char *perform_get_request(const char *command) {
   return buffer;
 }
 
-bool is_relay_running() {
-  char *response = perform_get_request("ping");
-  return (response != NULL && strcmp(response, "true") == 0);
+bool is_port_open(int port) {
+  int sock =
+      sceNetSocket("ping.server", ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
+
+  if (sock < 0)
+    return false;
+
+  OrbisNetSockaddr server_addr;
+  memset(&server_addr, 0, sizeof(server_addr));
+  server_addr.len = sizeof(server_addr);
+  server_addr.sa_family = ORBIS_NET_AF_INET;
+  *(uint16_t *)server_addr.sa_data = sceNetHtons(port);
+  memset(server_addr.sa_data + 2, 0, 4);
+
+  int result = sceNetConnect(sock, &server_addr, sizeof(server_addr));
+
+  if (result == 0) {
+    sceNetSocketClose(sock);
+    return true;
+  }
+
+  sceNetSocketClose(sock);
+  return false;
 }
 
 char *decode_url(const char *url) {
@@ -132,9 +152,10 @@ std::string generate_json(
 
 void send_response(const char *message) {
   char response[BUFFER_SIZE];
-  int socket = (data.sockets.daemon.client != -1) ? data.sockets.daemon.client
-                                                  : data.sockets.relay.client;
-  bool *toggle = (data.sockets.daemon.client != -1) ? &connected : &attached;
+
+  int socket =
+      isDaemon ? data.sockets.daemon.client : data.sockets.relay.client;
+  bool *toggle = isDaemon ? &connected : &attached;
 
   int message_length = snprintf(response, sizeof(response), RESPONSE_OK,
                                 (int)strlen(message), message);
@@ -159,9 +180,7 @@ void send_response(const nlohmann::json &response_data) {
 }
 
 void send_error_response(ErrorCode error_code) {
-  int socket = (data.sockets.daemon.client != -1) ? data.sockets.daemon.client
-                                                  : data.sockets.relay.client;
-  bool *toggle = (data.sockets.daemon.client != -1) ? &connected : &attached;
+  bool *toggle = isDaemon ? &connected : &attached;
 
   const char *message = error_messages[UNKNOWN_ERROR].message;
 
