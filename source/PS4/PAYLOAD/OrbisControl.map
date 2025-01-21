@@ -9,14 +9,14 @@ Archive member included to satisfy reference by file (symbol)
 
 Merging program properties
 
-Removed property 0xc0000002 to merge build/main.o (0x3) and /tmp/ccwfffEc.o (not found)
+Removed property 0xc0000002 to merge build/main.o (0x3) and /tmp/cc7taDIx.o (not found)
 Removed property 0xc0000002 to merge build/main.o (not found) and /opt/ps4sdk/libPS4/libPS4.a(kernel.o) (0x3)
 Removed property 0xc0000002 to merge build/main.o (not found) and /opt/ps4sdk/libPS4/libPS4.a(module.o) (0x3)
 
 Discarded input sections
 
- .data          0x0000000000000000        0x0 /tmp/ccwfffEc.o
- .bss           0x0000000000000000        0x0 /tmp/ccwfffEc.o
+ .data          0x0000000000000000        0x0 /tmp/cc7taDIx.o
+ .bss           0x0000000000000000        0x0 /tmp/cc7taDIx.o
  .text          0x0000000000000000        0x0 build/main.o
  .data          0x0000000000000000        0x0 build/main.o
  .bss           0x0000000000000000        0x0 build/main.o
@@ -65,13 +65,13 @@ Name             Origin             Length             Attributes
 
 Linker script and memory map
 
-LOAD /tmp/ccwfffEc.o
+LOAD /tmp/cc7taDIx.o
 LOAD build/main.o
 
 .text           0x0000000000000000      0x47c
  *(.text.start)
  *(.text*)
- .text          0x0000000000000000        0x5 /tmp/ccwfffEc.o
+ .text          0x0000000000000000        0x5 /tmp/cc7taDIx.o
                 0x0000000000000000                _start
  .text.dlsym    0x0000000000000005       0x19 build/main.o
                 0x0000000000000005                dlsym
@@ -91,292 +91,292 @@ LOAD build/main.o
                 0x0000000000000451                syscall_macro
 
 .plt            0x0000000000000480        0x0
- .plt           0x0000000000000480        0x0 /tmp/ccwfffEc.o
+ .plt           0x0000000000000480        0x0 /tmp/cc7taDIx.o
 
 .plt.got        0x0000000000000480        0x0
- .plt.got       0x0000000000000480        0x0 /tmp/ccwfffEc.o
+ .plt.got       0x0000000000000480        0x0 /tmp/cc7taDIx.o
 
-.rodata         0x000000000000047c      0x30d
+.rodata         0x000000000000047c      0x318
  *(.rodata)
  *(.rodata*)
  .rodata._main.str1.1
-                0x000000000000047c       0x39 build/main.o
+                0x000000000000047c       0x44 build/main.o
  .rodata.initKernel.str1.1
-                0x00000000000004b5      0x2d4 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000004c0      0x2d4 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
 
-.gnu.version_d  0x0000000000000790        0x0
+.gnu.version_d  0x0000000000000798        0x0
  .gnu.version_d
-                0x0000000000000790        0x0 /tmp/ccwfffEc.o
+                0x0000000000000798        0x0 /tmp/cc7taDIx.o
 
-.gnu.version    0x000000000000078a        0x0
- .gnu.version   0x000000000000078a        0x0 /tmp/ccwfffEc.o
+.gnu.version    0x0000000000000794        0x0
+ .gnu.version   0x0000000000000794        0x0 /tmp/cc7taDIx.o
 
-.gnu.version_r  0x0000000000000790        0x0
+.gnu.version_r  0x0000000000000798        0x0
  .gnu.version_r
-                0x0000000000000790        0x0 /tmp/ccwfffEc.o
+                0x0000000000000798        0x0 /tmp/cc7taDIx.o
 
-.dynsym         0x0000000000000790       0x18
- .dynsym        0x0000000000000790       0x18 /tmp/ccwfffEc.o
+.dynsym         0x0000000000000798       0x18
+ .dynsym        0x0000000000000798       0x18 /tmp/cc7taDIx.o
 
-.dynstr         0x00000000000007a8        0x1
- .dynstr        0x00000000000007a8        0x1 /tmp/ccwfffEc.o
+.dynstr         0x00000000000007b0        0x1
+ .dynstr        0x00000000000007b0        0x1 /tmp/cc7taDIx.o
 
-.gnu.hash       0x00000000000007b0       0x1c
- .gnu.hash      0x00000000000007b0       0x1c /tmp/ccwfffEc.o
+.gnu.hash       0x00000000000007b8       0x1c
+ .gnu.hash      0x00000000000007b8       0x1c /tmp/cc7taDIx.o
 
-.eh_frame_hdr   0x00000000000007cc        0x0
- .eh_frame_hdr  0x00000000000007cc        0x0 build/main.o
+.eh_frame_hdr   0x00000000000007d4        0x0
+ .eh_frame_hdr  0x00000000000007d4        0x0 build/main.o
 
-.rela.dyn       0x00000000000007d0        0x0
- .rela.plt      0x00000000000007d0        0x0 /tmp/ccwfffEc.o
- .rela.got      0x00000000000007d0        0x0 /tmp/ccwfffEc.o
- .rela.bss      0x00000000000007d0        0x0 /tmp/ccwfffEc.o
+.rela.dyn       0x00000000000007d8        0x0
+ .rela.plt      0x00000000000007d8        0x0 /tmp/cc7taDIx.o
+ .rela.got      0x00000000000007d8        0x0 /tmp/cc7taDIx.o
+ .rela.bss      0x00000000000007d8        0x0 /tmp/cc7taDIx.o
  .rela.data.rel.ro
-                0x00000000000007d0        0x0 /tmp/ccwfffEc.o
- .rela.ifunc    0x00000000000007d0        0x0 /tmp/ccwfffEc.o
+                0x00000000000007d8        0x0 /tmp/cc7taDIx.o
+ .rela.ifunc    0x00000000000007d8        0x0 /tmp/cc7taDIx.o
 
 .data
  *(.data)
 
-.dynamic        0x00000000000007d0       0xe0
- .dynamic       0x00000000000007d0       0xe0 /tmp/ccwfffEc.o
-                0x00000000000007d0                _DYNAMIC
+.dynamic        0x00000000000007d8       0xe0
+ .dynamic       0x00000000000007d8       0xe0 /tmp/cc7taDIx.o
+                0x00000000000007d8                _DYNAMIC
 
-.got            0x00000000000008b0        0x0
- .got           0x00000000000008b0        0x0 /tmp/ccwfffEc.o
+.got            0x00000000000008b8        0x0
+ .got           0x00000000000008b8        0x0 /tmp/cc7taDIx.o
 
-.got.plt        0x00000000000008b0        0x0
- .got.plt       0x00000000000008b0        0x0 /tmp/ccwfffEc.o
+.got.plt        0x00000000000008b8        0x0
+ .got.plt       0x00000000000008b8        0x0 /tmp/cc7taDIx.o
 
-.data.rel.ro    0x00000000000008b0        0x0
- .data.rel.ro   0x00000000000008b0        0x0 /tmp/ccwfffEc.o
+.data.rel.ro    0x00000000000008b8        0x0
+ .data.rel.ro   0x00000000000008b8        0x0 /tmp/cc7taDIx.o
 
 .bss
  *(.bss)
 
-.dynbss         0x00000000000008b0        0x0
- .dynbss        0x00000000000008b0        0x0 /tmp/ccwfffEc.o
+.dynbss         0x00000000000008b8        0x0
+ .dynbss        0x00000000000008b8        0x0 /tmp/cc7taDIx.o
 
-.bss.__init     0x00000000000008b0        0x8
- .bss.__init    0x00000000000008b0        0x8 build/main.o
+.bss.__init     0x00000000000008b8        0x8
+ .bss.__init    0x00000000000008b8        0x8 build/main.o
 
 .bss.sceKernelGetCpuTemperature
-                0x00000000000008b8        0x8
+                0x00000000000008c0        0x8
  .bss.sceKernelGetCpuTemperature
-                0x00000000000008b8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000008b8                sceKernelGetCpuTemperature
+                0x00000000000008c0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000008c0                sceKernelGetCpuTemperature
 
 .bss.sceKernelGetSystemSwVersion
-                0x00000000000008c0        0x8
+                0x00000000000008c8        0x8
  .bss.sceKernelGetSystemSwVersion
-                0x00000000000008c0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000008c0                sceKernelGetSystemSwVersion
+                0x00000000000008c8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000008c8                sceKernelGetSystemSwVersion
 
 .bss.sceKernelGetFsSandboxRandomWord
-                0x00000000000008c8        0x8
+                0x00000000000008d0        0x8
  .bss.sceKernelGetFsSandboxRandomWord
-                0x00000000000008c8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000008c8                sceKernelGetFsSandboxRandomWord
+                0x00000000000008d0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000008d0                sceKernelGetFsSandboxRandomWord
 
 .bss.sceKernelSendNotificationRequest
-                0x00000000000008d0        0x8
+                0x00000000000008d8        0x8
  .bss.sceKernelSendNotificationRequest
-                0x00000000000008d0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000008d0                sceKernelSendNotificationRequest
+                0x00000000000008d8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000008d8                sceKernelSendNotificationRequest
 
-.bss.setregid   0x00000000000008d8        0x8
- .bss.setregid  0x00000000000008d8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000008d8                setregid
+.bss.setregid   0x00000000000008e0        0x8
+ .bss.setregid  0x00000000000008e0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000008e0                setregid
 
-.bss.setreuid   0x00000000000008e0        0x8
- .bss.setreuid  0x00000000000008e0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000008e0                setreuid
+.bss.setreuid   0x00000000000008e8        0x8
+ .bss.setreuid  0x00000000000008e8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000008e8                setreuid
 
-.bss.setgid     0x00000000000008e8        0x8
- .bss.setgid    0x00000000000008e8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000008e8                setgid
+.bss.setgid     0x00000000000008f0        0x8
+ .bss.setgid    0x00000000000008f0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000008f0                setgid
 
-.bss.setuid     0x00000000000008f0        0x8
- .bss.setuid    0x00000000000008f0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000008f0                setuid
+.bss.setuid     0x00000000000008f8        0x8
+ .bss.setuid    0x00000000000008f8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000008f8                setuid
 
-.bss.getpid     0x00000000000008f8        0x8
- .bss.getpid    0x00000000000008f8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000008f8                getpid
+.bss.getpid     0x0000000000000900        0x8
+ .bss.getpid    0x0000000000000900        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000900                getpid
 
-.bss.getgid     0x0000000000000900        0x8
- .bss.getgid    0x0000000000000900        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000900                getgid
+.bss.getgid     0x0000000000000908        0x8
+ .bss.getgid    0x0000000000000908        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000908                getgid
 
-.bss.getuid     0x0000000000000908        0x8
- .bss.getuid    0x0000000000000908        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000908                getuid
+.bss.getuid     0x0000000000000910        0x8
+ .bss.getuid    0x0000000000000910        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000910                getuid
 
 .bss.sceKernelAddReadEvent
-                0x0000000000000910        0x8
+                0x0000000000000918        0x8
  .bss.sceKernelAddReadEvent
-                0x0000000000000910        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000910                sceKernelAddReadEvent
+                0x0000000000000918        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000918                sceKernelAddReadEvent
 
 .bss.sceKernelAddUserEvent
-                0x0000000000000918        0x8
+                0x0000000000000920        0x8
  .bss.sceKernelAddUserEvent
-                0x0000000000000918        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000918                sceKernelAddUserEvent
+                0x0000000000000920        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000920                sceKernelAddUserEvent
 
 .bss.sceKernelDeleteEqueue
-                0x0000000000000920        0x8
+                0x0000000000000928        0x8
  .bss.sceKernelDeleteEqueue
-                0x0000000000000920        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000920                sceKernelDeleteEqueue
+                0x0000000000000928        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000928                sceKernelDeleteEqueue
 
 .bss.sceKernelCreateEqueue
-                0x0000000000000928        0x8
+                0x0000000000000930        0x8
  .bss.sceKernelCreateEqueue
-                0x0000000000000928        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000928                sceKernelCreateEqueue
+                0x0000000000000930        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000930                sceKernelCreateEqueue
 
 .bss.pthread_setaffinity_np
-                0x0000000000000930        0x8
+                0x0000000000000938        0x8
  .bss.pthread_setaffinity_np
-                0x0000000000000930        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000930                pthread_setaffinity_np
+                0x0000000000000938        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000938                pthread_setaffinity_np
 
 .bss.pthread_self
-                0x0000000000000938        0x8
+                0x0000000000000940        0x8
  .bss.pthread_self
-                0x0000000000000938        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000938                pthread_self
+                0x0000000000000940        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000940                pthread_self
 
-.bss.execve     0x0000000000000940        0x8
- .bss.execve    0x0000000000000940        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000940                execve
+.bss.execve     0x0000000000000948        0x8
+ .bss.execve    0x0000000000000948        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000948                execve
 
-.bss.sysarch    0x0000000000000948        0x8
- .bss.sysarch   0x0000000000000948        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000948                sysarch
+.bss.sysarch    0x0000000000000950        0x8
+ .bss.sysarch   0x0000000000000950        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000950                sysarch
 
 .bss.sysctlbyname
-                0x0000000000000950        0x8
+                0x0000000000000958        0x8
  .bss.sysctlbyname
-                0x0000000000000950        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000950                sysctlbyname
+                0x0000000000000958        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000958                sysctlbyname
 
-.bss.sysctl     0x0000000000000958        0x8
- .bss.sysctl    0x0000000000000958        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000958                sysctl
+.bss.sysctl     0x0000000000000960        0x8
+ .bss.sysctl    0x0000000000000960        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000960                sysctl
 
 .bss.sceKernelGetCurrentCpu
-                0x0000000000000960        0x8
+                0x0000000000000968        0x8
  .bss.sceKernelGetCurrentCpu
-                0x0000000000000960        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000960                sceKernelGetCurrentCpu
+                0x0000000000000968        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000968                sceKernelGetCurrentCpu
 
 .bss.sceKernelGetProcessTime
-                0x0000000000000968        0x8
+                0x0000000000000970        0x8
  .bss.sceKernelGetProcessTime
-                0x0000000000000968        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000968                sceKernelGetProcessTime
+                0x0000000000000970        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000970                sceKernelGetProcessTime
 
 .bss.sceKernelGettimeofday
-                0x0000000000000970        0x8
+                0x0000000000000978        0x8
  .bss.sceKernelGettimeofday
-                0x0000000000000970        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000970                sceKernelGettimeofday
+                0x0000000000000978        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000978                sceKernelGettimeofday
 
 .bss.sceKernelUsleep
-                0x0000000000000978        0x8
+                0x0000000000000980        0x8
  .bss.sceKernelUsleep
-                0x0000000000000978        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000978                sceKernelUsleep
+                0x0000000000000980        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000980                sceKernelUsleep
 
 .bss.sceKernelSleep
-                0x0000000000000980        0x8
+                0x0000000000000988        0x8
  .bss.sceKernelSleep
-                0x0000000000000980        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000980                sceKernelSleep
+                0x0000000000000988        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000988                sceKernelSleep
 
 .bss.sceKernelClose
-                0x0000000000000988        0x8
+                0x0000000000000990        0x8
  .bss.sceKernelClose
-                0x0000000000000988        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000988                sceKernelClose
+                0x0000000000000990        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000990                sceKernelClose
 
 .bss.sceKernelLseek
-                0x0000000000000990        0x8
+                0x0000000000000998        0x8
  .bss.sceKernelLseek
-                0x0000000000000990        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000990                sceKernelLseek
+                0x0000000000000998        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x0000000000000998                sceKernelLseek
 
 .bss.sceKernelRead
-                0x0000000000000998        0x8
+                0x00000000000009a0        0x8
  .bss.sceKernelRead
-                0x0000000000000998        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x0000000000000998                sceKernelRead
+                0x00000000000009a0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009a0                sceKernelRead
 
 .bss.sceKernelOpen
-                0x00000000000009a0        0x8
+                0x00000000000009a8        0x8
  .bss.sceKernelOpen
-                0x00000000000009a0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000009a0                sceKernelOpen
+                0x00000000000009a8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009a8                sceKernelOpen
 
 .bss.sceKernelStat
-                0x00000000000009a8        0x8
+                0x00000000000009b0        0x8
  .bss.sceKernelStat
-                0x00000000000009a8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000009a8                sceKernelStat
+                0x00000000000009b0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009b0                sceKernelStat
 
 .bss.sceKernelGetDirectMemorySize
-                0x00000000000009b0        0x8
+                0x00000000000009b8        0x8
  .bss.sceKernelGetDirectMemorySize
-                0x00000000000009b0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000009b0                sceKernelGetDirectMemorySize
+                0x00000000000009b8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009b8                sceKernelGetDirectMemorySize
 
 .bss.sceKernelMapDirectMemory
-                0x00000000000009b8        0x8
+                0x00000000000009c0        0x8
  .bss.sceKernelMapDirectMemory
-                0x00000000000009b8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000009b8                sceKernelMapDirectMemory
+                0x00000000000009c0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009c0                sceKernelMapDirectMemory
 
 .bss.sceKernelAllocateDirectMemory
-                0x00000000000009c0        0x8
+                0x00000000000009c8        0x8
  .bss.sceKernelAllocateDirectMemory
-                0x00000000000009c0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000009c0                sceKernelAllocateDirectMemory
+                0x00000000000009c8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009c8                sceKernelAllocateDirectMemory
 
 .bss.sceKernelLoadStartModule
-                0x00000000000009c8        0x8
+                0x00000000000009d0        0x8
  .bss.sceKernelLoadStartModule
-                0x00000000000009c8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000009c8                sceKernelLoadStartModule
+                0x00000000000009d0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009d0                sceKernelLoadStartModule
 
 .bss.sceKernelError
-                0x00000000000009d0        0x8
+                0x00000000000009d8        0x8
  .bss.sceKernelError
-                0x00000000000009d0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000009d0                sceKernelError
+                0x00000000000009d8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009d8                sceKernelError
 
-.bss.__error    0x00000000000009d8        0x8
- .bss.__error   0x00000000000009d8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000009d8                __error
+.bss.__error    0x00000000000009e0        0x8
+ .bss.__error   0x00000000000009e0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009e0                __error
 
 .bss.__stack_chk_fail
-                0x00000000000009e0        0x8
+                0x00000000000009e8        0x8
  .bss.__stack_chk_fail
-                0x00000000000009e0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000009e0                __stack_chk_fail
+                0x00000000000009e8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009e8                __stack_chk_fail
 
 .bss.__stack_chk_guard
-                0x00000000000009e8        0x8
+                0x00000000000009f0        0x8
  .bss.__stack_chk_guard
-                0x00000000000009e8        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000009e8                __stack_chk_guard
+                0x00000000000009f0        0x8 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009f0                __stack_chk_guard
 
 .bss.libKernelHandle
-                0x00000000000009f0        0x4
+                0x00000000000009f8        0x4
  .bss.libKernelHandle
-                0x00000000000009f0        0x4 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
-                0x00000000000009f0                libKernelHandle
+                0x00000000000009f8        0x4 /opt/ps4sdk/libPS4/libPS4.a(kernel.o)
+                0x00000000000009f8                libKernelHandle
 
 /DISCARD/
  *(.comment)

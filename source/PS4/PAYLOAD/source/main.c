@@ -11,7 +11,7 @@ int _main(void) {
   
   initKernel();
 
-  if (loadModule("/user/data/GoldHEN/plugins/OrbisControl.prx", &prx_id) != 0 ||
+  if (loadModule("/user/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx", &prx_id) != 0 ||
       dlsym(prx_id, "__wrap__init", (void **)&__init) < 0 || __init == NULL)
     return -1;
 

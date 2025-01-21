@@ -327,36 +327,65 @@ void *unified_thread(void *arg)
 
 extern "C" int32_t __wrap__init(size_t args, const void *argp)
 {
-  serverData data;
   struct proc_info info;
-
-  if (isDaemon && is_port_open(DAEMON_PORT))
-  {
-    sys_utils::text_notify(222,
-                           (std::string("[OCAPI] Already loaded!")).c_str());
-
-    return 1;
-  }
-
   sys_sdk_proc_info(&info);
 
   isDaemon = (strcmp(info.titleid, DAEMON) == 0);
 
-  sys_utils::text_notify(
-      222, (std::string("[OCAPI] ") +
-            (isDaemon ? "Daemon server started!" : "Relay server started"))
-               .c_str());
-
-  pthread_t &thread =
-      isDaemon ? data.threads.daemon.main : data.threads.relay.main;
-
-  if (thread == -1 &&
-      pthread_create(&thread, nullptr, unified_thread, nullptr) != 0)
+  if (isDaemon)
   {
-    sys_utils::text_notify(222, (std::string("[OCAPI] Failed to create ") +
-                                 (isDaemon ? "daemon" : "relay") + " thread!")
-                                    .c_str());
+    if (is_port_open(DAEMON_PORT))
+    {
+      sys_utils::text_notify(222, "[OCAPI] Already loaded!");
 
+      return 1;
+    }
+
+    const char *file = "/user/data/GoldHEN/plugins.ini";
+    const char *content = "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n";
+
+    int fd = open(file, O_RDONLY);
+    bool contentFound = false;
+
+    if (fd != -1)
+    {
+      char buffer[1024];
+      ssize_t bytesRead;
+
+      while ((bytesRead = read(fd, buffer, sizeof(buffer))) > 0)
+      {
+        buffer[bytesRead] = '\0';
+        if (strstr(buffer, "[default]") && strstr(buffer, content))
+        {
+          contentFound = true;
+          break;
+        }
+      }
+      close(fd);
+    }
+
+    if (!contentFound)
+    {
+      fd = open(file, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+      if (fd != -1)
+      {
+        write(fd, content, strlen(content));
+        log_message("Added OrbisControl to %s", file);
+
+        close(fd);
+      }
+    }
+  }
+
+  sys_utils::text_notify(222,
+                         (std::string("[OCAPI] ") + (isDaemon ? "Daemon server started!" : "Relay server started")).c_str());
+
+  // Create and detach the appropriate thread
+  pthread_t &thread = isDaemon ? data.threads.daemon.main : data.threads.relay.main;
+
+  if (thread == -1 && pthread_create(&thread, nullptr, unified_thread, nullptr) != 0)
+  {
+    sys_utils::text_notify(222, (std::string("[OCAPI] Failed to create ") + (isDaemon ? "daemon" : "relay") + " thread!").c_str());
     return 1;
   }
 
@@ -371,7 +400,6 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
       sceKernelSleep(1);
 
     sys_utils::text_notify(222, "[OCAPI] Unloaded!");
-
     sceSystemServiceLoadExec("exit", 0);
   }
 
