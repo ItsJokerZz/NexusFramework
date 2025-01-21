@@ -1,6 +1,7 @@
 #include "../headers/includes.hpp"
 
-void handle_command(void (*func)()) {
+void handle_command(void (*func)())
+{
   bool *toggle = isDaemon ? &connected : &attached;
 
   if (*toggle)
@@ -11,8 +12,10 @@ void handle_command(void (*func)()) {
                             : NOT_ATTACHED); // Modifying toggle
 }
 
-void *unified_process(void *arg) {
-  if (isDaemon) {
+void *unified_process(void *arg)
+{
+  if (isDaemon)
+  {
     data.sockets.daemon.client = *static_cast<int *>(arg);
     std::fill(data.buffers.daemon.begin(), data.buffers.daemon.end(), 0);
 
@@ -20,11 +23,13 @@ void *unified_process(void *arg) {
         sceNetRecv(data.sockets.daemon.client, data.buffers.daemon.data(),
                    data.buffers.daemon.size() - 1, 0);
 
-    if (bytes_received > 0) {
+    if (bytes_received > 0)
+    {
       data.buffers.daemon[bytes_received] = '\0';
       const std::string request(data.buffers.daemon.data());
 
-      if (request.substr(0, 14) == "GET / HTTP/1.1") {
+      if (request.substr(0, 14) == "GET / HTTP/1.1")
+      {
         send_error_response(NO_COMMAND);
 
         return nullptr;
@@ -34,51 +39,66 @@ void *unified_process(void *arg) {
           {"GET /connect", cmds::client::connection::connect},
           {"GET /unload", cmds::client::connection::unload},
           {"GET /disconnect",
-           []() { handle_command(cmds::client::connection::disconnect); }},
+           []()
+           { handle_command(cmds::client::connection::disconnect); }},
           {"GET /attach",
-           []() { handle_command(cmds::client::connection::attach); }},
+           []()
+           { handle_command(cmds::client::connection::attach); }},
           {"GET /get_prx_version",
-           []() { handle_command(cmds::client::connection::version); }},
+           []()
+           { handle_command(cmds::client::connection::version); }},
           {"GET /get_fw_version",
-           []() { handle_command(cmds::client::sys_info::get_fw); }},
+           []()
+           { handle_command(cmds::client::sys_info::get_fw); }},
           {"GET /get_sys_type",
-           []() { handle_command(cmds::client::sys_info::sys_type); }},
+           []()
+           { handle_command(cmds::client::sys_info::sys_type); }},
           {"GET /get_temperature",
-           []() { handle_command(cmds::client::sys_info::get_temp); }},
+           []()
+           { handle_command(cmds::client::sys_info::get_temp); }},
           {"GET /get_username",
-           []() { handle_command(cmds::client::sys_info::get_user); }},
+           []()
+           { handle_command(cmds::client::sys_info::get_user); }},
           {"GET /send_notify",
-           []() { handle_command(cmds::client::sys_control::notify); }},
+           []()
+           { handle_command(cmds::client::sys_control::notify); }},
           {"GET /set_temp_limit",
-           []() { handle_command(cmds::client::sys_control::temp_limit); }},
+           []()
+           { handle_command(cmds::client::sys_control::temp_limit); }},
           {"GET /set_power_state",
-           []() {
+           []()
+           {
              handle_command(cmds::client::sys_control::set_power_state);
            }},
           {"GET /ring_buzzer",
-           []() { handle_command(cmds::client::sys_control::ring_buzzer); }},
+           []()
+           { handle_command(cmds::client::sys_control::ring_buzzer); }},
           {"GET /get_proc_list",
-           []() { handle_command(cmds::client::process::get_proc_list); }},
+           []()
+           { handle_command(cmds::client::process::get_proc_list); }},
           {"GET /get_pid_by_name",
-           []() { handle_command(cmds::client::process::find_pid_by_name); }},
+           []()
+           { handle_command(cmds::client::process::find_pid_by_name); }},
           {"GET /get_name_of_pid",
-           []() { handle_command(cmds::client::process::find_name_of_pid); }},
+           []()
+           { handle_command(cmds::client::process::find_name_of_pid); }},
           {"GET /load_module",
-           []() { handle_command(cmds::client::process::load_module); }},
+           []()
+           { handle_command(cmds::client::process::load_module); }},
           {"GET /load_plugin",
-           []() { handle_command(cmds::client::process::load_plugin); }},
+           []()
+           { handle_command(cmds::client::process::load_plugin); }},
           {"GET /rw_memory",
-           []() { handle_command(cmds::client::process::rw_proc_mem); }},
-          {"GET /ping", []() { handle_command(cmds::client::ping); }},
-
-      };
+           []()
+           { handle_command(cmds::client::process::rw_proc_mem); }}};
 
       typedef std::map<std::string, std::function<void()>>::const_iterator
           CommandIter;
       CommandIter it = std::find_if(
           commands.begin(), commands.end(),
           [&request](
-              const std::pair<std::string, std::function<void()>> &pair) {
+              const std::pair<std::string, std::function<void()>> &pair)
+          {
             return request.find(pair.first) != std::string::npos;
           });
 
@@ -89,7 +109,9 @@ void *unified_process(void *arg) {
     }
 
     sceNetSocketClose(data.sockets.daemon.client);
-  } else {
+  }
+  else
+  {
     data.sockets.relay.client = *static_cast<int *>(arg);
     std::fill(data.buffers.relay.begin(), data.buffers.relay.end(), 0);
 
@@ -97,11 +119,13 @@ void *unified_process(void *arg) {
         sceNetRecv(data.sockets.relay.client, data.buffers.relay.data(),
                    data.buffers.relay.size() - 1, 0);
 
-    if (bytes_received > 0) {
+    if (bytes_received > 0)
+    {
       data.buffers.relay[bytes_received] = '\0';
       const std::string request(data.buffers.relay.data());
 
-      if (request.substr(0, 14) == "GET / HTTP/1.1") {
+      if (request.substr(0, 14) == "GET / HTTP/1.1")
+      {
         send_error_response(NO_COMMAND);
 
         return nullptr;
@@ -109,7 +133,8 @@ void *unified_process(void *arg) {
 
       static const std::map<std::string, std::function<void()>> commands = {
           {"GET /test",
-           []() {
+           []()
+           {
              send_response("done");
              if (!attached &&
                  strcmp(perform_get_request("attach"), "done") == 0)
@@ -125,7 +150,8 @@ void *unified_process(void *arg) {
       CommandIter it = std::find_if(
           commands.begin(), commands.end(),
           [&request](
-              const std::pair<std::string, std::function<void()>> &pair) {
+              const std::pair<std::string, std::function<void()>> &pair)
+          {
             return request.find(pair.first) != std::string::npos;
           });
 
@@ -141,7 +167,8 @@ void *unified_process(void *arg) {
   return nullptr;
 }
 
-void *unified_thread(void *arg) {
+void *unified_thread(void *arg)
+{
   OrbisNetSockaddr server_addr, client_addr;
   socklen_t client_addr_len = sizeof(client_addr);
   uint16_t port = isDaemon ? DAEMON_PORT : RELAYS_PORT;
@@ -149,24 +176,29 @@ void *unified_thread(void *arg) {
   const char *socket_name = isDaemon ? "daemon.server" : "relay.server";
   void *socket_data =
       isDaemon ? (void *)&data.sockets.daemon : (void *)&data.sockets.relay;
+
   void *thread_data =
       isDaemon ? (void *)&data.threads.daemon : (void *)&data.threads.relay;
+
   int server_socket = -1, client_socket = -1, bind_retries = 0,
       listen_retries = 0, accept_retries = 0;
 
   bool retrying = false;
 
-  while (!unloaded) {
+  while (!unloaded)
+  {
     server_socket =
         sceNetSocket(socket_name, ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
 
-    if (server_socket < 0) {
+    if (server_socket < 0)
+    {
       log_message("%s failed to create server socket, retrying in %d "
                   "seconds... Attempt %d/%d",
                   isDaemon ? "Daemon" : "Relay", RETRY_DELAY_SECONDS,
                   bind_retries + 1, MAX_RETRY_ATTEMPTS);
 
-      if (++bind_retries >= MAX_RETRY_ATTEMPTS) {
+      if (++bind_retries >= MAX_RETRY_ATTEMPTS)
+      {
         log_message(
             "%s failed to create server socket after %d attempts, unloading...",
             isDaemon ? "Daemon" : "Relay", MAX_RETRY_ATTEMPTS);
@@ -184,12 +216,14 @@ void *unified_thread(void *arg) {
     *(uint16_t *)server_addr.sa_data = sceNetHtons(port);
     memset(server_addr.sa_data + 2, 0, 4);
 
-    if (sceNetBind(server_socket, &server_addr, sizeof(server_addr)) < 0) {
+    if (sceNetBind(server_socket, &server_addr, sizeof(server_addr)) < 0)
+    {
       log_message("%s failed to bind server socket, retrying in %d seconds... "
                   "Attempt %d/%d",
                   isDaemon ? "Daemon" : "Relay", RETRY_DELAY_SECONDS,
                   bind_retries + 1, MAX_RETRY_ATTEMPTS);
-      if (++bind_retries >= MAX_RETRY_ATTEMPTS) {
+      if (++bind_retries >= MAX_RETRY_ATTEMPTS)
+      {
         log_message(
             "%s failed to bind server socket after %d attempts, unloading...",
             isDaemon ? "Daemon" : "Relay", MAX_RETRY_ATTEMPTS);
@@ -201,12 +235,14 @@ void *unified_thread(void *arg) {
       continue;
     }
 
-    if (sceNetListen(server_socket, 1) < 0) {
+    if (sceNetListen(server_socket, 1) < 0)
+    {
       log_message("%s failed to listen on server socket, retrying in %d "
                   "seconds... Attempt %d/%d",
                   isDaemon ? "Daemon" : "Relay", RETRY_DELAY_SECONDS,
                   listen_retries + 1, MAX_RETRY_ATTEMPTS);
-      if (++listen_retries >= MAX_RETRY_ATTEMPTS) {
+      if (++listen_retries >= MAX_RETRY_ATTEMPTS)
+      {
         log_message("%s failed to listen on server socket after %d attempts, "
                     "unloading...",
                     isDaemon ? "Daemon" : "Relay", MAX_RETRY_ATTEMPTS);
@@ -221,15 +257,18 @@ void *unified_thread(void *arg) {
     log_message("%s has started a server listening on port %d.",
                 isDaemon ? "Daemon" : "Relay", port);
 
-    while (!unloaded) {
+    while (!unloaded)
+    {
       client_socket =
           sceNetAccept(server_socket, &client_addr, &client_addr_len);
 
-      if (client_socket < 0) {
+      if (client_socket < 0)
+      {
         log_message("Failed to accept client connection. Closing server socket "
                     "and restarting...");
 
-        if (++accept_retries >= MAX_RETRY_ATTEMPTS) {
+        if (++accept_retries >= MAX_RETRY_ATTEMPTS)
+        {
           log_message("Failed to accept client connection after %d attempts, "
                       "unloading...",
                       MAX_RETRY_ATTEMPTS);
@@ -242,7 +281,8 @@ void *unified_thread(void *arg) {
 
         server_socket = sceNetSocket(socket_name, ORBIS_NET_AF_INET,
                                      ORBIS_NET_SOCK_STREAM, 0);
-        if (server_socket < 0) {
+        if (server_socket < 0)
+        {
           log_message("Failed to recreate server socket, retrying...");
           continue;
         }
@@ -253,12 +293,14 @@ void *unified_thread(void *arg) {
         *(uint16_t *)server_addr.sa_data = sceNetHtons(port);
         memset(server_addr.sa_data + 2, 0, 4);
 
-        if (sceNetBind(server_socket, &server_addr, sizeof(server_addr)) < 0) {
+        if (sceNetBind(server_socket, &server_addr, sizeof(server_addr)) < 0)
+        {
           log_message("Failed to bind server socket after reset, retrying...");
           continue;
         }
 
-        if (sceNetListen(server_socket, 1) < 0) {
+        if (sceNetListen(server_socket, 1) < 0)
+        {
           log_message(
               "Failed to listen on server socket after reset, retrying...");
           continue;
@@ -283,11 +325,13 @@ void *unified_thread(void *arg) {
   return nullptr;
 }
 
-extern "C" int32_t __wrap__init(size_t args, const void *argp) {
+extern "C" int32_t __wrap__init(size_t args, const void *argp)
+{
   serverData data;
   struct proc_info info;
 
-  if (is_port_open(RELAYS_PORT) || is_port_open(DAEMON_PORT)) {
+  if (isDaemon && is_port_open(DAEMON_PORT))
+  {
     sys_utils::text_notify(222,
                            (std::string("[OCAPI] Already loaded!")).c_str());
 
@@ -307,7 +351,8 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp) {
       isDaemon ? data.threads.daemon.main : data.threads.relay.main;
 
   if (thread == -1 &&
-      pthread_create(&thread, nullptr, unified_thread, nullptr) != 0) {
+      pthread_create(&thread, nullptr, unified_thread, nullptr) != 0)
+  {
     sys_utils::text_notify(222, (std::string("[OCAPI] Failed to create ") +
                                  (isDaemon ? "daemon" : "relay") + " thread!")
                                     .c_str());
@@ -317,7 +362,8 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp) {
 
   pthread_detach(thread);
 
-  if (isDaemon) {
+  if (isDaemon)
+  {
     sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
     sceUserServiceInitialize2();
 

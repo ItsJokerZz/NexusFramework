@@ -10,11 +10,12 @@
 #define RETRY_DELAY_SECONDS 5
 #define MAX_RETRY_ATTEMPTS 10
 
-#define RESPONSE_OK                                                            \
-  "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: "            \
+#define RESPONSE_OK                                                 \
+  "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " \
   "%d\r\n\r\n%s"
 
-enum ErrorCode {
+enum ErrorCode
+{
   NO_COMMAND,
   INVALID_CMD,
   NOT_CONNECTED,
@@ -24,7 +25,8 @@ enum ErrorCode {
   ERROR_COUNT
 };
 
-struct ErrorMessage {
+struct ErrorMessage
+{
   const char *message;
 };
 
@@ -32,32 +34,40 @@ extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
 
 extern bool isDaemon, unloaded, connected, attached;
 
-struct serverData {
-  struct sockets {
-    struct daemon {
+struct serverData
+{
+  struct sockets
+  {
+    struct daemon
+    {
       int server = -1;
       int client = -1;
     } daemon;
 
-    struct relay {
+    struct relay
+    {
       int server = -1;
       int client = -1;
     } relay;
 
   } sockets;
 
-  struct buffers {
+  struct buffers
+  {
     std::array<char, BUFFER_SIZE> relay = {};
     std::array<char, BUFFER_SIZE> daemon = {};
   } buffers;
 
-  struct threads {
-    struct daemon {
+  struct threads
+  {
+    struct daemon
+    {
       pthread_t main = -1;
       pthread_t client = -1;
     } daemon;
 
-    struct relay {
+    struct relay
+    {
       pthread_t main = -1;
       pthread_t client = -1;
     } relay;
