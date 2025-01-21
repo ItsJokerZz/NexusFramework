@@ -9,6 +9,7 @@ struct proc_list_entry
 namespace sys_utils
 {
   extern std::string console_type;
+  extern std::string get_title_id();
 
   extern int sys_proc_list(struct proc_list_entry *procs, uint64_t *num);
   extern int find_pid_by_procName(const char *proc_name, int *pid);
@@ -27,7 +28,7 @@ namespace sys_utils
   void set_power_state(power_state state = DO_NOTHING);
   void ring_buzzer(int type);
 
-} // namespace sys_utils
+}
 
 extern "C"
 {

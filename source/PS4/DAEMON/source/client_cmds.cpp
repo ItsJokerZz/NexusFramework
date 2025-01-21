@@ -61,7 +61,7 @@ namespace cmds
         send_response("done");
       }
 
-    } // namespace connection
+    }
 
     namespace sys_info
     {
@@ -107,7 +107,7 @@ namespace cmds
         send_response(
             sys_utils::get_username()); // Pass the username to send_response
       }
-    } // namespace sys_info
+    }
 
     namespace sys_control
     {
@@ -241,7 +241,7 @@ namespace cmds
         send_response("done");
       }
 
-    } // namespace sys_control
+    }
 
     namespace process
     {
@@ -429,7 +429,7 @@ namespace cmds
 
       void rw_proc_mem() { send_response("done"); }
 
-    } // namespace process
+    }
 
-  } // namespace client
-} // namespace cmds
+  }
+}

@@ -2,7 +2,31 @@
 
 namespace sys_utils
 {
-  std::string console_type;
+  std::string console_type = "RETAIL";
+
+  std::string get_title_id()
+  {
+    struct dirent *entry;
+    DIR *dir = opendir("/mnt/sandbox");
+    std::string title_id = "User Interface (UI)";
+
+    while ((entry = readdir(dir)) != nullptr)
+    {
+      std::string entry_name = entry->d_name;
+      std::regex pattern("^[A-Za-z0-9]{4}[0-9]{5}$");
+
+      if (std::regex_match(entry_name, pattern) && entry_name.substr(0, 4) != "NPXS")
+      {
+        title_id = entry_name;
+
+        break;
+      }
+    }
+
+    closedir(dir);
+
+    return title_id;
+  }
 
   int sys_proc_list(struct proc_list_entry *procs, uint64_t *num)
   {
@@ -102,16 +126,13 @@ namespace sys_utils
 
   const char *get_console_type()
   {
-    int32_t cex = sceKernelIsCEX();
-    int32_t devKit = sceKernelIsDevKit();
-    int32_t testKit = sceKernelIsTestKit();
-
-    if (cex)
-      console_type = "CEX";
-    if (devKit)
+    if (sceKernelIsDevKit())
       console_type = "KIT";
-    if (testKit)
+    if (sceKernelIsTestKit())
       console_type = "TEST";
+
+    // if (sceKernelIsCEX())
+    // console_type = "RETAIL";
 
     return console_type.c_str();
   }

@@ -234,7 +234,7 @@
             this.memory_p.Controls.Add(this.panel5);
             this.memory_p.Location = new System.Drawing.Point(999, 999);
             this.memory_p.Name = "memory_p";
-            this.memory_p.Size = new System.Drawing.Size(530, 307);
+            this.memory_p.Size = new System.Drawing.Size(530, 227);
             this.memory_p.TabIndex = 13;
             // 
             // label16
@@ -242,7 +242,7 @@
             this.label16.AutoSize = true;
             this.label16.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label16.ForeColor = System.Drawing.Color.White;
-            this.label16.Location = new System.Drawing.Point(222, 192);
+            this.label16.Location = new System.Drawing.Point(224, 116);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(98, 15);
             this.label16.TabIndex = 21;
@@ -253,7 +253,7 @@
             this.groupBox9.Controls.Add(this.textBox9);
             this.groupBox9.Controls.Add(this.textBox10);
             this.groupBox9.Controls.Add(this.button8);
-            this.groupBox9.Location = new System.Drawing.Point(225, 204);
+            this.groupBox9.Location = new System.Drawing.Point(227, 128);
             this.groupBox9.Name = "groupBox9";
             this.groupBox9.Size = new System.Drawing.Size(300, 48);
             this.groupBox9.TabIndex = 20;
@@ -301,7 +301,7 @@
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.ForeColor = System.Drawing.Color.White;
-            this.label4.Location = new System.Drawing.Point(4, 240);
+            this.label4.Location = new System.Drawing.Point(6, 164);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(84, 15);
             this.label4.TabIndex = 19;
@@ -312,7 +312,7 @@
             this.groupBox8.Controls.Add(this.textBox8);
             this.groupBox8.Controls.Add(this.textBox7);
             this.groupBox8.Controls.Add(this.button9);
-            this.groupBox8.Location = new System.Drawing.Point(6, 252);
+            this.groupBox8.Location = new System.Drawing.Point(8, 176);
             this.groupBox8.Name = "groupBox8";
             this.groupBox8.Size = new System.Drawing.Size(519, 48);
             this.groupBox8.TabIndex = 18;
@@ -432,7 +432,7 @@
             this.details_p.Controls.Add(this.panel3);
             this.details_p.Location = new System.Drawing.Point(999, 999);
             this.details_p.Name = "details_p";
-            this.details_p.Size = new System.Drawing.Size(530, 307);
+            this.details_p.Size = new System.Drawing.Size(530, 227);
             this.details_p.TabIndex = 12;
             // 
             // label8
@@ -635,7 +635,7 @@
             this.system_p.Controls.Add(this.groupBox2);
             this.system_p.Location = new System.Drawing.Point(999, 999);
             this.system_p.Name = "system_p";
-            this.system_p.Size = new System.Drawing.Size(530, 307);
+            this.system_p.Size = new System.Drawing.Size(530, 224);
             this.system_p.TabIndex = 11;
             // 
             // label14
@@ -643,7 +643,7 @@
             this.label14.AutoSize = true;
             this.label14.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label14.ForeColor = System.Drawing.Color.White;
-            this.label14.Location = new System.Drawing.Point(335, 156);
+            this.label14.Location = new System.Drawing.Point(338, 124);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(147, 15);
             this.label14.TabIndex = 18;
@@ -653,7 +653,7 @@
             // 
             this.groupBox7.Controls.Add(this.numericUpDown1);
             this.groupBox7.Controls.Add(this.button7);
-            this.groupBox7.Location = new System.Drawing.Point(339, 167);
+            this.groupBox7.Location = new System.Drawing.Point(342, 135);
             this.groupBox7.Name = "groupBox7";
             this.groupBox7.Size = new System.Drawing.Size(185, 35);
             this.groupBox7.TabIndex = 17;
@@ -706,7 +706,7 @@
             this.label17.AutoSize = true;
             this.label17.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label17.ForeColor = System.Drawing.Color.White;
-            this.label17.Location = new System.Drawing.Point(4, 251);
+            this.label17.Location = new System.Drawing.Point(3, 165);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(126, 15);
             this.label17.TabIndex = 16;
@@ -806,7 +806,7 @@
             this.groupBox2.Controls.Add(this.button4);
             this.groupBox2.Controls.Add(this.textBox3);
             this.groupBox2.Controls.Add(this.textBox4);
-            this.groupBox2.Location = new System.Drawing.Point(7, 262);
+            this.groupBox2.Location = new System.Drawing.Point(6, 176);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(518, 42);
             this.groupBox2.TabIndex = 0;

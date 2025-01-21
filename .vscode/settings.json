@@ -78,6 +78,7 @@
         "mutex": "cpp",
         "stop_token": "cpp",
         "thread": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "regex": "cpp"
     }
 }

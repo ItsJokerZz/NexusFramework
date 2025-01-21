@@ -334,6 +334,8 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
 
   if (isDaemon)
   {
+    log_message("%s", sys_utils::get_title_id().c_str());
+
     if (is_port_open(DAEMON_PORT))
     {
       sys_utils::text_notify(222, "[OCAPI] Already loaded!");
@@ -358,9 +360,11 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
         if (strstr(buffer, "[default]") && strstr(buffer, content))
         {
           contentFound = true;
+
           break;
         }
       }
+
       close(fd);
     }
 
@@ -380,7 +384,6 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
   sys_utils::text_notify(222,
                          (std::string("[OCAPI] ") + (isDaemon ? "Daemon server started!" : "Relay server started")).c_str());
 
-  // Create and detach the appropriate thread
   pthread_t &thread = isDaemon ? data.threads.daemon.main : data.threads.relay.main;
 
   if (thread == -1 && pthread_create(&thread, nullptr, unified_thread, nullptr) != 0)
