@@ -42,6 +42,7 @@ struct serverData
     {
       int server = -1;
       int client = -1;
+
     } daemon;
 
     struct relay
@@ -50,6 +51,10 @@ struct serverData
       int client = -1;
     } relay;
 
+    OrbisNetSockaddr server_addr = {};
+    OrbisNetSockaddr client_addr = {};
+    socklen_t client_addr_len = {};
+    
   } sockets;
 
   struct buffers
