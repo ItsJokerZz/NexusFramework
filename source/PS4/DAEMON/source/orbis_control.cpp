@@ -1,57 +1,5 @@
 #include "../headers/includes.hpp"
 
-enum
-{
-  MAIN_ON_STANDBY = 500,
-  WORKING = 1000
-};
-
-static OrbisKernelEventFlag statemgr = NULL; // Kernel event flag handler
-
-int sceSystemOpenStartMgr()
-{
-  if ((unsigned int)sceKernelOpenEventFlag(&statemgr, "SceSystemStateMgrInfo") != 0)
-    return -1;
-  return 0;
-}
-
-int sceSystemStateMgrGetCurrentState()
-{
-  uint64_t ret = 0;
-
-  // Initialize statemgr if it's not already initialized
-  if (!statemgr)
-  {
-    if (sceSystemOpenStartMgr() == -1)
-      return -1;
-  }
-
-  // Poll for the event flag
-  sceKernelPollEventFlag(statemgr, 0xFFFF, SCE_KERNEL_EVF_WAITMODE_OR, &ret);
-
-  // If system is in WORKING state and certain condition is met, change state to MAIN_ON_STANDBY
-  if ((int)ret == WORKING && sceKernelPollEventFlag(statemgr, 0x200000, SCE_KERNEL_EVF_WAITMODE_OR, 0) == 0)
-    ret = MAIN_ON_STANDBY;
-
-  // Log if system state is MAIN_ON_STANDBY
-  if ((int)ret == MAIN_ON_STANDBY)
-    log_message("SceSystemStateMgrGetCurrentState MAIN_ON_STANDBY");
-
-  return (int)ret;
-}
-
-bool isRestMode()
-{
-  return sceSystemStateMgrGetCurrentState() == MAIN_ON_STANDBY;
-}
-
-bool isOn()
-{
-  return true;
-
-  // return sceSystemStateMgrGetCurrentState() == WORKING;
-}
-
 void handle_command(void (*func)())
 {
   bool *toggle = isDaemon ? &connected : &attached;
@@ -192,7 +140,7 @@ void *unified_process(void *arg)
 void *unified_thread(void *arg)
 {
   std::string buffer;
-  std::string socket_name = "[OCAPI] " + name + " Socket";
+  std::string socket_name = "[OrbisControl] " + name + " Socket";
 
   int server_socket = -1, client_socket = -1, retries = 0;
 
@@ -320,13 +268,15 @@ void *unified_thread(void *arg)
 
 extern "C" int32_t __wrap__init(size_t args, const void *argp)
 {
+  debug_log("%s", "TEST DEBUG MESSAGE");
+
   struct proc_info info;
   sys_sdk_proc_info(&info);
 
   isDaemon = (strcmp(info.titleid, DAEMON) == 0);
   port = isDaemon ? DAEMON_PORT : RELAYS_PORT;
 
-  std::string buffer = "[OCAPI] Already loaded!";
+  std::string buffer = "[OrbisControl] Already loaded!";
 
   if (isDaemon)
   {
@@ -374,11 +324,11 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
   }
 
   name = isDaemon ? "Daemon" : "Relay";
-  buffer = "[OCAPI] " + name + " server started";
+  buffer = "[OrbisControl] " + name + " server started";
   pthread_t &thread = isDaemon ? data.threads.daemon.server : data.threads.relay.server;
   if (thread == -1 && pthread_create(&thread, nullptr, unified_thread, nullptr) != 0)
   {
-    buffer = "[OCAPI] Failed to create " + name + " thread!";
+    buffer = "[OrbisControl] Failed to create " + name + " thread!";
     sys_utils::text_notify(222, buffer.c_str());
     return 1;
   }
@@ -391,10 +341,16 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
     sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
     sceUserServiceInitialize2();
 
-    while (!unloaded && (!DEBUG || !(isOn() && isRestMode())))
-      sceKernelSleep(1);
+    /* UNLOAD AT STARTUP / ON RESTMODE */
+    while (!unloaded)
+    {
+      if (DEBUG && sys_utils::has_entered_restmode())
+        unloaded = true;
 
-    buffer = "[OCAPI] Unloaded!";
+      sceKernelSleep(1);
+    }
+
+    buffer = "[OrbisControl] Unloaded!";
     sys_utils::text_notify(222, buffer.c_str());
     sceSystemServiceLoadExec("exit", 0);
   }

@@ -6,12 +6,20 @@ struct proc_list_entry
   int pid;
 } __attribute__((packed));
 
-namespace sys_utils
+enum power_state
+{
+  DO_NOTHING = -1,
+  POWER_OFF = 31,
+  RESTART = 30,
+  RESTMODE = 1,
+};
+
+namespace sys_utils // drop this namespace
 {
   extern std::string console_type;
   extern std::string get_title_id();
 
-  extern int sys_proc_list(struct proc_list_entry *procs, uint64_t *num);
+  extern int get_proc_list(struct proc_list_entry *procs, uint64_t *num);
   extern int find_pid_by_procName(const char *proc_name, int *pid);
   extern int find_procName_of_pid(int pid, char *proc_name);
 
@@ -21,6 +29,8 @@ namespace sys_utils
 
   extern uint32_t get_cpu_temperature();
   extern uint32_t get_soc_temperature();
+
+  extern bool has_entered_restmode();
 
   void text_notify(int type, const char *_msg);
   void image_notify(const char *IconUri, const char *text);

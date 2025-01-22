@@ -65,13 +65,20 @@ namespace cmds
 
     namespace sys_info
     {
-      void sys_type() { send_response(sys_utils::get_console_type()); }
+      void sys_type()
+      {
+        send_response(sys_utils::get_console_type());
+      }
 
-      void get_fw() { send_response(sys_utils::get_fw_version()); }
+      void get_fw()
+      {
+        send_response(sys_utils::get_fw_version());
+      }
 
       void get_temp()
       {
-        char temp[BUFFER_SIZE] = {0};
+        char temp[BUFFER_SIZE] = {
+            0};
         const char *start = strstr(data.buffers.daemon.data(), "type=");
         if (start)
         {
@@ -104,9 +111,9 @@ namespace cmds
 
       void get_user()
       {
-        send_response(
-            sys_utils::get_username()); // Pass the username to send_response
+        send_response(sys_utils::get_username());
       }
+
     }
 
     namespace sys_control
@@ -265,7 +272,9 @@ namespace cmds
                      prx_path.c_str());
             sys_utils::text_notify(222, notify_msg);
 
-            nlohmann::json response = {{prx_path, prx_handle}};
+            nlohmann::json response = {
+                {prx_path,
+                 prx_handle}};
             send_response(generate_json(response).c_str());
 
             return true;
@@ -327,7 +336,7 @@ namespace cmds
 
         nlohmann::json response = nlohmann::json::object();
 
-        if (sys_utils::sys_proc_list(nullptr, &num) != 0 || num == 0)
+        if (sys_utils::get_proc_list(nullptr, &num) != 0 || num == 0)
           return;
 
         procs =
@@ -335,7 +344,7 @@ namespace cmds
         if (!procs)
           return;
 
-        if (sys_utils::sys_proc_list(procs, &num) != 0)
+        if (sys_utils::get_proc_list(procs, &num) != 0)
         {
           free(procs);
           return;
@@ -347,7 +356,8 @@ namespace cmds
           if (procs[i].p_comm[sizeof(procs[i].p_comm) - 1] != '\0')
             procs[i].p_comm[sizeof(procs[i].p_comm) - 1] = '\0';
 
-          sorted_procs.push_back({procs[i].pid, procs[i].p_comm});
+          sorted_procs.push_back({procs[i].pid,
+                                  procs[i].p_comm});
         }
 
         std::sort(sorted_procs.begin(), sorted_procs.end());
@@ -378,7 +388,9 @@ namespace cmds
         int pid = sys_utils::find_pid_by_procName(proc_name.c_str(), &procID);
 
         // Create and send JSON response using helper function
-        nlohmann::json response = {{"pid", pid}};
+        nlohmann::json response = {
+            {"pid",
+             pid}};
         send_response(generate_json(response).c_str());
       }
 
@@ -396,7 +408,9 @@ namespace cmds
 
         if (pid == 0)
         {
-          nlohmann::json error_response = {{"error", "Invalid pid."}};
+          nlohmann::json error_response = {
+              {"error",
+               "Invalid pid."}};
           send_response(generate_json(error_response).c_str());
           return;
         }
@@ -409,11 +423,15 @@ namespace cmds
         nlohmann::json response;
         if (ret == 1)
         {
-          response = {{"name", proc_name}};
+          response = {
+              {"name",
+               proc_name}};
         }
         else
         {
-          response = {{"error", "Process not found."}};
+          response = {
+              {"error",
+               "Process not found."}};
         }
 
         send_response(generate_json(response).c_str());
@@ -427,7 +445,10 @@ namespace cmds
           send_error_response(NOT_ATTACHED);
       }
 
-      void rw_proc_mem() { send_response("done"); }
+      void rw_proc_mem()
+      {
+        send_response("done");
+      }
 
     }
 

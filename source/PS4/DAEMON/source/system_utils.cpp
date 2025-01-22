@@ -1,6 +1,6 @@
 #include "../headers/includes.hpp"
 
-namespace sys_utils
+namespace sys_utils // drop this namespace
 {
   std::string console_type;
 
@@ -29,7 +29,7 @@ namespace sys_utils
     return title_id;
   }
 
-  int sys_proc_list(struct proc_list_entry *procs, uint64_t *num)
+  int get_proc_list(struct proc_list_entry *procs, uint64_t *num)
   {
     return orbis_syscall(107 + 90, procs, num);
   }
@@ -39,7 +39,7 @@ namespace sys_utils
     struct proc_list_entry *proc_list;
     uint64_t pnum;
 
-    if (sys_proc_list(NULL, &pnum))
+    if (get_proc_list(NULL, &pnum))
       return 0;
 
     proc_list =
@@ -48,7 +48,7 @@ namespace sys_utils
     if (!proc_list)
       return 0;
 
-    if (sys_proc_list(proc_list, &pnum))
+    if (get_proc_list(proc_list, &pnum))
     {
       free(proc_list);
       return 0;
@@ -71,7 +71,7 @@ namespace sys_utils
     struct proc_list_entry *proc_list;
     uint64_t pnum;
 
-    if (sys_proc_list(NULL, &pnum))
+    if (get_proc_list(NULL, &pnum))
       return 0;
 
     proc_list =
@@ -80,7 +80,7 @@ namespace sys_utils
     if (!proc_list)
       return 0;
 
-    if (sys_proc_list(proc_list, &pnum))
+    if (get_proc_list(proc_list, &pnum))
     {
       free(proc_list);
 
@@ -167,6 +167,23 @@ namespace sys_utils
     return celsius;
   }
 
+  bool has_entered_restmode()
+  {
+    OrbisKernelEventFlag statemgr = NULL;
+    uint64_t ret = 0;
+
+    if ((unsigned int)sceKernelOpenEventFlag(&statemgr, "SceSystemStateMgrInfo") != 0)
+      return false;
+
+    sceKernelPollEventFlag(statemgr, 0xFFFF, SCE_KERNEL_EVF_WAITMODE_OR, &ret);
+    if ((int)ret == 1000 && sceKernelPollEventFlag(statemgr, 0x200000, SCE_KERNEL_EVF_WAITMODE_OR, 0) == 0)
+      ret = 500;
+
+    log_message("%s", (int)ret == 500 ? "System state: REST mode" : "System state: AWAKE mode");
+
+    return (int)ret == 500;
+  }
+
   void text_notify(int type, const char *_msg)
   {
     std::string msg = _msg;
@@ -208,5 +225,4 @@ namespace sys_utils
   }
 
   void ring_buzzer(int type) { sceKernelIccSetBuzzer(type); }
-
 }

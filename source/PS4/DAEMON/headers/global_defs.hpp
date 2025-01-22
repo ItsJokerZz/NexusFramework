@@ -1,6 +1,6 @@
 #pragma once
 
-#define DAEMON "NPXS21002"
+#define DAEMON "NPXS21002" /* ScePartyDaemon */
 #define LOCAHOST "127.0.0.1"
 #define DAEMON_PORT 1337
 #define RELAYS_PORT 5000

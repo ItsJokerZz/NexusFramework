@@ -1,5 +1,53 @@
 #include "../headers/includes.hpp"
 
+void log_message(const char *fmt, ...)
+{
+  char _msg_buffer[512];
+
+  auto now = std::chrono::system_clock::to_time_t(
+      std::chrono::system_clock::now());
+
+  struct tm *_time_info = std::localtime(&now);
+
+  int eastern_offset = 5;
+
+  _time_info->tm_hour -= eastern_offset;
+  if (_time_info->tm_hour < 0)
+  {
+    _time_info->tm_hour += 24;
+    if (_time_info->tm_mday > 1)
+      _time_info->tm_mday -= 1;
+    else
+    {
+      _time_info->tm_mday = 31;
+      _time_info->tm_mon -= 1;
+    }
+  }
+
+  char _time_buffer[80];
+
+  std::strftime(_time_buffer, sizeof(_time_buffer), "%m/%d/%Y @ %I:%M:%S %p (EST)", _time_info);
+
+  va_list args;
+  va_start(args, fmt);
+  snprintf(_msg_buffer, sizeof(_msg_buffer),
+           "[OrbisControl %.2fb%d] %s: ", VERSION, BUILD,
+           _time_buffer);
+  vsnprintf(_msg_buffer + strlen(_msg_buffer), sizeof(_msg_buffer) - strlen(_msg_buffer), fmt, args);
+  va_end(args);
+
+  sceKernelDebugOutText(0, _msg_buffer);
+
+  int fd = open("/user/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.log",
+                O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+  if (fd != -1)
+  {
+    std::string _content = std::string(_msg_buffer);
+    write(fd, _content.c_str(), _content.length());
+    close(fd);
+  }
+}
+
 std::string extract_param(const char *key,
                           std::array<char, BUFFER_SIZE> buffer)
 {
@@ -27,7 +75,7 @@ char *perform_get_request(const char *command)
     return NULL;
   }
 
-  snprintf(userAgent, sizeof(userAgent), "OCAPIv%.2fb%d", VERSION, BUILD);
+  snprintf(userAgent, sizeof(userAgent), "OrbisControl v%.2fb%d", VERSION, BUILD);
   tmplId = sceHttpCreateTemplate(httpCtxId, userAgent, 1, 0);
   if (tmplId < 0)
   {
@@ -97,33 +145,6 @@ char *perform_get_request(const char *command)
   return buffer;
 }
 
-bool is_port_open(int port)
-{
-  int sock =
-      sceNetSocket("ping.server", ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
-
-  if (sock < 0)
-    return false;
-
-  OrbisNetSockaddr server_addr;
-  memset(&server_addr, 0, sizeof(server_addr));
-  server_addr.len = sizeof(server_addr);
-  server_addr.sa_family = ORBIS_NET_AF_INET;
-  *(uint16_t *)server_addr.sa_data = sceNetHtons(port);
-  memset(server_addr.sa_data + 2, 0, 4);
-
-  int result = sceNetConnect(sock, &server_addr, sizeof(server_addr));
-
-  if (result == 0)
-  {
-    sceNetSocketClose(sock);
-    return true;
-  }
-
-  sceNetSocketClose(sock);
-  return false;
-}
-
 char *decode_url(const char *url)
 {
   size_t len = strlen(url);
@@ -166,6 +187,33 @@ std::string generate_json(
     response["DATA"][pair.first] = pair.second;
 
   return response.dump(4);
+}
+
+bool is_port_open(int port)
+{
+  int sock =
+      sceNetSocket("[OrbisControl] Ping Socket", ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
+
+  if (sock < 0)
+    return false;
+
+  OrbisNetSockaddr server_addr;
+  memset(&server_addr, 0, sizeof(server_addr));
+  server_addr.len = sizeof(server_addr);
+  server_addr.sa_family = ORBIS_NET_AF_INET;
+  *(uint16_t *)server_addr.sa_data = sceNetHtons(port);
+  memset(server_addr.sa_data + 2, 0, 4);
+
+  int result = sceNetConnect(sock, &server_addr, sizeof(server_addr));
+
+  if (result == 0)
+  {
+    sceNetSocketClose(sock);
+    return true;
+  }
+
+  sceNetSocketClose(sock);
+  return false;
 }
 
 void send_response(const char *message)

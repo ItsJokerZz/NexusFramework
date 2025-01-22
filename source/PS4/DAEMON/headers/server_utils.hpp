@@ -1,48 +1,8 @@
 #pragma once
 
-#define log_message(fmt, ...)                                                                      \
-  do                                                                                               \
-  {                                                                                                \
-    char _msg_buffer[512];                                                                         \
-                                                                                                   \
-    auto now = std::chrono::system_clock::to_time_t(                                               \
-        std::chrono::system_clock::now());                                                         \
-                                                                                                   \
-    struct tm *_time_info = std::localtime(&now);                                                  \
-                                                                                                   \
-    int estern_offset = 5;                                                                         \
-                                                                                                   \
-    _time_info->tm_hour -= estern_offset;                                                          \
-    if (_time_info->tm_hour < 0)                                                                   \
-    {                                                                                              \
-      _time_info->tm_hour += 24;                                                                   \
-      if (_time_info->tm_mday > 1)                                                                 \
-        _time_info->tm_mday -= 1;                                                                  \
-      else                                                                                         \
-      {                                                                                            \
-        _time_info->tm_mday = 31;                                                                  \
-        _time_info->tm_mon -= 1;                                                                   \
-      }                                                                                            \
-    }                                                                                              \
-                                                                                                   \
-    char _time_buffer[80];                                                                         \
-                                                                                                   \
-    std::strftime(_time_buffer, sizeof(_time_buffer), "%m/%d/%Y @ %I:%M:%S %p (EST)", _time_info); \
-                                                                                                   \
-    snprintf(_msg_buffer, sizeof(_msg_buffer),                                                     \
-             "[OrbisControl %.2fb%d] %s: (%s:%d->%s) " fmt "\n", VERSION, BUILD,                   \
-             _time_buffer, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__);                       \
-    sceKernelDebugOutText(0, _msg_buffer);                                                         \
-                                                                                                   \
-    int fd = open("/user/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.log",                        \
-                  O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);                               \
-    if (fd != -1)                                                                                  \
-    {                                                                                              \
-      std::string _content = std::string(_msg_buffer);                                             \
-      write(fd, _content.c_str(), _content.length());                                              \
-      close(fd);                                                                                   \
-    }                                                                                              \
-  } while (0)
+#define debug_log(fmt, ...) \
+  if (DEBUG)             \
+  log_message("[%s:%d->%s] ", fmt, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__)
 
 asm("orbis_syscall:\n"
     "movq $0, %rax\n"
@@ -60,21 +20,18 @@ asm("orbis_syscall:\n"
     "retq\n");
 int orbis_syscall(int num, ...);
 
-enum power_state
-{
-  DO_NOTHING = -1,
-  POWER_OFF = 31,
-  RESTART = 30,
-  RESTMODE = 1,
-};
+extern void log_message(const char *fmt, ...);
 
 extern std::string extract_param(const char *key,
                                  std::array<char, BUFFER_SIZE> buffer);
 extern char *perform_get_request(const char *command);
-extern bool is_port_open(int port);
 extern char *decode_url(const char *url);
+
 extern std::string generate_json(
-    const std::unordered_map<std::string, nlohmann::json> &data_entries);
+    const std::unordered_map<std::string,
+                             nlohmann::json> &data_entries);
+
+extern bool is_port_open(int port);
 
 void send_response(const char *message);
 void send_response(const nlohmann::json &response_data);
