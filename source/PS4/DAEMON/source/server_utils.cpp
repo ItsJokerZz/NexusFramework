@@ -1,5 +1,32 @@
 #include "../headers/includes.hpp"
 
+bool is_port_open(int port)
+{
+  int sock =
+      sceNetSocket("[OrbisControl] Ping Socket", ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
+
+  if (sock < 0)
+    return false;
+
+  OrbisNetSockaddr server_addr;
+  memset(&server_addr, 0, sizeof(server_addr));
+  server_addr.len = sizeof(server_addr);
+  server_addr.sa_family = ORBIS_NET_AF_INET;
+  *(uint16_t *)server_addr.sa_data = sceNetHtons(port);
+  memset(server_addr.sa_data + 2, 0, 4);
+
+  int result = sceNetConnect(sock, &server_addr, sizeof(server_addr));
+
+  if (result == 0)
+  {
+    sceNetSocketClose(sock);
+    return true;
+  }
+
+  sceNetSocketClose(sock);
+  return false;
+}
+
 std::string extract_param(const char *key,
                           std::array<char, BUFFER_SIZE> buffer)
 {
@@ -139,33 +166,6 @@ std::string generate_json(
     response["DATA"][pair.first] = pair.second;
 
   return response.dump(4);
-}
-
-bool is_port_open(int port)
-{
-  int sock =
-      sceNetSocket("[OrbisControl] Ping Socket", ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
-
-  if (sock < 0)
-    return false;
-
-  OrbisNetSockaddr server_addr;
-  memset(&server_addr, 0, sizeof(server_addr));
-  server_addr.len = sizeof(server_addr);
-  server_addr.sa_family = ORBIS_NET_AF_INET;
-  *(uint16_t *)server_addr.sa_data = sceNetHtons(port);
-  memset(server_addr.sa_data + 2, 0, 4);
-
-  int result = sceNetConnect(sock, &server_addr, sizeof(server_addr));
-
-  if (result == 0)
-  {
-    sceNetSocketClose(sock);
-    return true;
-  }
-
-  sceNetSocketClose(sock);
-  return false;
 }
 
 void send_response(const char *message)

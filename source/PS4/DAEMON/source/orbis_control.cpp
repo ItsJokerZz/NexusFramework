@@ -162,7 +162,8 @@ void *unified_thread(void *arg)
     data.sockets.server_addr.len = sizeof(data.sockets.server_addr);
     data.sockets.server_addr.sa_family = ORBIS_NET_AF_INET;
     *(uint16_t *)data.sockets.server_addr.sa_data = sceNetHtons(port);
-    memset(data.sockets.server_addr.sa_data + 2, 0, 4);
+    // memset(data.sockets.server_addr.sa_data + 2, 0, 4);
+    *(uint32_t *)(data.sockets.server_addr.sa_data + 2) = sceNetHtonl(isDaemon ? 0x00000000 : 0x7F000001); // Bind to public or local IP
 
     return sceNetBind(server_socket, &data.sockets.server_addr, sizeof(data.sockets.server_addr)) >= 0;
   };
@@ -274,14 +275,14 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
   isDaemon = (strcmp(info.titleid, DAEMON) == 0);
   port = isDaemon ? DAEMON_PORT : RELAYS_PORT;
 
-  std::string buffer = "[OrbisControl]\n Already loaded!";
+  std::string buffer = "[OrbisControl] Already loaded!";
 
   if (isDaemon)
   {
     if (is_port_open(port))
     {
       if (!DEBUG)
-        sys_utils::text_notify(222, buffer.c_str());
+        text_notify(222, buffer.c_str());
       else
         unloaded = true; // for testing purposes
       return 1;
@@ -297,17 +298,14 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
       ssize_t bytesRead;
       while ((bytesRead = read(fd, bufferRead, sizeof(bufferRead))) > 0)
       {
-        buffer = "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n";
-
         bufferRead[bytesRead] = '\0';
-        if (strstr(bufferRead, buffer.c_str()))
+        if (strstr(bufferRead,
+                   "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n"))
         {
           contentFound = true;
-
           break;
         }
       }
-
       close(fd);
     }
 
@@ -316,23 +314,25 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
       fd = open(file, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
       if (fd != -1)
       {
+        buffer = "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n";
         write(fd, buffer.c_str(), buffer.length());
         log_message("Added OrbisControl to %s", file);
-
         close(fd);
       }
     }
   }
 
   name = isDaemon ? "Daemon" : "Relay";
-  buffer = "[OrbisControl]\n" + name + " server started";
-
+  buffer = "[OrbisControl] " + name + " server started";
   pthread_t &thread = isDaemon ? data.threads.daemon.server : data.threads.relay.server;
   if (thread == -1 && pthread_create(&thread, nullptr, unified_thread, nullptr) != 0)
+  {
+    buffer = "[OrbisControl] Failed to create " + name + " thread!";
+    text_notify(222, buffer.c_str());
     return 1;
+  }
 
-  sys_utils::text_notify(222, buffer.c_str());
-
+  text_notify(222, buffer.c_str());
   pthread_detach(thread);
 
   if (isDaemon)
@@ -343,14 +343,14 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
     /* UNLOAD AT STARTUP / ON RESTMODE */
     while (!unloaded)
     {
-      if (DEBUG && sys_utils::has_entered_restmode())
+      if (DEBUG && has_entered_restmode())
         unloaded = true;
 
       sceKernelSleep(1);
     }
 
     buffer = "[OrbisControl] Unloaded!";
-    sys_utils::text_notify(222, buffer.c_str());
+    text_notify(222, buffer.c_str());
     sceSystemServiceLoadExec("exit", 0);
   }
 

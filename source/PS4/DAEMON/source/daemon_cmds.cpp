@@ -8,7 +8,7 @@ namespace cmds
     {
       attached = true;
 
-      sys_utils::text_notify(222, "[OCAPI] Attached!");
+      text_notify(222, "[OCAPI] Attached!");
       send_response("done");
     }
 
@@ -87,7 +87,7 @@ namespace cmds
 
       char notify_msg[BUFFER_SIZE];
       snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] SPRX Loaded:\n%s", path);
-      sys_utils::text_notify(222, notify_msg);
+      text_notify(222, notify_msg);
 
       free((void *)path);
     }
@@ -172,7 +172,7 @@ namespace cmds
 
       char notify_msg[BUFFER_SIZE];
       snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] Plugin Loaded: %s", plugin);
-      sys_utils::text_notify(222, notify_msg);
+      text_notify(222, notify_msg);
 
       free((void *)plugin);
     }
@@ -200,13 +200,13 @@ namespace cmds
           snprintf(logBuffer, sizeof(logBuffer), "%s -> IsMultiplayer%sfound!",
                    game.second,
                    std::strcmp(buffer, "IsMultiplayer") == 0 ? " " : " NOT ");
-          sys_utils::text_notify(222, logBuffer);
+          text_notify(222, logBuffer);
         }
         else
         {
           snprintf(logBuffer, sizeof(logBuffer), "Error reading memory for game %s",
                    game.second);
-          sys_utils::text_notify(222, logBuffer);
+          text_notify(222, logBuffer);
         }
       }
     }

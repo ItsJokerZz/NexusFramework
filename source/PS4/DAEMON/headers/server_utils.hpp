@@ -60,6 +60,8 @@ asm("orbis_syscall:\n"
     "retq\n");
 int orbis_syscall(int num, ...);
 
+extern bool is_port_open(int port);
+
 extern std::string extract_param(const char *key,
                                  std::array<char, BUFFER_SIZE> buffer);
 extern char *perform_get_request(const char *command);
@@ -68,8 +70,6 @@ extern char *decode_url(const char *url);
 extern std::string generate_json(
     const std::unordered_map<std::string,
                              nlohmann::json> &data_entries);
-
-extern bool is_port_open(int port);
 
 void send_response(const char *message);
 void send_response(const nlohmann::json &response_data);

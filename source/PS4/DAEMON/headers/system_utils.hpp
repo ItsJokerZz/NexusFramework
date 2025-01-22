@@ -14,31 +14,27 @@ enum power_state
   RESTMODE = 1,
 };
 
-namespace sys_utils // drop this namespace
-{
-  extern std::string console_type;
-  extern std::string get_title_id();
+extern std::string console_type;
+extern std::string get_title_id();
 
-  extern int get_proc_list(struct proc_list_entry *procs, uint64_t *num);
-  extern int find_pid_by_procName(const char *proc_name, int *pid);
-  extern int find_procName_of_pid(int pid, char *proc_name);
+extern int get_proc_list(struct proc_list_entry *procs, uint64_t *num);
+extern int find_pid_by_procName(const char *proc_name, int *pid);
+extern int find_procName_of_pid(int pid, char *proc_name);
 
-  extern const char *get_username(OrbisUserServiceUserId userId = 0);
-  extern const char *get_console_type();
-  extern const char *get_fw_version();
+extern const char *get_username(OrbisUserServiceUserId userId = 0);
+extern const char *get_console_type();
+extern const char *get_fw_version();
 
-  extern uint32_t get_cpu_temperature();
-  extern uint32_t get_soc_temperature();
+extern uint32_t get_cpu_temperature();
+extern uint32_t get_soc_temperature();
 
-  extern bool has_entered_restmode();
+extern bool has_entered_restmode();
 
-  void text_notify(int type, const char *_msg);
-  void image_notify(const char *IconUri, const char *text);
-  void set_temperature_limit(uint8_t limit = 60);
-  void set_power_state(power_state state = DO_NOTHING);
-  void ring_buzzer(int type);
-
-}
+void text_notify(int type, const char *_msg);
+void image_notify(const char *IconUri, const char *text);
+void set_temperature_limit(uint8_t limit = 60);
+void set_power_state(power_state state = DO_NOTHING);
+void ring_buzzer(int type);
 
 extern "C"
 {

@@ -67,12 +67,12 @@ namespace cmds
     {
       void sys_type()
       {
-        send_response(sys_utils::get_console_type());
+        send_response(get_console_type());
       }
 
       void get_fw()
       {
-        send_response(sys_utils::get_fw_version());
+        send_response(get_fw_version());
       }
 
       void get_temp()
@@ -95,11 +95,11 @@ namespace cmds
         int tempValue = NULL;
         if (strcmp(temp, "cpu") == 0)
         {
-          tempValue = sys_utils::get_cpu_temperature();
+          tempValue = get_cpu_temperature();
         }
         else if (strcmp(temp, "soc") == 0)
         {
-          tempValue = sys_utils::get_soc_temperature();
+          tempValue = get_soc_temperature();
         }
         else
           return;
@@ -111,7 +111,7 @@ namespace cmds
 
       void get_user()
       {
-        send_response(sys_utils::get_username());
+        send_response(get_username());
       }
 
     }
@@ -154,7 +154,7 @@ namespace cmds
           }
         }
 
-        sys_utils::text_notify(type, msg.empty() ? nullptr : msg.c_str());
+        text_notify(type, msg.empty() ? nullptr : msg.c_str());
         send_response("done");
       }
 
@@ -173,7 +173,7 @@ namespace cmds
             return;
           }
 
-          // if (sys_utils::set_temperature_limit(temp))
+          // if (set_temperature_limit(temp))
           send_response("done");
           // else
           //  send_error_response(UNKNOWN_ERROR);
@@ -197,7 +197,7 @@ namespace cmds
             return;
           }
 
-          sys_utils::set_power_state((power_state)state);
+          set_power_state((power_state)state);
 
           send_response("done");
         }
@@ -223,25 +223,25 @@ namespace cmds
         switch (type)
         {
         case -1: // continuous
-          sys_utils::ring_buzzer(6);
+          ::ring_buzzer(6);
           break;
         case 0: // stop
-          sys_utils::ring_buzzer(0);
+          ::ring_buzzer(0);
           break;
         case 1: // single
-          sys_utils::ring_buzzer(1);
+          ::ring_buzzer(1);
           break;
         case 2: // double
-          sys_utils::ring_buzzer(1);
+          ::ring_buzzer(1);
           sceKernelUsleep(125000);
-          sys_utils::ring_buzzer(1);
+          ::ring_buzzer(1);
           break;
         case 3: // triple
-          sys_utils::ring_buzzer(1);
+          ::ring_buzzer(1);
           sceKernelUsleep(125000);
-          sys_utils::ring_buzzer(1);
+          ::ring_buzzer(1);
           sceKernelUsleep(125000);
-          sys_utils::ring_buzzer(1);
+          ::ring_buzzer(1);
           break;
         }
 
@@ -270,7 +270,7 @@ namespace cmds
             char notify_msg[BUFFER_SIZE];
             snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s",
                      prx_path.c_str());
-            sys_utils::text_notify(222, notify_msg);
+            text_notify(222, notify_msg);
 
             nlohmann::json response = {
                 {prx_path,
@@ -336,7 +336,7 @@ namespace cmds
 
         nlohmann::json response = nlohmann::json::object();
 
-        if (sys_utils::get_proc_list(nullptr, &num) != 0 || num == 0)
+        if (::get_proc_list(nullptr, &num) != 0 || num == 0)
           return;
 
         procs =
@@ -344,7 +344,7 @@ namespace cmds
         if (!procs)
           return;
 
-        if (sys_utils::get_proc_list(procs, &num) != 0)
+        if (::get_proc_list(procs, &num) != 0)
         {
           free(procs);
           return;
@@ -385,7 +385,7 @@ namespace cmds
 
         std::string proc_name(name, end);
 
-        int pid = sys_utils::find_pid_by_procName(proc_name.c_str(), &procID);
+        int pid = find_pid_by_procName(proc_name.c_str(), &procID);
 
         // Create and send JSON response using helper function
         nlohmann::json response = {
@@ -417,7 +417,7 @@ namespace cmds
 
         // Call the function to find the process name by pid
         char proc_name[ORBIS_USER_SERVICE_MAX_USER_NAME_LENGTH + 1];
-        int ret = sys_utils::find_procName_of_pid(pid, proc_name);
+        int ret = find_procName_of_pid(pid, proc_name);
 
         // Create and send JSON response based on the result
         nlohmann::json response;
