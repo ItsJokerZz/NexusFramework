@@ -1,53 +1,5 @@
 #include "../headers/includes.hpp"
 
-void log_message(const char *fmt, ...)
-{
-  char _msg_buffer[512];
-
-  auto now = std::chrono::system_clock::to_time_t(
-      std::chrono::system_clock::now());
-
-  struct tm *_time_info = std::localtime(&now);
-
-  int eastern_offset = 5;
-
-  _time_info->tm_hour -= eastern_offset;
-  if (_time_info->tm_hour < 0)
-  {
-    _time_info->tm_hour += 24;
-    if (_time_info->tm_mday > 1)
-      _time_info->tm_mday -= 1;
-    else
-    {
-      _time_info->tm_mday = 31;
-      _time_info->tm_mon -= 1;
-    }
-  }
-
-  char _time_buffer[80];
-
-  std::strftime(_time_buffer, sizeof(_time_buffer), "%m/%d/%Y @ %I:%M:%S %p (EST)", _time_info);
-
-  va_list args;
-  va_start(args, fmt);
-  snprintf(_msg_buffer, sizeof(_msg_buffer),
-           "[OrbisControl %.2fb%d] %s: ", VERSION, BUILD,
-           _time_buffer);
-  vsnprintf(_msg_buffer + strlen(_msg_buffer), sizeof(_msg_buffer) - strlen(_msg_buffer), fmt, args);
-  va_end(args);
-
-  sceKernelDebugOutText(0, _msg_buffer);
-
-  int fd = open("/user/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.log",
-                O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
-  if (fd != -1)
-  {
-    std::string _content = std::string(_msg_buffer);
-    write(fd, _content.c_str(), _content.length());
-    close(fd);
-  }
-}
-
 std::string extract_param(const char *key,
                           std::array<char, BUFFER_SIZE> buffer)
 {

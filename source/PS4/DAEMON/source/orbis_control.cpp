@@ -268,15 +268,13 @@ void *unified_thread(void *arg)
 
 extern "C" int32_t __wrap__init(size_t args, const void *argp)
 {
-  debug_log("%s", "TEST DEBUG MESSAGE");
-
   struct proc_info info;
   sys_sdk_proc_info(&info);
 
   isDaemon = (strcmp(info.titleid, DAEMON) == 0);
   port = isDaemon ? DAEMON_PORT : RELAYS_PORT;
 
-  std::string buffer = "[OrbisControl] Already loaded!";
+  std::string buffer = "[OrbisControl]\n Already loaded!";
 
   if (isDaemon)
   {
@@ -299,14 +297,17 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
       ssize_t bytesRead;
       while ((bytesRead = read(fd, bufferRead, sizeof(bufferRead))) > 0)
       {
+        buffer = "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n";
+
         bufferRead[bytesRead] = '\0';
-        if (strstr(bufferRead,
-                   "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n"))
+        if (strstr(bufferRead, buffer.c_str()))
         {
           contentFound = true;
+
           break;
         }
       }
+
       close(fd);
     }
 
@@ -315,25 +316,23 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
       fd = open(file, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
       if (fd != -1)
       {
-        buffer = "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n";
         write(fd, buffer.c_str(), buffer.length());
         log_message("Added OrbisControl to %s", file);
+
         close(fd);
       }
     }
   }
 
   name = isDaemon ? "Daemon" : "Relay";
-  buffer = "[OrbisControl] " + name + " server started";
+  buffer = "[OrbisControl]\n" + name + " server started";
+
   pthread_t &thread = isDaemon ? data.threads.daemon.server : data.threads.relay.server;
   if (thread == -1 && pthread_create(&thread, nullptr, unified_thread, nullptr) != 0)
-  {
-    buffer = "[OrbisControl] Failed to create " + name + " thread!";
-    sys_utils::text_notify(222, buffer.c_str());
     return 1;
-  }
 
   sys_utils::text_notify(222, buffer.c_str());
+
   pthread_detach(thread);
 
   if (isDaemon)
