@@ -1,17 +1,5 @@
 #include "../headers/includes.hpp"
 
-void handle_command(void (*func)())
-{
-  bool *toggle = isDaemon ? &connected : &attached;
-
-  if (*toggle)
-    func();
-  else
-    send_error_response(toggle == &connected
-                            ? NOT_CONNECTED
-                            : NOT_ATTACHED); // Modifying toggle
-}
-
 void handle_request(const std::string &request, bool isDaemon)
 {
   static const std::map<std::string, std::function<void()>> daemon_commands = {
@@ -81,58 +69,29 @@ void *unified_process(void *arg)
 {
   int client_socket = *static_cast<int *>(arg);
 
-  if (isDaemon)
+  auto &client = isDaemon ? data.sockets.daemon.client
+                          : data.sockets.relay.client;
+
+  auto &buffer = isDaemon ? data.buffers.daemon
+                          : data.buffers.relay;
+
+  client = client_socket;
+  std::fill(buffer.begin(), buffer.end(), 0);
+
+  int bytes_received = sceNetRecv(client, buffer.data(), buffer.size() - 1, 0);
+
+  if (bytes_received > 0)
   {
-    data.sockets.daemon.client = client_socket;
-    std::fill(data.buffers.daemon.begin(), data.buffers.daemon.end(), 0);
+    buffer[bytes_received] = '\0';
+    std::string request(buffer.data());
 
-    int bytes_received = sceNetRecv(data.sockets.daemon.client,
-                                    data.buffers.daemon.data(),
-                                    data.buffers.daemon.size() - 1, 0);
-
-    if (bytes_received > 0)
-    {
-      data.buffers.daemon[bytes_received] = '\0';
-      std::string request(data.buffers.daemon.data());
-
-      if (request.substr(0, 14) == "GET / HTTP/1.1")
-      {
-        send_error_response(NO_COMMAND);
-      }
-      else
-      {
-        handle_request(request, true);
-      }
-    }
-
-    sceNetSocketClose(data.sockets.daemon.client);
+    if (request.substr(0, 14) == "GET / HTTP/1.1")
+      send_error_response(NO_COMMAND);
+    else
+      handle_request(request, isDaemon);
   }
-  else
-  {
-    data.sockets.relay.client = client_socket;
-    std::fill(data.buffers.relay.begin(), data.buffers.relay.end(), 0);
 
-    int bytes_received = sceNetRecv(data.sockets.relay.client,
-                                    data.buffers.relay.data(),
-                                    data.buffers.relay.size() - 1, 0);
-
-    if (bytes_received > 0)
-    {
-      data.buffers.relay[bytes_received] = '\0';
-      std::string request(data.buffers.relay.data());
-
-      if (request.substr(0, 14) == "GET / HTTP/1.1")
-      {
-        send_error_response(NO_COMMAND);
-      }
-      else
-      {
-        handle_request(request, false);
-      }
-    }
-
-    sceNetSocketClose(data.sockets.relay.client);
-  }
+  sceNetSocketClose(client);
 
   return nullptr;
 }
@@ -162,8 +121,11 @@ void *unified_thread(void *arg)
     data.sockets.server_addr.len = sizeof(data.sockets.server_addr);
     data.sockets.server_addr.sa_family = ORBIS_NET_AF_INET;
     *(uint16_t *)data.sockets.server_addr.sa_data = sceNetHtons(port);
-    // memset(data.sockets.server_addr.sa_data + 2, 0, 4);
-    *(uint32_t *)(data.sockets.server_addr.sa_data + 2) = sceNetHtonl(isDaemon ? 0x00000000 : 0x7F000001); // Bind to public or local IP
+
+    if (DEBUG)
+      memset(data.sockets.server_addr.sa_data + 2, 0, 4);
+    else
+      *(uint32_t *)(data.sockets.server_addr.sa_data + 2) = sceNetHtonl(isDaemon ? 0x00000000 : 0x7F000001);
 
     return sceNetBind(server_socket, &data.sockets.server_addr, sizeof(data.sockets.server_addr)) >= 0;
   };
@@ -275,7 +237,7 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
   isDaemon = (strcmp(info.titleid, DAEMON) == 0);
   port = isDaemon ? DAEMON_PORT : RELAYS_PORT;
 
-  std::string buffer = "[OrbisControl] Already loaded!";
+  std::string buffer = "OrbisControl Already loaded!";
 
   if (isDaemon)
   {
@@ -287,6 +249,9 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
         unloaded = true; // for testing purposes
       return 1;
     }
+    
+    mkdir("/update/PS4UPDATE.PUP", 0777);
+    mkdir("/update/PS4UPDATE.PUP.net.temp", 0777);
 
     const char *file = "/user/data/GoldHEN/plugins.ini";
     int fd = open(file, O_RDONLY);
@@ -323,14 +288,10 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
   }
 
   name = isDaemon ? "Daemon" : "Relay";
-  buffer = "[OrbisControl] " + name + " server started";
+  buffer = "[OrbisControl]\n" + name + " started";
   pthread_t &thread = isDaemon ? data.threads.daemon.server : data.threads.relay.server;
   if (thread == -1 && pthread_create(&thread, nullptr, unified_thread, nullptr) != 0)
-  {
-    buffer = "[OrbisControl] Failed to create " + name + " thread!";
-    text_notify(222, buffer.c_str());
     return 1;
-  }
 
   text_notify(222, buffer.c_str());
   pthread_detach(thread);
@@ -347,6 +308,22 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
         unloaded = true;
 
       sceKernelSleep(1);
+    }
+
+    if (data.sockets.daemon.server >= 0)
+    {
+      sceNetSocketClose(data.sockets.daemon.server);
+      data.sockets.daemon.server = -1;
+
+      pthread_cancel(data.threads.daemon.server);
+    }
+
+    if (data.sockets.daemon.client >= 0)
+    {
+      sceNetSocketClose(data.sockets.daemon.client);
+      data.sockets.daemon.client = -1;
+
+      pthread_cancel(data.threads.daemon.client);
     }
 
     buffer = "[OrbisControl] Unloaded!";

@@ -18,6 +18,7 @@
 
 enum ErrorCode
 {
+  _DEBUGGING,
   NO_COMMAND,
   INVALID_CMD,
   NOT_CONNECTED,

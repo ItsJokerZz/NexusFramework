@@ -20,20 +20,25 @@ namespace cmds
 
       void unload()
       {
-        send_response("done");
         if (data.sockets.daemon.server >= 0)
         {
           sceNetSocketClose(data.sockets.daemon.server);
           data.sockets.daemon.server = -1;
+
+          pthread_cancel(data.threads.daemon.server);
         }
 
         if (data.sockets.daemon.client >= 0)
         {
           sceNetSocketClose(data.sockets.daemon.client);
           data.sockets.daemon.client = -1;
+
+          pthread_cancel(data.threads.daemon.client);
         }
 
         unloaded = true;
+        
+        send_response("done");
       }
 
       void disconnect()

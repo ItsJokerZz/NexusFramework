@@ -216,11 +216,14 @@ void send_error_response(ErrorCode error_code)
   send_response(log_string.c_str()); // Call send_response
 }
 
-void send_error_response(const std::string &message)
+void handle_command(void (*func)())
 {
-  nlohmann::json error_response;
-  error_response["ERROR"]["msg"] = message;
+  bool *toggle = isDaemon ? &connected : &attached;
 
-  std::string log_string = error_response.dump(4); // Pretty print with 4 spaces
-  send_response(log_string.c_str());               // Call send_response
+  if (*toggle)
+    func();
+  else
+    send_error_response(toggle == &connected
+                            ? NOT_CONNECTED
+                            : NOT_ATTACHED); // Modifying toggle
 }

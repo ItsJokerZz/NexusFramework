@@ -1,6 +1,7 @@
 #include "../headers/includes.hpp"
 
 std::array<ErrorMessage, ERROR_COUNT> error_messages = {{
+    {"DEBUGGING ERROR"},
     {"Server is running, but no command was passed. Please check."},
     {"Command not found. Please check and try again."},
     {"Not connected to the server. Check your connection."},

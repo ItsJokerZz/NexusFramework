@@ -111,7 +111,7 @@ namespace cmds
       if (!plugin)
       {
         log_message("No plugin provided to load");
-        send_error_response("failed");
+        send_error_response(_DEBUGGING);
         return;
       }
 
@@ -126,7 +126,7 @@ namespace cmds
       {
         log_message("Plugin %s not found", plugin);
         free((void *)plugin);
-        send_error_response("failed");
+        send_error_response(_DEBUGGING);
         return;
       }
       else if (result < 0)
@@ -134,7 +134,7 @@ namespace cmds
         log_message("Error loading Plugin %s! Error code 0x%08x (%i)", plugin,
                     result, result);
         free((void *)plugin);
-        send_error_response("failed");
+        send_error_response(_DEBUGGING);
         return;
       }
 
