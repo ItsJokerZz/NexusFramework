@@ -14,6 +14,8 @@
   "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " \
   "%d\r\n\r\n%s"
 
+#define SCE_KERNEL_EVF_WAITMODE_OR 0x02
+
 enum ErrorCode
 {
   NO_COMMAND,
@@ -54,7 +56,7 @@ struct serverData
     OrbisNetSockaddr server_addr = {};
     OrbisNetSockaddr client_addr = {};
     socklen_t client_addr_len = {};
-    
+
   } sockets;
 
   struct buffers

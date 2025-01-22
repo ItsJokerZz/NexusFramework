@@ -30,7 +30,7 @@
     std::strftime(_time_buffer, sizeof(_time_buffer), "%m/%d/%Y @ %I:%M:%S %p (EST)", _time_info); \
                                                                                                    \
     snprintf(_msg_buffer, sizeof(_msg_buffer),                                                     \
-             "[OCAPI %.2fb%d] %s: (%s:%d->%s) " fmt "\n", VERSION, BUILD,                          \
+             "[OrbisControl %.2fb%d] %s: (%s:%d->%s) " fmt "\n", VERSION, BUILD,                   \
              _time_buffer, __FILE__, __LINE__, __FUNCTION__, ##__VA_ARGS__);                       \
     sceKernelDebugOutText(0, _msg_buffer);                                                         \
                                                                                                    \

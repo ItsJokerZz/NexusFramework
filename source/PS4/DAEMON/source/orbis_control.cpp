@@ -6,8 +6,6 @@ enum
   WORKING = 1000
 };
 
-#define SCE_KERNEL_EVF_WAITMODE_OR 0x02
-
 static OrbisKernelEventFlag statemgr = NULL; // Kernel event flag handler
 
 int sceSystemOpenStartMgr()
@@ -393,7 +391,7 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
     sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
     sceUserServiceInitialize2();
 
-    while (!unloaded || (DEBUG && isOn() && isRestMode()))
+    while (!unloaded && (!DEBUG || !(isOn() && isRestMode())))
       sceKernelSleep(1);
 
     buffer = "[OCAPI] Unloaded!";

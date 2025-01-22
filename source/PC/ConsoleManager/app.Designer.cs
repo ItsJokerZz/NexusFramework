@@ -958,7 +958,7 @@
             this.consoleIP_tb.ForeColor = System.Drawing.Color.White;
             this.consoleIP_tb.Name = "consoleIP_tb";
             this.consoleIP_tb.Size = new System.Drawing.Size(110, 25);
-            this.consoleIP_tb.Text = "192.168.137.154";
+            this.consoleIP_tb.Text = "192.168.137.67";
             // 
             // toolStripSeparator2
             // 
