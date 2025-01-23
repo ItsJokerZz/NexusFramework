@@ -177,38 +177,182 @@ namespace cmds
       free((void *)plugin);
     }
 
-    void rw_proc_mem()
+    void read_proc_mem()
     {
-      char buffer[128];
+      const char *address = nullptr;
+      const char *size = nullptr;
 
-      std::pair<const char *, const char *> games[] = {
-          {reinterpret_cast<const char *>(0xB06FDA), "IW6SP"},
-          {reinterpret_cast<const char *>(0xC251D7), "IW6MP"}};
-
-      for (const auto &game : games)
+      // Extract address param from query string
+      const char *start = strstr(data.buffers.relay.data(), "address=");
+      if (start)
       {
-        char logBuffer[256];
-
-        proc_rw args;
-        args.address = reinterpret_cast<uint64_t>(game.first);
-        args.data = static_cast<void *>(buffer);
-        args.length = sizeof(buffer);
-        args.write_flags = 0;
-
-        if (sys_sdk_proc_rw(&args) == 0)
+        start += 8; // Move past "address="
+        const char *end = strchr(start, '&');
+        if (end)
         {
-          snprintf(logBuffer, sizeof(logBuffer), "%s -> IsMultiplayer%sfound!",
-                   game.second,
-                   std::strcmp(buffer, "IsMultiplayer") == 0 ? " " : " NOT ");
-          text_notify(222, logBuffer);
+          address = decode_url(std::string(start, end).c_str());
         }
         else
         {
-          snprintf(logBuffer, sizeof(logBuffer), "Error reading memory for game %s",
-                   game.second);
-          text_notify(222, logBuffer);
+          address = decode_url(start); // If no '&' found, address is the last param
         }
       }
+
+      if (!address)
+      {
+        log_message("No address provided");
+        send_error_response(_DEBUGGING);
+        return;
+      }
+
+      // Extract size param from query string
+      start = strstr(data.buffers.relay.data(), "size=");
+      if (start)
+      {
+        start += 5; // Move past "size="
+        const char *end = strchr(start, ' ');
+        if (end)
+        {
+          size = std::string(start, end).c_str();
+        }
+        else
+        {
+          size = start; // If no space found, size is the last param
+        }
+      }
+
+      if (!size)
+      {
+        log_message("No size provided");
+        send_error_response(_DEBUGGING);
+        return;
+      }
+
+      uint64_t addressVal = std::stoull(address, nullptr, 16); // Convert hex string to uint64_t
+      size_t byteSize = std::stoul(size);                      // Convert string to size_t
+
+      if (byteSize > 1024 * 1024)
+      {
+        send_response("error: byteSize too large");
+        return;
+      }
+
+      char *buffer = new char[byteSize];
+
+      proc_rw args;
+      args.address = addressVal;
+      args.data = static_cast<void *>(buffer);
+      args.length = byteSize;
+      args.write_flags = 0;
+
+      if (sys_sdk_proc_rw(&args) == 0)
+      {
+        std::string bufferStr(buffer, byteSize); // Create a string from the buffer
+
+        send_response(bufferStr.c_str());
+      }
+      else
+      {
+        send_response("error: failed to read memory");
+      }
+
+      delete[] buffer;
+    }
+
+    void write_proc_mem()
+    {
+      const char *address = nullptr;
+      const char *dataToWrite = nullptr;
+
+      // Extract the address parameter from the URL
+      const char *start = strstr(data.buffers.relay.data(), "address=");
+      if (start)
+      {
+        start += 8; // Move past "address="
+        const char *end = strchr(start, '&');
+        if (end)
+        {
+          address = decode_url(std::string(start, end).c_str());
+        }
+        else
+        {
+          address = decode_url(start); // If no '&' found, address is the last param
+        }
+      }
+
+      if (!address)
+      {
+        log_message("No address provided");
+        send_error_response(_DEBUGGING);
+        return;
+      }
+
+      // Extract the data parameter from the URL
+      start = strstr(data.buffers.relay.data(), "data=");
+      if (start)
+      {
+        start += 5; // Move past "data="
+        const char *end = strchr(start, '&');
+        if (end)
+        {
+          dataToWrite = decode_url(std::string(start, end).c_str());
+        }
+        else
+        {
+          dataToWrite = decode_url(start); // If no '&' found, data is the last param
+        }
+      }
+
+      if (!dataToWrite)
+      {
+        log_message("No data to write provided");
+        send_error_response(_DEBUGGING);
+        return;
+      }
+
+      uint64_t addressVal = std::stoull(address, nullptr, 16);
+      size_t byteSize = strlen(dataToWrite) / 2; // Each byte is represented by 2 hex characters
+
+      // Check if byte size exceeds limit
+      if (byteSize > 1024 * 1024)
+      {
+        send_response("error: byteSize too large");
+        return;
+      }
+
+      // Convert hex string to byte buffer
+      char *buffer = new char[byteSize + 1]; // Allocate extra byte for null-termination
+      buffer[byteSize] = '\0';               // Explicitly null-terminate the string
+
+      for (size_t i = 0; i < byteSize; i++)
+      {
+        unsigned int byte;
+        sscanf(dataToWrite + i * 2, "%2x", &byte); // Read two hex digits at a time
+        buffer[i] = static_cast<char>(byte);
+      }
+
+      // Log the buffer content to check conversion
+      log_message("Buffer: %s", buffer);
+
+      // Prepare the arguments for sys_sdk_proc_rw
+      proc_rw args;
+      args.address = addressVal;
+      args.data = static_cast<void *>(buffer);
+      args.length = byteSize + 1; // Add 1 for the null terminator
+      args.write_flags = 1;
+
+      // Perform the memory write
+      if (sys_sdk_proc_rw(&args) == 0)
+      {
+        send_response("success: memory written");
+      }
+      else
+      {
+        send_response("error: failed to write memory");
+      }
+
+      // Clean up the allocated buffer
+      delete[] buffer;
     }
 
   }

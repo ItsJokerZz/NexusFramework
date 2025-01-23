@@ -27,8 +27,7 @@ bool is_port_open(int port)
   return false;
 }
 
-std::string extract_param(const char *key,
-                          std::array<char, BUFFER_SIZE> buffer)
+std::string extract_param(const char *key, std::array<char, BUFFER_SIZE> buffer)
 {
   const char *start = strstr(buffer.data(), key);
   if (!start)

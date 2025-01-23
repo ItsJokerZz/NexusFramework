@@ -7,7 +7,8 @@ namespace cmds
         void attach_relay();
         void load_module();
         void start_plugin();
-        void rw_proc_mem();
+        void read_proc_mem();
+        void write_proc_mem();
 
     }
 }

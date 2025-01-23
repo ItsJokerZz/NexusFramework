@@ -1,4 +1,5 @@
 #pragma once
+#include <sys/socket.h>
 
 #include <cstdint>
 #include <dirent.h>
@@ -13,8 +14,6 @@
 #include <orbis/SystemService.h>
 #include <orbis/UserService.h>
 
-#include <sys/socket.h>
-
 #include "nlohmann/json.hpp"
 #include "global_defs.hpp"
 #include "server_utils.hpp"
@@ -22,3 +21,7 @@
 #include "client_cmds.hpp"
 #include "daemon_cmds.hpp"
 #include "orbis_control.hpp"
+
+
+#include "b64/encode.h"
+#include "b64/decode.h"
