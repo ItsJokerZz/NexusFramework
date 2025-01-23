@@ -27,17 +27,28 @@ bool is_port_open(int port)
   return false;
 }
 
-std::string extract_param(const char *key, std::array<char, BUFFER_SIZE> buffer)
+std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE>& buffer)
 {
-  const char *start = strstr(buffer.data(), key);
-  if (!start)
-    return "";
+    // Find the start of the query string (i.e., parameters after ?)
+    const char *start = strstr(buffer.data(), key);
+    if (!start)
+        return "";
 
-  start += strlen(key);
+    start += strlen(key);
+    if (*start != '=')
+        return ""; // If '=' is not found after the key, it's an invalid parameter
 
-  const char *end = strchr(start, ' ') ?: start + strlen(start);
+    start++;  // Move past '='
 
-  return std::string(start, end);
+    // Find where the query string ends by looking for the first space (after HTTP/1.1)
+    const char *end = strchr(start, '&');
+    if (!end)
+        end = strchr(start, ' ');  // Stop at the first space (before HTTP/1.1 or headers)
+
+    if (!end)
+        end = start + strlen(start);  // If no space or '&', end at the end of the string
+
+    return std::string(start, end - start);
 }
 
 char *perform_get_request(const char *command)
@@ -136,22 +147,31 @@ char *decode_url(const char *url)
   {
     if (*s == '%')
     {
-      if (isxdigit(s[1]) && isxdigit(s[2]))
+      // Ensure there are at least two more characters to form a valid hex value
+      if (s[1] && s[2] && isxdigit(s[1]) && isxdigit(s[2]))
       {
         int value;
         sscanf(s + 1, "%2x", &value);
         *d++ = (char)value;
-        s += 2;
+        s += 2; // Skip past the 2 hex digits
       }
       else
+      {
+        // Invalid percent-encoding, just copy the '%' character
         *d++ = '%';
+      }
     }
     else if (*s == '+')
-      *d++ = ' ';
+    {
+      *d++ = ' '; // Convert '+' to space
+    }
     else
-      *d++ = *s;
+    {
+      *d++ = *s; // Copy the regular character
+    }
   }
-  *d = '\0';
+
+  *d = '\0'; // Null-terminate the decoded string
 
   return decoded;
 }

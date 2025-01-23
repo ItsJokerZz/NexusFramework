@@ -21,7 +21,3 @@
 #include "client_cmds.hpp"
 #include "daemon_cmds.hpp"
 #include "orbis_control.hpp"
-
-
-#include "b64/encode.h"
-#include "b64/decode.h"

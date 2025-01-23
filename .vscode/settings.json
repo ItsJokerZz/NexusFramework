@@ -80,6 +80,7 @@
         "thread": "cpp",
         "fstream": "cpp",
         "regex": "cpp",
-        "bitset": "cpp"
+        "bitset": "cpp",
+        "set": "cpp"
     }
 }

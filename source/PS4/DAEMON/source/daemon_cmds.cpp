@@ -261,97 +261,48 @@ namespace cmds
 
     void write_proc_mem()
     {
-      const char *address = nullptr;
-      const char *dataToWrite = nullptr;
+      std::string address = extract_param("address", data.buffers.relay);
+      std::string dataToWrite = extract_param("data", data.buffers.relay);
 
-      // Extract the address parameter from the URL
-      const char *start = strstr(data.buffers.relay.data(), "address=");
-      if (start)
-      {
-        start += 8; // Move past "address="
-        const char *end = strchr(start, '&');
-        if (end)
-        {
-          address = decode_url(std::string(start, end).c_str());
-        }
-        else
-        {
-          address = decode_url(start); // If no '&' found, address is the last param
-        }
-      }
-
-      if (!address)
+      if (address.empty())
       {
         log_message("No address provided");
         send_error_response(_DEBUGGING);
         return;
       }
 
-      // Extract the data parameter from the URL
-      start = strstr(data.buffers.relay.data(), "data=");
-      if (start)
-      {
-        start += 5; // Move past "data="
-        const char *end = strchr(start, '&');
-        if (end)
-        {
-          dataToWrite = decode_url(std::string(start, end).c_str());
-        }
-        else
-        {
-          dataToWrite = decode_url(start); // If no '&' found, data is the last param
-        }
-      }
-
-      if (!dataToWrite)
+      if (dataToWrite.empty())
       {
         log_message("No data to write provided");
         send_error_response(_DEBUGGING);
         return;
       }
 
-      uint64_t addressVal = std::stoull(address, nullptr, 16);
-      size_t byteSize = strlen(dataToWrite) / 2; // Each byte is represented by 2 hex characters
+      log_message("Address: %s, Data: %s", address.c_str(), dataToWrite.c_str());
 
-      // Check if byte size exceeds limit
-      if (byteSize > 1024 * 1024)
-      {
-        send_response("error: byteSize too large");
-        return;
-      }
-
-      // Convert hex string to byte buffer
-      char *buffer = new char[byteSize + 1]; // Allocate extra byte for null-termination
-      buffer[byteSize] = '\0';               // Explicitly null-terminate the string
+      uint64_t addressVal = strtoull(address.c_str(), nullptr, 16);
+      size_t byteSize = dataToWrite.length() / 2;
+      char *buffer = new char[byteSize + 1];
+      buffer[byteSize] = '\0';
 
       for (size_t i = 0; i < byteSize; i++)
       {
         unsigned int byte;
-        sscanf(dataToWrite + i * 2, "%2x", &byte); // Read two hex digits at a time
+        sscanf(dataToWrite.c_str() + i * 2, "%2x", &byte);
         buffer[i] = static_cast<char>(byte);
       }
 
-      // Log the buffer content to check conversion
-      log_message("Buffer: %s", buffer);
-
-      // Prepare the arguments for sys_sdk_proc_rw
       proc_rw args;
       args.address = addressVal;
       args.data = static_cast<void *>(buffer);
-      args.length = byteSize + 1; // Add 1 for the null terminator
+      args.length = byteSize;
       args.write_flags = 1;
 
-      // Perform the memory write
       if (sys_sdk_proc_rw(&args) == 0)
-      {
         send_response("success: memory written");
-      }
       else
-      {
         send_response("error: failed to write memory");
-      }
 
-      // Clean up the allocated buffer
       delete[] buffer;
     }
 

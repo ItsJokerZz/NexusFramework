@@ -1,12 +1,8 @@
-LIBB64_DIR := /mnt/c/Users/Dakota/Downloads/libb64-1.2.1
-LIBB64_INCLUDE_DIR := $(LIBB64_DIR)/include
-LIBB64_SRC_DIR := $(LIBB64_DIR)/src
-
 TOOLCHAIN     := $(OO_PS4_TOOLCHAIN)
 PROJDIR       := source
 INTDIR        := build
 
-VERSION       := 0.54
+VERSION       := 0.55
 TARGET        := OrbisControl.prx
 
 VERSION_FILE  := $(INTDIR)/.version
@@ -15,23 +11,17 @@ BUILD_FILE    := $(INTDIR)/.number
 LIBS          := -lc -lc++ -lkernel -lGoldHEN_Hook    \
                  -lSceSystemService -lSceSysmodule    \
                  -lSceUserService -lSceNet -lSceHttp  \
-                 -lSceSysUtil -lSceSysmodule -lScePad \
+				 -lSceSysUtil -lSceSysmodule -lScePad \
 
 CPPFILES      := $(wildcard $(PROJDIR)/*.cpp)
 OBJS          := $(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES))
 
-# Add libb64 .c files to the OBJS list
-LIBB64_C_FILES := $(wildcard $(LIBB64_SRC_DIR)/*.c)
-LIBB64_OBJS     := $(patsubst $(LIBB64_SRC_DIR)/%.c, $(INTDIR)/%.o, $(LIBB64_C_FILES))
-
-OBJS += $(LIBB64_OBJS)
-
 CFLAGS        := --target=x86_64-pc-freebsd12-elf -fPIC -funwind-tables -c \
                  $(EXTRAFLAGS) -isysroot $(TOOLCHAIN) -isystem $(TOOLCHAIN)/include \
-                 -Iinclude -I$(LIBB64_INCLUDE_DIR) -std=c11 -D_DEFAULT_SOURCE -DFMT_HEADER_ONLY
+                 -Iinclude -std=c11 -D_DEFAULT_SOURCE -DFMT_HEADER_ONLY
 
 CXXFLAGS      := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1 \
-                 -std=c++11 -Iinclude -I$(LIBB64_INCLUDE_DIR) -DFMT_HEADER_ONLY
+                 -std=c++11 -Iinclude -DFMT_HEADER_ONLY
 
 LDFLAGS       := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr \
                  -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o --wrap=_init \
@@ -47,9 +37,8 @@ $(INTDIR)/%.o: $(PROJDIR)/%.c
 $(INTDIR)/%.o: $(PROJDIR)/%.cpp
 	$(CCX) $(CXXFLAGS) -D BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
-# Adding libb64 source file compilation rule
-$(INTDIR)/%.o: $(LIBB64_SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -I$(LIBB64_INCLUDE_DIR) -D BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
+$(INTDIR)/%.o: $(COMMONDIR)/%.cpp
+	$(CCX) $(CXXFLAGS) -D BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
 _unused       := $(shell mkdir -p $(INTDIR))
 UNAME_S       := $(shell uname -s)

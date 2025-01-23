@@ -167,7 +167,7 @@ namespace cmds
       {
         uint8_t temp = 0;
 
-        std::string limit_str = extract_param("limit=", data.buffers.daemon);
+        std::string limit_str = extract_param("limit", data.buffers.daemon);
 
         if (!limit_str.empty())
         {
@@ -191,7 +191,7 @@ namespace cmds
       {
         int state = 0;
 
-        std::string state_str = extract_param("state=", data.buffers.daemon);
+        std::string state_str = extract_param("state", data.buffers.daemon);
 
         if (!state_str.empty())
         {
@@ -261,8 +261,8 @@ namespace cmds
       {
         char request[BUFFER_SIZE];
 
-        std::string prx_path = extract_param("path=", data.buffers.daemon);
-        std::string exec_path = extract_param("exec=", data.buffers.daemon);
+        std::string prx_path = extract_param("path", data.buffers.daemon);
+        std::string exec_path = extract_param("exec", data.buffers.daemon);
 
         auto load_prx = [](const std::string &exec_path,
                            const std::string &prx_path) -> bool
