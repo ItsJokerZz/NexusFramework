@@ -236,9 +236,6 @@ void *unified_thread(void *arg)
   return nullptr;
 }
 
-#include <netinet/in.h> // For sockaddr_in, AF_INET, etc.
-#include <arpa/inet.h>  // For inet_ntoa
-
 void *telnet_server(void *arg)
 {
   int server_socket = -1, client_socket = -1;

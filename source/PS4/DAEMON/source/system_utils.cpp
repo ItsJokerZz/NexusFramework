@@ -2,32 +2,65 @@
 
 std::string console_type;
 
-std::string get_title_id()
+std::string get_game_info(const std::string &returnType)
 {
-  struct dirent *entry;
-  std::string titleId = "";
+  const std::vector<std::string> validGameTypes = {"SLES", "SCES", "SCED", "SLUS", "SCUS", "SLPS", "SCAJ", "SLKA", "SLPM",
+                                                   "SCPS", "CF00", "SCKA", "ALCH", "CPCS", "SLAJ", "KOEI", "ARZE", "TCPS",
+                                                   "SCCS", "PAPX", "SRPM", "GUST", "WLFD", "ULKS", "VUGJ", "HAKU", "ROSE",
+                                                   "CZP2", "ARP2", "PKP2", "SLPN", "NMP2", "MTP2", "SCPM", "PBPX"};
 
+  std::string titleID = "";
+  struct dirent *entry;
   DIR *dir = opendir("/mnt/sandbox/");
   if (dir == nullptr)
-    return titleId;
+    return "";
 
   while ((entry = readdir(dir)) != nullptr)
   {
     std::regex titleRegex("(?!NPXS)([a-zA-Z0-9]{4}[0-9]{5})");
-    std::smatch match;
     std::string dirName(entry->d_name);
+    std::smatch match;
 
     if (std::regex_search(dirName, match, titleRegex) && match.size() > 1)
     {
-      titleId = match.str(1);
-
+      titleID = match.str(1);
       break;
     }
   }
 
   closedir(dir);
 
-  return titleId;
+  if (titleID.empty())
+    return "";
+
+  std::string json_req = "https://playstationappjsonfinder.tiiny.io/?titleId=" + titleID;
+  std::string response = perform_get_request("", 0, json_req.c_str());
+  nlohmann::json jsonResponse = nlohmann::json::parse(response, nullptr, false);
+
+  if (jsonResponse.is_discarded())
+    return "";
+
+  std::string gameName = jsonResponse["names"].empty() ? "" : jsonResponse["names"][0]["name"];
+  std::string imageUrl = jsonResponse["icons"].empty() ? "" : jsonResponse["icons"][0]["icon"];
+
+  std::string gameType =
+      (titleID.rfind("CUSA", 0) == 0) ? "PS4"
+      : (std::find(validGameTypes.begin(),
+                   validGameTypes.end(),
+                   titleID.substr(0, 4)) != validGameTypes.end())
+          ? "PS1/PS2"
+          : "Homebrew";
+
+  if (returnType == "name")
+    return gameName;
+  if (returnType == "titleId")
+    return titleID;
+  if (returnType == "image")
+    return imageUrl;
+  if (returnType == "type")
+    return gameType;
+
+  return "";
 }
 
 int get_proc_list(struct proc_list_entry *procs, uint64_t *num)

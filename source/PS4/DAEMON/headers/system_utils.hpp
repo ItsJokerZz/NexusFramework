@@ -15,7 +15,7 @@ enum power_state
 };
 
 extern std::string console_type;
-extern std::string get_title_id();
+extern std::string get_game_info(const std::string &returnType = "name");
 
 extern int get_proc_list(struct proc_list_entry *procs, uint64_t *num);
 extern int find_pid_by_procName(const char *proc_name, int *pid);

@@ -1,5 +1,11 @@
 #include "../headers/includes.hpp"
 
+struct ResponseData
+{
+  char *buffer;
+  size_t responseSize;
+};
+
 bool is_port_open(int port)
 {
   int sock =
@@ -56,87 +62,80 @@ std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE> &
   return std::string(param_start, param_end - param_start);
 }
 
-char *perform_get_request(const char *command, int port)
+static size_t writeCallback(void *contents, size_t size, size_t nmemb, void *userp)
 {
-  static char buffer[BUFFER_SIZE];
-  int httpCtxId = 0, tmplId = 0, connId = 0, reqId = 0, bytesRead = 0;
-  char userAgent[64], url[256];
+  size_t totalSize = size * nmemb;
 
-  httpCtxId = sceHttpInit(0, 0, 1024 * 1024);
-  if (httpCtxId < 0)
+  // Cast userp to a ResponseData pointer, assuming userp is a pointer to ResponseData struct
+  ResponseData *responseData = (ResponseData *)userp;
+
+  // Reallocate buffer to accommodate new data
+  char *newBuffer = (char *)realloc(responseData->buffer, responseData->responseSize + totalSize + 1);
+  if (!newBuffer)
   {
-    log_message("Failed to initialize HTTP. Error code: %d", httpCtxId);
+    log_message("Memory allocation failed during response buffering.");
+    return 0;
+  }
+
+  responseData->buffer = newBuffer;
+  memcpy(&(responseData->buffer[responseData->responseSize]), contents, totalSize);
+  responseData->responseSize += totalSize;
+  responseData->buffer[responseData->responseSize] = '\0'; // Null-terminate the string
+
+  return totalSize;
+}
+
+char *perform_get_request(const char *command, int port, const char *custom_url)
+{
+  CURL *curl;
+  CURLcode result;
+
+  ResponseData responseData = {NULL, 0}; // Initialize responseData with null buffer and size 0
+
+  curl = curl_easy_init();
+  if (!curl)
+  {
+    log_message("Failed to initialize CURL.");
     return NULL;
   }
 
-  snprintf(userAgent, sizeof(userAgent), "OrbisControl v%.2fb%d", VERSION, BUILD);
-  tmplId = sceHttpCreateTemplate(httpCtxId, userAgent, 1, 0);
-  if (tmplId < 0)
+  std::string url;
+  if (custom_url)
+    url = custom_url;
+  else
+    url = "http://127.0.0.1:" + std::to_string(port) + "/" + command;
+
+  // Configure CURL options.
+  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+  curl_easy_setopt(curl, CURLOPT_USERAGENT, "PS4");
+  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
+  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseData); // Pass responseData to callback
+  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+
+  result = curl_easy_perform(curl);
+
+  if (result != CURLE_OK)
   {
-    log_message("Failed to create HTTP template. Error code: %d", tmplId);
-    sceHttpTerm(httpCtxId);
-    return NULL;
+    free(responseData.buffer); // Free the buffer if an error occurred
+    responseData.buffer = NULL;
+  }
+  else
+  {
+    long httpStatusCode;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpStatusCode);
+
+    if (httpStatusCode != 200)
+    {
+      free(responseData.buffer); // Free the buffer if the status code is not 200
+      responseData.buffer = NULL;
+    }
   }
 
-  connId = sceHttpCreateConnection(tmplId, "127.0.0.1", "http", port, 1);
-  if (connId < 0)
-  {
-    log_message("Failed to create HTTP connection. Error code: %d", connId);
-    sceHttpDeleteTemplate(tmplId);
-    sceHttpTerm(httpCtxId);
-    return NULL;
-  }
+  curl_easy_cleanup(curl);
 
-  snprintf(url, sizeof(url), "/%s", command);
-  reqId = sceHttpCreateRequest(connId, ORBIS_METHOD_GET, url, 0);
-  if (reqId < 0)
-  {
-    log_message("Failed to create HTTP request. Error code: %d", reqId);
-    sceHttpDeleteConnection(connId);
-    sceHttpDeleteTemplate(tmplId);
-    sceHttpTerm(httpCtxId);
-    return NULL;
-  }
-
-  int sendRequestResult = sceHttpSendRequest(reqId, NULL, 0);
-  if (sendRequestResult < 0 && strcmp(command, "attach") != 0)
-  {
-    log_message("Failed to send HTTP request. Error code: %d",
-                sendRequestResult);
-    sceHttpDeleteRequest(reqId);
-    sceHttpDeleteConnection(connId);
-    sceHttpDeleteTemplate(tmplId);
-    sceHttpTerm(httpCtxId);
-    return NULL;
-  }
-
-  bytesRead = sceHttpReadData(reqId, buffer, sizeof(buffer));
-  if (bytesRead < 0)
-  {
-    log_message("Failed to read HTTP response. Error code: %d", bytesRead);
-    sceHttpDeleteRequest(reqId);
-    sceHttpDeleteConnection(connId);
-    sceHttpDeleteTemplate(tmplId);
-    sceHttpTerm(httpCtxId);
-    return NULL;
-  }
-
-  buffer[bytesRead] = '\0';
-  char *bodyStart = strstr(buffer, "\r\n\r\n");
-  if (bodyStart != NULL)
-  {
-    bodyStart += 4;
-    size_t bodyLength = bytesRead - (bodyStart - buffer);
-    memmove(buffer, bodyStart, bodyLength);
-    buffer[bodyLength] = '\0';
-  }
-
-  sceHttpDeleteRequest(reqId);
-  sceHttpDeleteConnection(connId);
-  sceHttpDeleteTemplate(tmplId);
-  sceHttpTerm(httpCtxId);
-
-  return buffer;
+  return responseData.buffer; // Return the buffer, which contains the response
 }
 
 char *decode_url(const char *url)
