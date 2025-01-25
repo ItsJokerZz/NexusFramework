@@ -81,6 +81,9 @@
         "fstream": "cpp",
         "regex": "cpp",
         "bitset": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "unordered_set": "cpp",
+        "sha1.h": "c",
+        "shalib.h": "c"
     }
 }

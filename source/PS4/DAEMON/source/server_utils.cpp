@@ -27,31 +27,36 @@ bool is_port_open(int port)
   return false;
 }
 
-std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE>& buffer)
+std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE> &buffer)
 {
-    // Find the start of the query string (i.e., parameters after ?)
-    const char *start = strstr(buffer.data(), key);
-    if (!start)
-        return "";
+  const char *query_start = strchr(buffer.data(), '?');
+  if (!query_start)
+    return "";
 
-    start += strlen(key);
-    if (*start != '=')
-        return ""; // If '=' is not found after the key, it's an invalid parameter
+  query_start++;
 
-    start++;  // Move past '='
+  const char *param_start = strstr(query_start, key);
+  if (!param_start)
+    return "";
 
-    // Find where the query string ends by looking for the first space (after HTTP/1.1)
-    const char *end = strchr(start, '&');
-    if (!end)
-        end = strchr(start, ' ');  // Stop at the first space (before HTTP/1.1 or headers)
+  param_start += strlen(key);
 
-    if (!end)
-        end = start + strlen(start);  // If no space or '&', end at the end of the string
+  if (*param_start != '=')
+    return "";
 
-    return std::string(start, end - start);
+  param_start++;
+
+  const char *param_end = strchr(param_start, '&');
+  if (!param_end)
+    param_end = strchr(param_start, ' ');
+
+  if (!param_end)
+    param_end = param_start + strlen(param_start);
+
+  return std::string(param_start, param_end - param_start);
 }
 
-char *perform_get_request(const char *command)
+char *perform_get_request(const char *command, int port)
 {
   static char buffer[BUFFER_SIZE];
   int httpCtxId = 0, tmplId = 0, connId = 0, reqId = 0, bytesRead = 0;
@@ -73,7 +78,7 @@ char *perform_get_request(const char *command)
     return NULL;
   }
 
-  connId = sceHttpCreateConnection(tmplId, "127.0.0.1", "http", RELAYS_PORT, 1);
+  connId = sceHttpCreateConnection(tmplId, "127.0.0.1", "http", port, 1);
   if (connId < 0)
   {
     log_message("Failed to create HTTP connection. Error code: %d", connId);
@@ -176,8 +181,7 @@ char *decode_url(const char *url)
   return decoded;
 }
 
-std::string generate_json(
-    const std::unordered_map<std::string, nlohmann::json> &data_entries)
+std::string generate_json(const std::unordered_map<std::string, nlohmann::json> &data_entries)
 {
   nlohmann::json response = {{"DATA", nlohmann::json::object()}};
 

@@ -14,21 +14,9 @@ namespace cmds
 
     void load_module()
     {
-      const char *path = nullptr;
-      const char *start = strstr(data.buffers.relay.data(), "path=");
+      std::string path = extract_param("path", data.buffers.relay);
 
-      if (start)
-      {
-        start += 5;
-        const char *end = strchr(start, ' ');
-        if (end)
-        {
-          std::string encoded_path(start, end);
-          path = decode_url(encoded_path.c_str());
-        }
-      }
-
-      if (!path)
+      if (path.empty())
       {
         log_message("No path provided for SPRX");
         return;
@@ -38,23 +26,20 @@ namespace cmds
       sys_sdk_proc_info(&info);
       int pid = info.pid;
 
-      int32_t result = sceKernelLoadStartModule(path, 0, 0, 0, NULL, NULL);
+      int32_t result = sceKernelLoadStartModule(path.c_str(), 0, 0, 0, NULL, NULL);
       if (result == 0x80020002)
       {
-        log_message("SPRX %s not found", path);
-        free((void *)path);
+        log_message("SPRX %s not found", path.c_str());
         return;
       }
       else if (result < 0)
       {
-        log_message("Error loading SPRX %s! Error code 0x%08x (%i)", path, result,
-                    result);
-        free((void *)path);
+        log_message("Error loading SPRX %s! Error code 0x%08x (%i)", path.c_str(), result, result);
         return;
       }
 
       char response[BUFFER_SIZE];
-      snprintf(response, sizeof(response), "%i,%d,%s", pid, result, path);
+      snprintf(response, sizeof(response), "%i,%d,%s", pid, result, path.c_str());
       send_response(response);
 
       int32_t ret;
@@ -80,148 +65,118 @@ namespace cmds
           log_message("module_stop returned with 0x%08x", prx_ret);
         }
         else if (prx_ret == 0)
+        {
           log_message("module_start exit successful 0x%08x", prx_ret);
+        }
       }
       else
+      {
         log_message("Unable to find module_start or module_stop!");
+      }
 
       char notify_msg[BUFFER_SIZE];
-      snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] SPRX Loaded:\n%s", path);
+      snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] SPRX Loaded:\n%s", path.c_str());
       text_notify(222, notify_msg);
-
-      free((void *)path);
     }
 
     void start_plugin()
     {
-      const char *plugin = nullptr;
-      const char *start = strstr(data.buffers.relay.data(), "plugin=");
+      std::string plugin = extract_param("plugin", data.buffers.relay);
 
-      if (start)
-      {
-        start += 7;
-        const char *end = strchr(start, ' ');
-        if (end)
-        {
-          std::string encoded_plugin(start, end);
-          plugin = decode_url(encoded_plugin.c_str());
-        }
-      }
-
-      if (!plugin)
+      if (plugin.empty())
       {
         log_message("No plugin provided to load");
-        send_error_response(_DEBUGGING);
         return;
       }
 
+      // Construct the full path for the plugin
+      std::string path = "/data/GoldHEN/plugins/" + plugin;
+      log_message("Attempting to load plugin from path: %s", path.c_str());
+
+      // Get process information
       struct proc_info info;
       sys_sdk_proc_info(&info);
       int pid = info.pid;
 
-      std::string path = std::string("/data/GoldHEN/plugins/") + plugin;
+      // Attempt to load the plugin
       int32_t result = sceKernelLoadStartModule(path.c_str(), 0, 0, 0, NULL, NULL);
-
       if (result == 0x80020002)
       {
-        log_message("Plugin %s not found", plugin);
-        free((void *)plugin);
-        send_error_response(_DEBUGGING);
+        log_message("Plugin %s not found at path: %s", plugin.c_str(), path.c_str());
+        send_response("Plugin not found");
         return;
       }
       else if (result < 0)
       {
-        log_message("Error loading Plugin %s! Error code 0x%08x (%i)", plugin,
-                    result, result);
-        free((void *)plugin);
-        send_error_response(_DEBUGGING);
+        log_message("Error loading plugin %s! Error code 0x%08x (%d)", plugin.c_str(), result, result);
+        send_response("Failed to load plugin");
         return;
       }
 
+      // Log successful load
+      log_message("Plugin %s loaded successfully with module ID: %d", plugin.c_str(), result);
+
+      // Prepare response
       char response[BUFFER_SIZE];
-      snprintf(response, sizeof(response), "%i,%d,%s", pid, result, plugin);
+      snprintf(response, sizeof(response), "%i,%d,%s", pid, result, plugin.c_str());
       send_response(response);
 
+      // Resolve the plugin_load and plugin_unload symbols
       int32_t ret;
-      int32_t (*plugin_load_ret)(void);
-      int32_t (*plugin_unload_ret)(void);
+      int32_t (*plugin_load_ret)(void) = nullptr;
+      int32_t (*plugin_unload_ret)(void) = nullptr;
 
       ret = sceKernelDlsym(result, "plugin_load", (void **)&plugin_load_ret);
-      log_message("plugin_load Dlsym 0x%08x @ %p", ret, plugin_load_ret);
+      if (ret < 0 || !plugin_load_ret)
+      {
+        log_message("Failed to resolve plugin_load symbol. Error: 0x%08x", ret);
+        send_response("Failed to find plugin_load");
+        return;
+      }
 
       ret = sceKernelDlsym(result, "plugin_unload", (void **)&plugin_unload_ret);
-      log_message("plugin_unload Dlsym 0x%08x @ %p", ret, plugin_unload_ret);
-
-      if (plugin_load_ret && plugin_unload_ret)
+      if (ret < 0 || !plugin_unload_ret)
       {
-        log_message("Starting plugin...");
-        int32_t prx_ret = plugin_load_ret();
-        log_message("plugin_load returned with 0x%08x", prx_ret);
-
-        if (prx_ret || prx_ret < 0)
-        {
-          log_message("Plugin returned non-zero, stopping module...");
-          prx_ret = plugin_unload_ret();
-          log_message("plugin_unload returned with 0x%08x", prx_ret);
-        }
-        else if (prx_ret == 0)
-          log_message("plugin_load exit successful 0x%08x", prx_ret);
+        log_message("Failed to resolve plugin_unload symbol. Error: 0x%08x", ret);
+        send_response("Failed to find plugin_unload");
+        return;
       }
-      else
-        log_message("Unable to find plugin_load or plugin_unload!");
 
+      // Call plugin_load
+      log_message("Starting plugin...");
+      int32_t prx_ret = plugin_load_ret();
+      log_message("plugin_load returned with 0x%08x", prx_ret);
+
+      // Handle errors from plugin_load
+      if (prx_ret != 0)
+      {
+        log_message("Plugin returned non-zero, stopping module...");
+        prx_ret = plugin_unload_ret();
+        log_message("plugin_unload returned with 0x%08x", prx_ret);
+        send_response("Plugin failed to start");
+        return;
+      }
+
+      // Log success and notify
+      log_message("plugin_load exited successfully with 0x%08x", prx_ret);
       char notify_msg[BUFFER_SIZE];
-      snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] Plugin Loaded: %s", plugin);
+      snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] Plugin Loaded: %s", plugin.c_str());
       text_notify(222, notify_msg);
-
-      free((void *)plugin);
     }
 
     void read_proc_mem()
     {
-      const char *address = nullptr;
-      const char *size = nullptr;
+      std::string address = extract_param("address", data.buffers.relay);
+      std::string size = extract_param("size", data.buffers.relay);
 
-      // Extract address param from query string
-      const char *start = strstr(data.buffers.relay.data(), "address=");
-      if (start)
-      {
-        start += 8; // Move past "address="
-        const char *end = strchr(start, '&');
-        if (end)
-        {
-          address = decode_url(std::string(start, end).c_str());
-        }
-        else
-        {
-          address = decode_url(start); // If no '&' found, address is the last param
-        }
-      }
-
-      if (!address)
+      if (address.empty())
       {
         log_message("No address provided");
         send_error_response(_DEBUGGING);
         return;
       }
 
-      // Extract size param from query string
-      start = strstr(data.buffers.relay.data(), "size=");
-      if (start)
-      {
-        start += 5; // Move past "size="
-        const char *end = strchr(start, ' ');
-        if (end)
-        {
-          size = std::string(start, end).c_str();
-        }
-        else
-        {
-          size = start; // If no space found, size is the last param
-        }
-      }
-
-      if (!size)
+      if (size.empty())
       {
         log_message("No size provided");
         send_error_response(_DEBUGGING);

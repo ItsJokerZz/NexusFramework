@@ -4,27 +4,30 @@ std::string console_type;
 
 std::string get_title_id()
 {
-  DIR *dir = opendir("/mnt/sandbox");
-  if (!dir)
-    return "User Interface (UI)"; // Return default if directory can't be opened.
-
-  std::string title_id = "User Interface (UI)";
   struct dirent *entry;
+  std::string titleId = "";
+
+  DIR *dir = opendir("/mnt/sandbox/");
+  if (dir == nullptr)
+    return titleId;
 
   while ((entry = readdir(dir)) != nullptr)
   {
-    std::string entry_name = entry->d_name;
-    std::regex pattern("^[A-Za-z0-9]{4}[0-9]{5}$");
+    std::regex titleRegex("(?!NPXS)([a-zA-Z0-9]{4}[0-9]{5})");
+    std::smatch match;
+    std::string dirName(entry->d_name);
 
-    if (std::regex_match(entry_name, pattern) && entry_name.substr(0, 4) != "NPXS")
+    if (std::regex_search(dirName, match, titleRegex) && match.size() > 1)
     {
-      title_id = entry_name;
+      titleId = match.str(1);
+
       break;
     }
   }
 
   closedir(dir);
-  return title_id;
+
+  return titleId;
 }
 
 int get_proc_list(struct proc_list_entry *procs, uint64_t *num)
