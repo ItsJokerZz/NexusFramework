@@ -41,6 +41,8 @@ namespace cmds
             void load_plugin();
             void rw_proc_mem();
 
+            void get_proc_info();
+
         } // namespace process
 
     }

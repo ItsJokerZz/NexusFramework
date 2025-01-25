@@ -2,127 +2,224 @@
 
 std::string console_type;
 
-std::string get_game_info(const std::string &returnType)
+std::string get_local_ip()
 {
-  const std::vector<std::string> validGameTypes = {"SLES", "SCES", "SCED", "SLUS", "SCUS", "SLPS", "SCAJ", "SLKA", "SLPM",
-                                                   "SCPS", "CF00", "SCKA", "ALCH", "CPCS", "SLAJ", "KOEI", "ARZE", "TCPS",
-                                                   "SCCS", "PAPX", "SRPM", "GUST", "WLFD", "ULKS", "VUGJ", "HAKU", "ROSE",
-                                                   "CZP2", "ARP2", "PKP2", "SLPN", "NMP2", "MTP2", "SCPM", "PBPX"};
-
-  std::string titleID = "";
-  struct dirent *entry;
-  DIR *dir = opendir("/mnt/sandbox/");
-  if (dir == nullptr)
+  int sock = socket(PF_INET, SOCK_DGRAM, 0);
+  if (sock == -1)
     return "";
 
+  sockaddr_in remote_addr{};
+  remote_addr.sin_family = AF_INET;
+  remote_addr.sin_addr.s_addr = inet_addr("8.8.8.8");
+  remote_addr.sin_port = htons(53);
+
+  if (connect(sock, reinterpret_cast<sockaddr *>(&remote_addr), sizeof(remote_addr)) == -1)
+  {
+    close(sock);
+    return "";
+  }
+
+  sockaddr_in local_addr{};
+  socklen_t addrlen = sizeof(local_addr);
+  if (getsockname(sock, reinterpret_cast<sockaddr *>(&local_addr), &addrlen) == -1)
+  {
+    close(sock);
+    return "";
+  }
+
+  close(sock);
+
+  char buf[INET_ADDRSTRLEN];
+  if (inet_ntop(AF_INET, &local_addr.sin_addr, buf, INET_ADDRSTRLEN) == nullptr)
+    return "";
+
+  return std::string(buf);
+}
+
+std::string get_title_id()
+{
+  DIR *dir = opendir("/mnt/sandbox/");
+  if (!dir)
+    return HOME_MENU;
+
+  std::string titleID = "";
+  std::regex titleRegex("(?!NPXS)([a-zA-Z0-9]{4}[0-9]{5})");
+  struct dirent *entry;
   while ((entry = readdir(dir)) != nullptr)
   {
-    std::regex titleRegex("(?!NPXS)([a-zA-Z0-9]{4}[0-9]{5})");
     std::string dirName(entry->d_name);
     std::smatch match;
-
     if (std::regex_search(dirName, match, titleRegex) && match.size() > 1)
     {
       titleID = match.str(1);
       break;
     }
   }
-
   closedir(dir);
 
-  if (titleID.empty())
+  return titleID.empty() ? HOME_MENU : titleID;
+}
+
+std::string get_title_name()
+{
+  std::string titleID = get_title_id();
+
+  if (titleID == HOME_MENU)
+    return "User Interface (UI)";
+
+  std::string path = "/system_data/priv/appmeta/" + titleID + "/param.sfo";
+
+  FILE *file = fopen(path.c_str(), "rb");
+  if (!file)
+  {
+    log_message("Failed to open SFO file at %s", path.c_str());
+    return "";
+  }
+
+  fseek(file, 0, SEEK_END);
+  long fileSize = ftell(file);
+  fseek(file, 0, SEEK_SET);
+
+  std::vector<u8> sfoData(fileSize);
+  fread(sfoData.data(), 1, fileSize, file);
+  fclose(file);
+
+  SfoReader sfoReader(sfoData);
+  return sfoReader.GetValueFor<std::string>("TITLE");
+}
+
+std::string find_exec_by_titleID()
+{
+  std::string titleID = get_title_id();
+  std::string path = "/mnt/sandbox/" + titleID + "_000/app0/";
+  DIR *dir = opendir(path.c_str());
+  if (!dir)
     return "";
 
-  std::string json_req = "https://playstationappjsonfinder.tiiny.io/?titleId=" + titleID;
-  std::string response = perform_get_request("", 0, json_req.c_str());
-  nlohmann::json jsonResponse = nlohmann::json::parse(response, nullptr, false);
+  struct dirent *entry;
+  while ((entry = readdir(dir)) != nullptr)
+  {
+    std::string fileName(entry->d_name);
+    if (fileName.find(".bin") != std::string::npos ||
+        fileName.find(".elf") != std::string::npos)
+    {
+      int pid = find_pid_by_procName(fileName.c_str());
 
-  if (jsonResponse.is_discarded())
-    return "";
+      closedir(dir);
 
-  std::string gameName = jsonResponse["names"].empty() ? "" : jsonResponse["names"][0]["name"];
-  std::string imageUrl = jsonResponse["icons"].empty() ? "" : jsonResponse["icons"][0]["icon"];
+      return std::string(find_procName_of_pid(pid).c_str());
+    }
+  }
 
-  std::string gameType =
-      (titleID.rfind("CUSA", 0) == 0) ? "PS4"
-      : (std::find(validGameTypes.begin(),
-                   validGameTypes.end(),
-                   titleID.substr(0, 4)) != validGameTypes.end())
-          ? "PS1/PS2"
-          : "Homebrew";
+  closedir(dir);
+  return "";
+}
 
-  if (returnType == "name")
-    return gameName;
+std::string get_game_info(const std::string &returnType)
+{
+  static const std::vector<std::string> validGameTypes = {
+      "SLES", "SCES", "SCED", "SLUS", "SCUS", "SLPS", "SCAJ", "SLKA", "SLPM",
+      "SCPS", "CF00", "SCKA", "ALCH", "CPCS", "SLAJ", "KOEI", "ARZE", "TCPS",
+      "SCCS", "PAPX", "SRPM", "GUST", "WLFD", "ULKS", "VUGJ", "HAKU", "ROSE",
+      "CZP2", "ARP2", "PKP2", "SLPN", "NMP2", "MTP2", "SCPM", "PBPX"};
+
+  std::string titleID = get_title_id();
+  std::string gameName = get_title_name();
+  std::string executable = find_exec_by_titleID();
+  std::string imagePath = titleID == HOME_MENU
+                              ? ""
+                              : "/user/appmeta/" + titleID + "/icon0.png";
+
+  std::string imageFtp = titleID == HOME_MENU
+                             ? ""
+                             : "ftp://" + get_local_ip() + ":2121/user/appmeta/" + titleID + "/icon0.png";
+
+  std::string gameType = (titleID.rfind("CUSA", 0) == 0)
+                             ? "PS4"
+                         : (std::find(validGameTypes.begin(),
+                                      validGameTypes.end(),
+                                      titleID.substr(0, 4)) != validGameTypes.end())
+                             ? "PS1/PS2"
+                             : "Homebrew";
+
+  int pid = find_pid_by_procName(executable.c_str());
+  if (returnType == "pid")
+    return pid == -1 ? "" : std::to_string(pid);
   if (returnType == "titleId")
     return titleID;
-  if (returnType == "image")
-    return imageUrl;
+  if (returnType == "name")
+    return gameName;
+  if (returnType == "exec")
+    return executable;
+  if (returnType == "imgPath")
+    return imagePath;
+  if (returnType == "imgFtp")
+    return imagePath;
   if (returnType == "type")
     return gameType;
 
   return "";
 }
 
-int get_proc_list(struct proc_list_entry *procs, uint64_t *num)
-{
-  return orbis_syscall(107 + 90, procs, num);
-}
-
-int find_pid_by_procName(const char *proc_name, int *pid)
+std::string find_procName_of_pid(int pid)
 {
   struct proc_list_entry *proc_list = nullptr;
   uint64_t pnum;
 
   if (get_proc_list(nullptr, &pnum) || !(proc_list = (struct proc_list_entry *)malloc(pnum * sizeof(struct proc_list_entry))))
-    return 0;
+    return ""; // Return an empty string on failure
 
   if (get_proc_list(proc_list, &pnum))
   {
     free(proc_list);
-    return 0;
-  }
-
-  for (size_t i = 0; i < pnum; ++i)
-  {
-    if (strncmp(proc_list[i].p_comm, proc_name, 32) == 0)
-    {
-      *pid = proc_list[i].pid;
-      free(proc_list);
-      return 1;
-    }
-  }
-
-  free(proc_list);
-  return 0;
-}
-
-int find_procName_of_pid(int pid, char *proc_name)
-{
-  struct proc_list_entry *proc_list = nullptr;
-  uint64_t pnum;
-
-  if (get_proc_list(nullptr, &pnum) || !(proc_list = (struct proc_list_entry *)malloc(pnum * sizeof(struct proc_list_entry))))
-    return 0;
-
-  if (get_proc_list(proc_list, &pnum))
-  {
-    free(proc_list);
-    return 0;
+    return ""; // Return an empty string if unable to get the process list
   }
 
   for (size_t i = 0; i < pnum; ++i)
   {
     if (proc_list[i].pid == pid)
     {
-      strncpy(proc_name, proc_list[i].p_comm, 32);
-      proc_name[31] = '\0'; // Ensure null-termination
+      std::string proc_name(proc_list[i].p_comm, 32); // Create a string from the first 32 characters
       free(proc_list);
-      return 1;
+      return proc_name;
     }
   }
 
   free(proc_list);
-  return 0;
+  return ""; // Return an empty string if no matching process is found
+}
+
+int find_pid_by_procName(const char *proc_name)
+{
+  struct proc_list_entry *proc_list = nullptr;
+  uint64_t pnum;
+
+  if (get_proc_list(nullptr, &pnum) || !(proc_list = (struct proc_list_entry *)malloc(pnum * sizeof(struct proc_list_entry))))
+    return -1; // Return -1 to indicate failure
+
+  if (get_proc_list(proc_list, &pnum))
+  {
+    free(proc_list);
+    return -1;
+  }
+
+  for (size_t i = 0; i < pnum; ++i)
+  {
+    if (strncmp(proc_list[i].p_comm, proc_name, 32) == 0)
+    {
+      int pid = proc_list[i].pid;
+      free(proc_list);
+      return pid; // Return the pid found
+    }
+  }
+
+  free(proc_list);
+  return -1; // Return -1 if no matching process is found
+}
+
+int get_proc_list(struct proc_list_entry *procs, uint64_t *num)
+{
+  return orbis_syscall(107 + 90, procs, num);
 }
 
 const char *get_username(OrbisUserServiceUserId userId)
@@ -138,7 +235,8 @@ const char *get_username(OrbisUserServiceUserId userId)
 
   if (sceUserServiceGetLoginUserIdList(&idList) == 0)
   {
-    if (sceUserServiceGetUserName(idList.userId[0], username, sizeof(username)) == 0)
+    if (sceUserServiceGetUserName(idList.userId[0], username,
+                                  sizeof(username)) == 0)
       return username;
   }
 
@@ -151,7 +249,7 @@ const char *get_console_type()
     return "KIT";
   if (sceKernelIsTestKit())
     return "TEST";
-  return "CEX"; // Default to "CEX"
+  return "CEX";
 }
 
 const char *get_fw_version(void)
@@ -190,10 +288,14 @@ bool has_entered_restmode()
     return false;
 
   uint64_t state;
-  if (sceKernelPollEventFlag(flag, 0xFFFF, SCE_KERNEL_EVF_WAITMODE_OR, &state) != 0)
+  if (sceKernelPollEventFlag(flag, 0xFFFF, SCE_KERNEL_EVF_WAITMODE_OR,
+                             &state) != 0)
     return false;
 
-  return (state == 1000 && sceKernelPollEventFlag(flag, 0x200000, SCE_KERNEL_EVF_WAITMODE_OR, 0) == 0) || state == 500;
+  return (state == 1000 &&
+          sceKernelPollEventFlag(flag, 0x200000, SCE_KERNEL_EVF_WAITMODE_OR,
+                                 0) == 0) ||
+         state == 500;
 }
 
 void text_notify(int type, const char *_msg)
@@ -223,7 +325,8 @@ void set_temperature_limit(uint8_t limit)
   if (fd < 0)
     return;
 
-  char data[10] = {0x00, 0x00, 0x00, 0x00, 0x00, static_cast<char>(limit), 0x00, 0x00, 0x00, 0x00};
+  char data[10] = {0x00, 0x00, 0x00, 0x00, 0x00, static_cast<char>(limit),
+                   0x00, 0x00, 0x00, 0x00};
   ioctl(fd, 0xC01C8F07, data);
   close(fd);
 }
@@ -234,7 +337,4 @@ void set_power_state(power_state state)
     orbis_syscall(37, 1, static_cast<int>(state));
 }
 
-void ring_buzzer(int type)
-{
-  sceKernelIccSetBuzzer(type);
-}
+void ring_buzzer(int type) { sceKernelIccSetBuzzer(type); }

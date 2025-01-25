@@ -1,18 +1,18 @@
 #pragma once
 
-#define DAEMON "NPXS21002" /* ScePartyDaemon */
+#define DAEMON_APP "NPXS21002" /* ScePartyDaemon */
 #define LOCAHOST "127.0.0.1"
 #define DAEMON_PORT 1337
 #define RELAYS_PORT 5000
 #define RPC_PORT 7000
 #define BUFFER_SIZE 4096
+#define HOME_MENU "NPXS21001" /* SceShellUI */
 
 #define RETRY_DELAY_SECONDS 5
-#define MAX_RETRY_ATTEMPTS 10
+#define MAX_RETRY_ATTEMPTS 12
 
-#define RESPONSE_OK                                                 \
-  "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: " \
-  "%d\r\n\r\n%s"
+#define RESPONSE_OK "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s"
+#define RESPONSE_OK_FILE "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: %ld\r\nContent-Disposition: attachment; filename=\"%s\"\r\n\r\n"
 
 #define SCE_KERNEL_EVF_WAITMODE_OR 0x02
 

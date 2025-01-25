@@ -15,16 +15,18 @@ enum power_state
 };
 
 extern std::string console_type;
-extern std::string get_game_info(const std::string &returnType = "name");
-
+extern std::string get_local_ip();
+extern std::string get_title_id();
+extern std::string find_exec_by_titleID();
+extern std::string get_game_info(const std::string &returnType);
+extern std::string find_procName_of_pid(int pid);
+extern int find_pid_by_procName(const char *proc_name);
 extern int get_proc_list(struct proc_list_entry *procs, uint64_t *num);
-extern int find_pid_by_procName(const char *proc_name, int *pid);
-extern int find_procName_of_pid(int pid, char *proc_name);
 
 extern const char *get_username(OrbisUserServiceUserId userId = 0);
+
 extern const char *get_console_type();
 extern const char *get_fw_version();
-
 extern uint32_t get_cpu_temperature();
 extern uint32_t get_soc_temperature();
 
