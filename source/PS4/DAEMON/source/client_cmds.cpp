@@ -37,7 +37,7 @@ namespace cmds
         }
 
         unloaded = true;
-        
+
         send_response("done");
       }
 
@@ -377,8 +377,6 @@ namespace cmds
 
       void find_pid_by_name()
       {
-        int procID;
-
         const char *name = strstr(data.buffers.daemon.data(), "name=");
         if (!name)
           return;
@@ -390,12 +388,9 @@ namespace cmds
 
         std::string proc_name(name, end);
 
-        int pid = find_pid_by_procName(proc_name.c_str(), &procID);
+        nlohmann::json response =
+            {{"pid", find_pid_by_procName(proc_name.c_str())}};
 
-        // Create and send JSON response using helper function
-        nlohmann::json response = {
-            {"pid",
-             pid}};
         send_response(generate_json(response).c_str());
       }
 
@@ -413,32 +408,13 @@ namespace cmds
 
         if (pid == 0)
         {
-          nlohmann::json error_response = {
-              {"error",
-               "Invalid pid."}};
+          nlohmann::json error_response = {{"error", "Invalid pid."}};
           send_response(generate_json(error_response).c_str());
+
           return;
         }
 
-        // Call the function to find the process name by pid
-        char proc_name[ORBIS_USER_SERVICE_MAX_USER_NAME_LENGTH + 1];
-        int ret = find_procName_of_pid(pid, proc_name);
-
-        // Create and send JSON response based on the result
-        nlohmann::json response;
-        if (ret == 1)
-        {
-          response = {
-              {"name",
-               proc_name}};
-        }
-        else
-        {
-          response = {
-              {"error",
-               "Process not found."}};
-        }
-
+        nlohmann::json response = {{"name", find_procName_of_pid(pid)}};
         send_response(generate_json(response).c_str());
       }
 
@@ -453,6 +429,14 @@ namespace cmds
       void rw_proc_mem()
       {
         send_response("done");
+      }
+
+      void get_proc_info()
+      {
+        std::string saveAs = get_game_info("titleId") + "_icon0.png";
+
+        if (!get_game_info("imgPath").empty())
+          send_file_response(get_game_info("imgPath").c_str(), saveAs.c_str());
       }
 
     }

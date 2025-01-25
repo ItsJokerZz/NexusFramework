@@ -3,6 +3,7 @@
 void handle_request(const std::string &request, bool isDaemon)
 {
   static const std::map<std::string, std::function<void()>> daemon_commands = {
+      {"GET /test", cmds::client::process::get_proc_info},
       {"GET /connect", cmds::client::connection::connect},
       {"GET /unload", cmds::client::connection::unload},
       {"GET /get_proc_list", cmds::client::process::get_proc_list},
@@ -338,7 +339,7 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
   struct proc_info info;
   sys_sdk_proc_info(&info);
 
-  isDaemon = (strcmp(info.titleid, DAEMON) == 0);
+  isDaemon = (strcmp(info.titleid, DAEMON_APP) == 0);
   port = isDaemon ? DAEMON_PORT : RELAYS_PORT;
 
   std::string buffer = "OrbisControl Already loaded!";

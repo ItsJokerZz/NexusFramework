@@ -2,18 +2,16 @@ TOOLCHAIN     := $(OO_PS4_TOOLCHAIN)
 PROJDIR       := source
 INTDIR        := build
 
-VERSION       := 0.56
+VERSION       := 0.57
 TARGET        := OrbisControl.prx
 
 VERSION_FILE  := $(INTDIR)/.version
 BUILD_FILE    := $(INTDIR)/.number
 
-LIBS        := -lc -lc++ -lz -lkernel -ljbc -lcurl -lpolarssl -lGoldHEN_Hook                     \
-               -lSceAppInstUtil -lSceLibcInternal -lSceNet                                       \
-               -lSceUserService -lSceLncUtil -lSceSysmodule                                      \
-               -lSceSystemService -lSceCommonDialog -lSceMsgDialog                               \
-               -lSceImeDialog -lSceIme -lSceBgft -lSceAppInstUtil                                \
-               -lSceSysUtil -lSceMsgDialog -lSceCommonDialog                                     \
+LIBS          := -lc -lc++ -lkernel -lGoldHEN_Hook    \
+                 -lSceSystemService -lSceSysmodule    \
+                 -lSceUserService -lSceNet -lSceHttp  \
+				 -lSceSysUtil -lSceSysmodule -lScePad \
 
 CPPFILES      := $(wildcard $(PROJDIR)/*.cpp)
 OBJS          := $(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES))

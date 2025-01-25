@@ -1,11 +1,5 @@
 #include "../headers/includes.hpp"
 
-struct ResponseData
-{
-  char *buffer;
-  size_t responseSize;
-};
-
 bool is_port_open(int port)
 {
   int sock =
@@ -62,80 +56,87 @@ std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE> &
   return std::string(param_start, param_end - param_start);
 }
 
-static size_t writeCallback(void *contents, size_t size, size_t nmemb, void *userp)
+char *perform_get_request(const char *command, int port)
 {
-  size_t totalSize = size * nmemb;
+  static char buffer[BUFFER_SIZE];
+  int httpCtxId = 0, tmplId = 0, connId = 0, reqId = 0, bytesRead = 0;
+  char userAgent[64], url[256];
 
-  // Cast userp to a ResponseData pointer, assuming userp is a pointer to ResponseData struct
-  ResponseData *responseData = (ResponseData *)userp;
-
-  // Reallocate buffer to accommodate new data
-  char *newBuffer = (char *)realloc(responseData->buffer, responseData->responseSize + totalSize + 1);
-  if (!newBuffer)
+  httpCtxId = sceHttpInit(0, 0, 1024 * 1024);
+  if (httpCtxId < 0)
   {
-    log_message("Memory allocation failed during response buffering.");
-    return 0;
-  }
-
-  responseData->buffer = newBuffer;
-  memcpy(&(responseData->buffer[responseData->responseSize]), contents, totalSize);
-  responseData->responseSize += totalSize;
-  responseData->buffer[responseData->responseSize] = '\0'; // Null-terminate the string
-
-  return totalSize;
-}
-
-char *perform_get_request(const char *command, int port, const char *custom_url)
-{
-  CURL *curl;
-  CURLcode result;
-
-  ResponseData responseData = {NULL, 0}; // Initialize responseData with null buffer and size 0
-
-  curl = curl_easy_init();
-  if (!curl)
-  {
-    log_message("Failed to initialize CURL.");
+    log_message("Failed to initialize HTTP. Error code: %d", httpCtxId);
     return NULL;
   }
 
-  std::string url;
-  if (custom_url)
-    url = custom_url;
-  else
-    url = "http://127.0.0.1:" + std::to_string(port) + "/" + command;
-
-  // Configure CURL options.
-  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-  curl_easy_setopt(curl, CURLOPT_USERAGENT, "PS4");
-  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0);
-  curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseData); // Pass responseData to callback
-  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
-
-  result = curl_easy_perform(curl);
-
-  if (result != CURLE_OK)
+  snprintf(userAgent, sizeof(userAgent), "OrbisControl v%.2fb%d", VERSION, BUILD);
+  tmplId = sceHttpCreateTemplate(httpCtxId, userAgent, 1, 0);
+  if (tmplId < 0)
   {
-    free(responseData.buffer); // Free the buffer if an error occurred
-    responseData.buffer = NULL;
-  }
-  else
-  {
-    long httpStatusCode;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpStatusCode);
-
-    if (httpStatusCode != 200)
-    {
-      free(responseData.buffer); // Free the buffer if the status code is not 200
-      responseData.buffer = NULL;
-    }
+    log_message("Failed to create HTTP template. Error code: %d", tmplId);
+    sceHttpTerm(httpCtxId);
+    return NULL;
   }
 
-  curl_easy_cleanup(curl);
+  connId = sceHttpCreateConnection(tmplId, "127.0.0.1", "http", port, 1);
+  if (connId < 0)
+  {
+    log_message("Failed to create HTTP connection. Error code: %d", connId);
+    sceHttpDeleteTemplate(tmplId);
+    sceHttpTerm(httpCtxId);
+    return NULL;
+  }
 
-  return responseData.buffer; // Return the buffer, which contains the response
+  snprintf(url, sizeof(url), "/%s", command);
+  reqId = sceHttpCreateRequest(connId, ORBIS_METHOD_GET, url, 0);
+  if (reqId < 0)
+  {
+    log_message("Failed to create HTTP request. Error code: %d", reqId);
+    sceHttpDeleteConnection(connId);
+    sceHttpDeleteTemplate(tmplId);
+    sceHttpTerm(httpCtxId);
+    return NULL;
+  }
+
+  int sendRequestResult = sceHttpSendRequest(reqId, NULL, 0);
+  if (sendRequestResult < 0 && strcmp(command, "attach") != 0)
+  {
+    log_message("Failed to send HTTP request. Error code: %d",
+                sendRequestResult);
+    sceHttpDeleteRequest(reqId);
+    sceHttpDeleteConnection(connId);
+    sceHttpDeleteTemplate(tmplId);
+    sceHttpTerm(httpCtxId);
+    return NULL;
+  }
+
+  bytesRead = sceHttpReadData(reqId, buffer, sizeof(buffer));
+  if (bytesRead < 0)
+  {
+    log_message("Failed to read HTTP response. Error code: %d", bytesRead);
+    sceHttpDeleteRequest(reqId);
+    sceHttpDeleteConnection(connId);
+    sceHttpDeleteTemplate(tmplId);
+    sceHttpTerm(httpCtxId);
+    return NULL;
+  }
+
+  buffer[bytesRead] = '\0';
+  char *bodyStart = strstr(buffer, "\r\n\r\n");
+  if (bodyStart != NULL)
+  {
+    bodyStart += 4;
+    size_t bodyLength = bytesRead - (bodyStart - buffer);
+    memmove(buffer, bodyStart, bodyLength);
+    buffer[bodyLength] = '\0';
+  }
+
+  sceHttpDeleteRequest(reqId);
+  sceHttpDeleteConnection(connId);
+  sceHttpDeleteTemplate(tmplId);
+  sceHttpTerm(httpCtxId);
+
+  return buffer;
 }
 
 char *decode_url(const char *url)
@@ -188,6 +189,56 @@ std::string generate_json(const std::unordered_map<std::string, nlohmann::json> 
     response["DATA"][pair.first] = pair.second;
 
   return response.dump(4);
+}
+
+void send_file_response(const char *file_path, const char *save_as)
+{
+  char header[512];
+  char buffer[BUFFER_SIZE];
+
+  int socket = isDaemon ? data.sockets.daemon.client : data.sockets.relay.client;
+  bool *toggle = isDaemon ? &connected : &attached;
+
+  FILE *file = fopen(file_path, "rb");
+  if (!file)
+  {
+    *toggle = false;
+    return;
+  }
+
+  fseek(file, 0, SEEK_END);
+  long file_size = ftell(file);
+  rewind(file);
+
+  const char *filename;
+  if (save_as && *save_as != '\0')
+    filename = save_as;
+  else
+  {
+    filename = strrchr(file_path, '/');
+    filename = (filename == NULL) ? file_path : filename + 1;
+  }
+
+  int header_length = snprintf(header, sizeof(header), RESPONSE_OK_FILE, file_size, filename);
+  if (sceNetSend(socket, header, header_length, 0) < header_length)
+  {
+    fclose(file);
+    *toggle = false;
+    return;
+  }
+
+  ssize_t bytes_read;
+  while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0)
+  {
+    if (sceNetSend(socket, buffer, bytes_read, 0) < bytes_read)
+    {
+      fclose(file);
+      *toggle = false;
+      return;
+    }
+  }
+
+  fclose(file);
 }
 
 void send_response(const char *message)
