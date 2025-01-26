@@ -3,10 +3,8 @@
 void handle_request(const std::string &request, bool isDaemon)
 {
   static const std::map<std::string, std::function<void()>> daemon_commands = {
-      {"GET /test", cmds::client::process::get_proc_info},
       {"GET /connect", cmds::client::connection::connect},
       {"GET /unload", cmds::client::connection::unload},
-      {"GET /get_proc_list", cmds::client::process::get_proc_list},
       {"GET /disconnect", []()
        { handle_command(cmds::client::connection::disconnect); }},
       {"GET /attach", []()
@@ -19,20 +17,24 @@ void handle_request(const std::string &request, bool isDaemon)
        { handle_command(cmds::client::sys_info::sys_type); }},
       {"GET /get_temperature", []()
        { handle_command(cmds::client::sys_info::get_temp); }},
+      {"GET /get_proc_list", []()
+       { handle_command(cmds::client::process::get_proc_list); }},
+      {"GET /get_pid_by_name", []()
+       { handle_command(cmds::client::process::find_pid_by_name); }},
+      {"GET /get_name_of_pid", []()
+       { handle_command(cmds::client::process::find_name_of_pid); }},
+      {"GET /get_proc_info", []()
+       { handle_command(cmds::client::process::get_proc_info); }},
       {"GET /get_username", []()
        { handle_command(cmds::client::sys_info::get_user); }},
-      {"GET /send_notify", []()
-       { handle_command(cmds::client::sys_control::notify); }},
       {"GET /set_temp_limit", []()
        { handle_command(cmds::client::sys_control::temp_limit); }},
       {"GET /set_power_state", []()
        { handle_command(cmds::client::sys_control::set_power_state); }},
       {"GET /ring_buzzer", []()
        { handle_command(cmds::client::sys_control::ring_buzzer); }},
-      {"GET /get_pid_by_name", []()
-       { handle_command(cmds::client::process::find_pid_by_name); }},
-      {"GET /get_name_of_pid", []()
-       { handle_command(cmds::client::process::find_name_of_pid); }},
+      {"GET /send_notify", []()
+       { handle_command(cmds::client::sys_control::notify); }},
       {"GET /load_module", []()
        { handle_command(cmds::client::process::load_module); }},
       {"GET /load_plugin", []()
