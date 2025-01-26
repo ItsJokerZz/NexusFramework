@@ -2,7 +2,7 @@ TOOLCHAIN     := $(OO_PS4_TOOLCHAIN)
 PROJDIR       := source
 INTDIR        := build
 
-VERSION       := 0.57
+VERSION       := 0.58
 TARGET        := OrbisControl.prx
 
 VERSION_FILE  := $(INTDIR)/.version
@@ -40,8 +40,8 @@ $(INTDIR)/%.o: $(PROJDIR)/%.cpp
 $(INTDIR)/%.o: $(COMMONDIR)/%.cpp
 	$(CCX) $(CXXFLAGS) -D BUILD=$(BUILD)+1 -D VERSION=$(VERSION) -o $@ $<
 
-_unused       := $(shell mkdir -p $(INTDIR))
-UNAME_S       := $(shell uname -s)
+_unused      := $(shell mkdir -p $(INTDIR))
+UNAME_S      := $(shell uname -s)
 
 ifeq ($(UNAME_S),Linux)
 	CC := clang
@@ -63,7 +63,7 @@ endif
 
 .DEFAULT_GOAL := all
 
-BUILD := $(shell cat $(BUILD_FILE))
+BUILD         := $(shell cat $(BUILD_FILE))
 
 incrementBuild:
 	@mkdir -p $(INTDIR)
