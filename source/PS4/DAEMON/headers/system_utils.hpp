@@ -16,9 +16,14 @@ enum power_state
 
 extern std::string console_type;
 extern std::string get_local_ip();
-extern std::string get_title_id();
+extern std::string get_apps_titleid();
+extern std::string parse_apps_sfo_param(const std::string &key);
+extern std::string get_apps_name();
+extern std::string get_apps_version();
+extern std::string get_apps_minFW();
+extern std::string get_apps_region();
+extern std::string get_app_info(const std::string &returnType);
 extern std::string find_exec_by_titleID();
-extern std::string get_game_info(const std::string &returnType);
 extern std::string find_procName_of_pid(int pid);
 extern int find_pid_by_procName(const char *proc_name);
 extern int get_proc_list(struct proc_list_entry *procs, uint64_t *num);

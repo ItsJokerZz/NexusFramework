@@ -36,7 +36,7 @@ std::string get_local_ip()
   return std::string(buf);
 }
 
-std::string get_title_id()
+std::string get_apps_titleid()
 {
   DIR *dir = opendir("/mnt/sandbox/");
   if (!dir)
@@ -60,12 +60,12 @@ std::string get_title_id()
   return titleID.empty() ? HOME_MENU : titleID;
 }
 
-std::string get_title_name()
+std::string parse_apps_sfo_param(const std::string &key)
 {
-  std::string titleID = get_title_id();
+  std::string titleID = get_apps_titleid();
 
   if (titleID == HOME_MENU)
-    return "User Interface (UI)";
+    return "";
 
   std::string path = "/system_data/priv/appmeta/" + titleID + "/param.sfo";
 
@@ -85,12 +85,112 @@ std::string get_title_name()
   fclose(file);
 
   SfoReader sfoReader(sfoData);
-  return sfoReader.GetValueFor<std::string>("TITLE");
+  return sfoReader.GetValueFor<std::string>(key);
+}
+
+std::string get_apps_name()
+{
+  std::string titleID = get_apps_titleid();
+
+  if (titleID == HOME_MENU)
+    return "User Interface (UI)";
+
+  return parse_apps_sfo_param("TITLE");
+}
+
+std::string get_apps_version()
+{
+  return parse_apps_sfo_param("VERSION");
+}
+
+std::string get_apps_minFW()
+{
+  char versionString[10];
+  std::string app_info = parse_apps_sfo_param("PUBTOOLINFO");
+  std::regex regex("sdk_ver=(\\d{8})");
+  std::smatch match;
+
+  if (std::regex_search(app_info, match, regex) && match.size() > 1)
+  {
+    std::string sdk_version = match.str(1);
+    int major = std::stoi(sdk_version.substr(0, 2));
+    int minor = std::stoi(sdk_version.substr(2, 2));
+
+    snprintf(versionString, sizeof(versionString), "%02d.%02d", major, minor);
+
+    return std::string(versionString);
+  }
+
+  return "";
+}
+
+std::string get_apps_region()
+{
+  char content_id[10];
+  std::string app_info = parse_apps_sfo_param("CONTENT_ID");
+  std::regex regex("^(\\w{2})\\d+");
+  std::smatch match;
+
+  if (std::regex_search(app_info, match, regex) && match.size() > 1)
+  {
+    std::string prefix = match.str(1);
+    std::string region;
+    if (prefix == "UP")
+      region = "USA";
+    else if (prefix == "JP")
+      region = "JAP";
+    else if (prefix == "AS")
+      region = "ASIA";
+    else if (prefix == "EP")
+      region = "EUR";
+
+    return region;
+  }
+
+  return ""; // Return empty string if no match is found
+}
+
+std::string get_app_info(const std::string &returnType)
+{
+  std::regex ps2Pattern("^(SL|SC|CF|AL|CP|KO|AR|TC|PA|SR|GU|WL|UL|VU|HA|RO|CZ|PK|NM|MT|PB)[A-Z0-9]{2,}\\d*$");
+
+  std::string titleID = get_apps_titleid();
+  bool is_home = (titleID == HOME_MENU);
+  std::string exec = is_home ? "SceShellUI" : find_exec_by_titleID();
+  std::string pid = std::to_string(find_pid_by_procName(exec.c_str()));
+
+  std::string type = (titleID.rfind("CUSA", 0) == 0) ? "PS4"
+                                                     : (std::regex_match(titleID, ps2Pattern)
+                                                            ? "PS1/PS2"
+                                                            : "Homebrew");
+
+  const std::unordered_map<std::string, std::function<std::string()>> resultMap = {
+      {"pid", [&]()
+       { return pid; }},
+      {"titleId", [&]()
+       { return titleID; }},
+      {"name", [&]()
+       { return get_apps_name(); }},
+      {"region", [&]()
+       { return is_home ? "" : get_apps_region(); }},
+      {"exec", [&]()
+       { return is_home ? (exec + " (eboot.bin)") : exec; }},
+      {"version", [&]()
+       { return is_home ? "" : get_apps_version(); }},
+      {"minFW", [&]()
+       { return is_home ? "" : get_apps_minFW(); }},
+      {"type", [&]()
+       { return is_home ? "" : type; }},
+      {"image", [&]()
+       { return is_home ? "" : "/user/appmeta/" + titleID + "/icon0.png"; }}};
+
+  auto it = resultMap.find(returnType);
+  return (it != resultMap.end()) ? it->second() : "";
 }
 
 std::string find_exec_by_titleID()
 {
-  std::string titleID = get_title_id();
+  std::string titleID = get_apps_titleid();
   std::string path = "/mnt/sandbox/" + titleID + "_000/app0/";
   DIR *dir = opendir(path.c_str());
   if (!dir)
@@ -112,52 +212,6 @@ std::string find_exec_by_titleID()
   }
 
   closedir(dir);
-  return "";
-}
-
-std::string get_game_info(const std::string &returnType)
-{
-  static const std::vector<std::string> validGameTypes = {
-      "SLES", "SCES", "SCED", "SLUS", "SCUS", "SLPS", "SCAJ", "SLKA", "SLPM",
-      "SCPS", "CF00", "SCKA", "ALCH", "CPCS", "SLAJ", "KOEI", "ARZE", "TCPS",
-      "SCCS", "PAPX", "SRPM", "GUST", "WLFD", "ULKS", "VUGJ", "HAKU", "ROSE",
-      "CZP2", "ARP2", "PKP2", "SLPN", "NMP2", "MTP2", "SCPM", "PBPX"};
-
-  std::string titleID = get_title_id();
-  std::string gameName = get_title_name();
-  std::string executable = find_exec_by_titleID();
-  std::string imagePath = titleID == HOME_MENU
-                              ? ""
-                              : "/user/appmeta/" + titleID + "/icon0.png";
-
-  std::string imageFtp = titleID == HOME_MENU
-                             ? ""
-                             : "ftp://" + get_local_ip() + ":2121/user/appmeta/" + titleID + "/icon0.png";
-
-  std::string gameType = (titleID.rfind("CUSA", 0) == 0)
-                             ? "PS4"
-                         : (std::find(validGameTypes.begin(),
-                                      validGameTypes.end(),
-                                      titleID.substr(0, 4)) != validGameTypes.end())
-                             ? "PS1/PS2"
-                             : "Homebrew";
-
-  int pid = find_pid_by_procName(executable.c_str());
-  if (returnType == "pid")
-    return pid == -1 ? "" : std::to_string(pid);
-  if (returnType == "titleId")
-    return titleID;
-  if (returnType == "name")
-    return gameName;
-  if (returnType == "exec")
-    return executable;
-  if (returnType == "imgPath")
-    return imagePath;
-  if (returnType == "imgFtp")
-    return imagePath;
-  if (returnType == "type")
-    return gameType;
-
   return "";
 }
 

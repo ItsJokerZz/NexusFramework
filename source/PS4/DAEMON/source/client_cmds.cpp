@@ -420,10 +420,14 @@ namespace cmds
 
       void load_plugin()
       {
-        if (attached && perform_get_request("load_plugin") != NULL)
-          send_response("done");
-        else
+        if (attached)
+        {
           send_error_response(NOT_ATTACHED);
+          return;
+        }
+
+        if (perform_get_request("load_plugin") != NULL)
+          send_response("done");
       }
 
       void rw_proc_mem()
@@ -433,10 +437,52 @@ namespace cmds
 
       void get_proc_info()
       {
-        std::string saveAs = get_game_info("titleId") + "_icon0.png";
+        std::unordered_map<std::string, std::string> info_map = {
+            {"pid", get_app_info("pid")},
+            {"region", get_app_info("region")},
+            {"titleId", get_app_info("titleId")},
+            {"type", get_app_info("type")},
+            {"name", get_app_info("name")},
+            {"exec", get_app_info("exec")},
+            {"version", get_app_info("version")},
+            {"minFW", get_app_info("minFW")},
+            {"image", get_app_info("image")}};
 
-        if (!get_game_info("imgPath").empty())
-          send_file_response(get_game_info("imgPath").c_str(), saveAs.c_str());
+        std::string return_str = extract_param("return", data.buffers.daemon);
+        if (return_str.empty())
+        {
+          send_error_response(INVALID_ARGS);
+
+          return;
+        }
+
+        if (return_str == "all")
+        {
+          std::string all_info;
+          for (const auto &pair : info_map)
+          {
+            if (!pair.second.empty())
+              all_info += pair.first + ": " + pair.second + "\n";
+          }
+
+          send_response(all_info.c_str());
+
+          return;
+        }
+
+        auto it = info_map.find(return_str);
+        if (it != info_map.end() && !it->second.empty())
+        {
+          if (return_str == "image")
+          {
+            std::string saveAs = get_app_info("titleId") + "_icon0.png";
+            send_file_response(it->second.c_str(), saveAs.c_str());
+          }
+          else
+            send_response(it->second.c_str());
+        }
+        else
+          send_error_response(INVALID_ARGS);
       }
 
     }
