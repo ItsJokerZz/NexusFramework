@@ -60,34 +60,6 @@ std::string get_apps_titleid()
   return titleID.empty() ? HOME_MENU : titleID;
 }
 
-std::string parse_apps_sfo_param(const std::string &key)
-{
-  std::string titleID = get_apps_titleid();
-
-  if (titleID == HOME_MENU)
-    return "";
-
-  std::string path = "/system_data/priv/appmeta/" + titleID + "/param.sfo";
-
-  FILE *file = fopen(path.c_str(), "rb");
-  if (!file)
-  {
-    log_message("Failed to open SFO file at %s", path.c_str());
-    return "";
-  }
-
-  fseek(file, 0, SEEK_END);
-  long fileSize = ftell(file);
-  fseek(file, 0, SEEK_SET);
-
-  std::vector<u8> sfoData(fileSize);
-  fread(sfoData.data(), 1, fileSize, file);
-  fclose(file);
-
-  SfoReader sfoReader(sfoData);
-  return sfoReader.GetValueFor<std::string>(key);
-}
-
 std::string get_apps_name()
 {
   std::string titleID = get_apps_titleid();
@@ -188,6 +160,34 @@ std::string get_app_info(const std::string &returnType)
   return (it != resultMap.end()) ? it->second() : "";
 }
 
+std::string parse_apps_sfo_param(const std::string &key)
+{
+  std::string titleID = get_apps_titleid();
+
+  if (titleID == HOME_MENU)
+    return "";
+
+  std::string path = "/system_data/priv/appmeta/" + titleID + "/param.sfo";
+
+  FILE *file = fopen(path.c_str(), "rb");
+  if (!file)
+  {
+    log_message("Failed to open SFO file at %s", path.c_str());
+    return "";
+  }
+
+  fseek(file, 0, SEEK_END);
+  long fileSize = ftell(file);
+  fseek(file, 0, SEEK_SET);
+
+  std::vector<u8> sfoData(fileSize);
+  fread(sfoData.data(), 1, fileSize, file);
+  fclose(file);
+
+  SfoReader sfoReader(sfoData);
+  return sfoReader.GetValueFor<std::string>(key);
+}
+
 std::string find_exec_by_titleID()
 {
   std::string titleID = get_apps_titleid();
@@ -276,16 +276,15 @@ int get_proc_list(struct proc_list_entry *procs, uint64_t *num)
   return orbis_syscall(107 + 90, procs, num);
 }
 
-int sys_proc_cmd(uint64_t pid, uint64_t cmd, void *data, int goldhen_offset)
+int sys_proc_cmd(uint64_t pid, uint64_t cmd, void *data)
 {
-  return orbis_syscall(109 + goldhen_offset, pid, cmd, data);
+  return orbis_syscall(109 + 90, pid, cmd, data);
 }
 
-int sys_proc_alloc(uint64_t pid, uint64_t cmd, void *data, bool free = true)
+int sys_proc_alloc(uint64_t pid, uint64_t cmd, void *data, bool free)
 {
-  struct sys_proc_free_and_alloc_args args = {
-      .address = NULL,
-      .length = 0};
+  struct free_and_alloc_args args = {
+      .address = NULL, .length = 0};
 
   if (free)
     return sys_proc_cmd(pid, SYS_PROC_FREE, &args);
