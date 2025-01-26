@@ -437,6 +437,8 @@ namespace cmds
 
       void get_proc_info()
       {
+        sceKernelIccIndicatorBootDone();
+
         std::unordered_map<std::string, std::string> info_map = {
             {"pid", get_app_info("pid")},
             {"region", get_app_info("region")},

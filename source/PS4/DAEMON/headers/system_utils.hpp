@@ -6,6 +6,12 @@ struct proc_list_entry
   int pid;
 } __attribute__((packed));
 
+struct sys_proc_free_and_alloc_args
+{
+  uint64_t address;
+  uint64_t length;
+} __attribute__((packed));
+
 enum power_state
 {
   DO_NOTHING = -1,
@@ -27,6 +33,7 @@ extern std::string find_exec_by_titleID();
 extern std::string find_procName_of_pid(int pid);
 extern int find_pid_by_procName(const char *proc_name);
 extern int get_proc_list(struct proc_list_entry *procs, uint64_t *num);
+extern int sys_proc_cmd(uint64_t pid, uint64_t cmd, void *data, int goldhen_offset = 90);
 
 extern const char *get_username(OrbisUserServiceUserId userId = 0);
 

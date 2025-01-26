@@ -16,6 +16,9 @@
 
 #define SCE_KERNEL_EVF_WAITMODE_OR 0x02
 
+#define SYS_PROC_ALLOC 1
+#define SYS_PROC_FREE 2
+
 enum ErrorCode
 {
   _DEBUGGING,

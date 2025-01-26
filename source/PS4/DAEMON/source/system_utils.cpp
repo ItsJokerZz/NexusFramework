@@ -276,6 +276,23 @@ int get_proc_list(struct proc_list_entry *procs, uint64_t *num)
   return orbis_syscall(107 + 90, procs, num);
 }
 
+int sys_proc_cmd(uint64_t pid, uint64_t cmd, void *data, int goldhen_offset)
+{
+  return orbis_syscall(109 + goldhen_offset, pid, cmd, data);
+}
+
+int sys_proc_alloc(uint64_t pid, uint64_t cmd, void *data, bool free = true)
+{
+  struct sys_proc_free_and_alloc_args args = {
+      .address = NULL,
+      .length = 0};
+
+  if (free)
+    return sys_proc_cmd(pid, SYS_PROC_FREE, &args);
+  else
+    return sys_proc_cmd(pid, SYS_PROC_ALLOC, &args);
+}
+
 const char *get_username(OrbisUserServiceUserId userId)
 {
   static char username[ORBIS_USER_SERVICE_MAX_USER_NAME_LENGTH + 1];

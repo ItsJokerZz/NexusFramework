@@ -9,14 +9,14 @@ Archive member included to satisfy reference by file (symbol)
 
 Merging program properties
 
-Removed property 0xc0000002 to merge build/main.o (0x3) and /tmp/cc6KPwNH.o (not found)
+Removed property 0xc0000002 to merge build/main.o (0x3) and /tmp/ccevJ73N.o (not found)
 Removed property 0xc0000002 to merge build/main.o (not found) and /opt/ps4sdk/libPS4/libPS4.a(kernel.o) (0x3)
 Removed property 0xc0000002 to merge build/main.o (not found) and /opt/ps4sdk/libPS4/libPS4.a(module.o) (0x3)
 
 Discarded input sections
 
- .data          0x0000000000000000        0x0 /tmp/cc6KPwNH.o
- .bss           0x0000000000000000        0x0 /tmp/cc6KPwNH.o
+ .data          0x0000000000000000        0x0 /tmp/ccevJ73N.o
+ .bss           0x0000000000000000        0x0 /tmp/ccevJ73N.o
  .text          0x0000000000000000        0x0 build/main.o
  .data          0x0000000000000000        0x0 build/main.o
  .bss           0x0000000000000000        0x0 build/main.o
@@ -65,13 +65,13 @@ Name             Origin             Length             Attributes
 
 Linker script and memory map
 
-LOAD /tmp/cc6KPwNH.o
+LOAD /tmp/ccevJ73N.o
 LOAD build/main.o
 
 .text           0x0000000000000000      0x47c
  *(.text.start)
  *(.text*)
- .text          0x0000000000000000        0x5 /tmp/cc6KPwNH.o
+ .text          0x0000000000000000        0x5 /tmp/ccevJ73N.o
                 0x0000000000000000                _start
  .text.dlsym    0x0000000000000005       0x19 build/main.o
                 0x0000000000000005                dlsym
@@ -91,10 +91,10 @@ LOAD build/main.o
                 0x0000000000000451                syscall_macro
 
 .plt            0x0000000000000480        0x0
- .plt           0x0000000000000480        0x0 /tmp/cc6KPwNH.o
+ .plt           0x0000000000000480        0x0 /tmp/ccevJ73N.o
 
 .plt.got        0x0000000000000480        0x0
- .plt.got       0x0000000000000480        0x0 /tmp/cc6KPwNH.o
+ .plt.got       0x0000000000000480        0x0 /tmp/ccevJ73N.o
 
 .rodata         0x000000000000047c      0x318
  *(.rodata)
@@ -106,56 +106,56 @@ LOAD build/main.o
 
 .gnu.version_d  0x0000000000000798        0x0
  .gnu.version_d
-                0x0000000000000798        0x0 /tmp/cc6KPwNH.o
+                0x0000000000000798        0x0 /tmp/ccevJ73N.o
 
 .gnu.version    0x0000000000000794        0x0
- .gnu.version   0x0000000000000794        0x0 /tmp/cc6KPwNH.o
+ .gnu.version   0x0000000000000794        0x0 /tmp/ccevJ73N.o
 
 .gnu.version_r  0x0000000000000798        0x0
  .gnu.version_r
-                0x0000000000000798        0x0 /tmp/cc6KPwNH.o
+                0x0000000000000798        0x0 /tmp/ccevJ73N.o
 
 .dynsym         0x0000000000000798       0x18
- .dynsym        0x0000000000000798       0x18 /tmp/cc6KPwNH.o
+ .dynsym        0x0000000000000798       0x18 /tmp/ccevJ73N.o
 
 .dynstr         0x00000000000007b0        0x1
- .dynstr        0x00000000000007b0        0x1 /tmp/cc6KPwNH.o
+ .dynstr        0x00000000000007b0        0x1 /tmp/ccevJ73N.o
 
 .gnu.hash       0x00000000000007b8       0x1c
- .gnu.hash      0x00000000000007b8       0x1c /tmp/cc6KPwNH.o
+ .gnu.hash      0x00000000000007b8       0x1c /tmp/ccevJ73N.o
 
 .eh_frame_hdr   0x00000000000007d4        0x0
  .eh_frame_hdr  0x00000000000007d4        0x0 build/main.o
 
 .rela.dyn       0x00000000000007d8        0x0
- .rela.plt      0x00000000000007d8        0x0 /tmp/cc6KPwNH.o
- .rela.got      0x00000000000007d8        0x0 /tmp/cc6KPwNH.o
- .rela.bss      0x00000000000007d8        0x0 /tmp/cc6KPwNH.o
+ .rela.plt      0x00000000000007d8        0x0 /tmp/ccevJ73N.o
+ .rela.got      0x00000000000007d8        0x0 /tmp/ccevJ73N.o
+ .rela.bss      0x00000000000007d8        0x0 /tmp/ccevJ73N.o
  .rela.data.rel.ro
-                0x00000000000007d8        0x0 /tmp/cc6KPwNH.o
- .rela.ifunc    0x00000000000007d8        0x0 /tmp/cc6KPwNH.o
+                0x00000000000007d8        0x0 /tmp/ccevJ73N.o
+ .rela.ifunc    0x00000000000007d8        0x0 /tmp/ccevJ73N.o
 
 .data
  *(.data)
 
 .dynamic        0x00000000000007d8       0xe0
- .dynamic       0x00000000000007d8       0xe0 /tmp/cc6KPwNH.o
+ .dynamic       0x00000000000007d8       0xe0 /tmp/ccevJ73N.o
                 0x00000000000007d8                _DYNAMIC
 
 .got            0x00000000000008b8        0x0
- .got           0x00000000000008b8        0x0 /tmp/cc6KPwNH.o
+ .got           0x00000000000008b8        0x0 /tmp/ccevJ73N.o
 
 .got.plt        0x00000000000008b8        0x0
- .got.plt       0x00000000000008b8        0x0 /tmp/cc6KPwNH.o
+ .got.plt       0x00000000000008b8        0x0 /tmp/ccevJ73N.o
 
 .data.rel.ro    0x00000000000008b8        0x0
- .data.rel.ro   0x00000000000008b8        0x0 /tmp/cc6KPwNH.o
+ .data.rel.ro   0x00000000000008b8        0x0 /tmp/ccevJ73N.o
 
 .bss
  *(.bss)
 
 .dynbss         0x00000000000008b8        0x0
- .dynbss        0x00000000000008b8        0x0 /tmp/cc6KPwNH.o
+ .dynbss        0x00000000000008b8        0x0 /tmp/ccevJ73N.o
 
 .bss.__init     0x00000000000008b8        0x8
  .bss.__init    0x00000000000008b8        0x8 build/main.o
