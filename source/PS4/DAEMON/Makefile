@@ -2,16 +2,14 @@ TOOLCHAIN     := $(OO_PS4_TOOLCHAIN)
 PROJDIR       := source
 INTDIR        := build
 
-VERSION       := 0.59
+VERSION       := 0.61
 TARGET        := OrbisControl.prx
 
 VERSION_FILE  := $(INTDIR)/.version
 BUILD_FILE    := $(INTDIR)/.number
 
-LIBS          := -lc -lc++ -lkernel -lGoldHEN_Hook    \
-                 -lSceSystemService -lSceSysmodule    \
-                 -lSceUserService -lSceNet -lSceHttp  \
-				 -lSceSysUtil -lSceSysmodule -lScePad \
+LIBS          := -lc -lc++ -lz -lkernel -ljbc -lSceLibcInternal -lGoldHEN_Hook -lSceSysUtil \
+                 -lSceNet -lSceHttp -lSceSysmodule -lSceSystemService -lSceUserService -lScePad 
 
 CPPFILES      := $(wildcard $(PROJDIR)/*.cpp)
 OBJS          := $(patsubst $(PROJDIR)/%.cpp, $(INTDIR)/%.o, $(CPPFILES))
@@ -24,7 +22,7 @@ CXXFLAGS      := $(CFLAGS) -isystem $(TOOLCHAIN)/include/c++/v1 \
                  -std=c++11 -Iinclude -DFMT_HEADER_ONLY
 
 LDFLAGS       := -m elf_x86_64 -pie --script $(TOOLCHAIN)/link.x --eh-frame-hdr \
-                 -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o --wrap=_init \
+                 -L$(TOOLCHAIN)/lib $(LIBS) $(TOOLCHAIN)/lib/crtlib.o --wrap=_init 
 
 $(TARGET): $(INTDIR) $(OBJS) incrementBuild
 	$(LD) $(OBJS) -o $(INTDIR)/$(PROJDIR).elf $(LDFLAGS) -e _init

@@ -4,56 +4,72 @@ void handle_request(const std::string &request, bool isDaemon)
 {
   static const std::map<std::string, std::function<void()>> daemon_commands = {
       {"GET /connect", cmds::client::connection::connect},
+      {"GET /version", cmds::client::connection::version},
       {"GET /unload", cmds::client::connection::unload},
       {"GET /disconnect", []()
        { handle_command(cmds::client::connection::disconnect); }},
       {"GET /attach", []()
        { handle_command(cmds::client::connection::attach); }},
-      {"GET /get_prx_version", []()
-       { handle_command(cmds::client::connection::version); }},
+
       {"GET /get_fw_version", []()
        { handle_command(cmds::client::sys_info::get_fw); }},
       {"GET /get_sys_type", []()
        { handle_command(cmds::client::sys_info::sys_type); }},
       {"GET /get_temperature", []()
        { handle_command(cmds::client::sys_info::get_temp); }},
+
+      {"GET /get_username", []()
+       { handle_command(cmds::client::sys_info::get_user); }},
+
       {"GET /get_proc_list", []()
        { handle_command(cmds::client::process::get_proc_list); }},
+      {"GET /get_proc_info", []()
+       { handle_command(cmds::client::process::get_proc_info); }},
       {"GET /get_pid_by_name", []()
        { handle_command(cmds::client::process::find_pid_by_name); }},
       {"GET /get_name_of_pid", []()
        { handle_command(cmds::client::process::find_name_of_pid); }},
-      {"GET /get_proc_info", []()
-       { handle_command(cmds::client::process::get_proc_info); }},
-      {"GET /get_username", []()
-       { handle_command(cmds::client::sys_info::get_user); }},
+
       {"GET /set_temp_limit", []()
        { handle_command(cmds::client::sys_control::temp_limit); }},
       {"GET /set_power_state", []()
        { handle_command(cmds::client::sys_control::set_power_state); }},
+
       {"GET /ring_buzzer", []()
        { handle_command(cmds::client::sys_control::ring_buzzer); }},
       {"GET /send_notify", []()
        { handle_command(cmds::client::sys_control::notify); }},
+
+      {"GET /read_memory", []()
+       { handle_command(cmds::client::process::read_proc_mem); }},
+      {"GET /write_memory", []()
+       { handle_command(cmds::client::process::write_proc_mem); }},
+      {"GET /alloc_memory", []()
+       { handle_command(cmds::client::process::alloc_proc_mem); }},
+      {"GET /free_memory", []()
+       { handle_command(cmds::client::process::alloc_proc_mem); }},
+      {"GET /start_plugin", []()
+       { handle_command(cmds::client::process::start_plugin); }},
       {"GET /load_module", []()
-       { handle_command(cmds::client::process::load_module); }},
-      {"GET /load_plugin", []()
-       { handle_command(cmds::client::process::load_plugin); }},
-      {"GET /rw_memory", []()
-       { handle_command(cmds::client::process::rw_proc_mem); }}};
+       { handle_command(cmds::client::process::load_module); }}};
 
   static const std::map<std::string, std::function<void()>> relay_commands = {
+      {"GET /attach_relay", cmds::daemon::attach_relay},
+
+      {"GET /read_memory", cmds::daemon::read_memory},
+      {"GET /write_memory", cmds::daemon::write_memory},
+      {"GET /alloc_memory", cmds::daemon::alloc_memory},
+      {"GET /free_memory", cmds::daemon::free_memory},
+
+      {"GET /start_plugin", cmds::daemon::start_plugin},
+      {"GET /load_module", cmds::daemon::load_module},
+
       {"GET /test", []()
        {
          send_response("done");
          if (!attached && strcmp(perform_get_request("attach"), "done") == 0)
            attached = true;
-       }},
-      {"GET /attach", cmds::daemon::attach_relay},
-      {"GET /exec_prx", cmds::daemon::load_module},
-      {"GET /load_plugin", cmds::daemon::start_plugin},
-      {"GET /read_memory", cmds::daemon::read_proc_mem},
-      {"GET /write_memory", cmds::daemon::write_proc_mem}};
+       }}};
 
   const auto &commands = isDaemon ? daemon_commands : relay_commands;
 
@@ -408,14 +424,16 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
     sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
     sceUserServiceInitialize2();
 
-    jailbreak_backup jb;
-    sys_sdk_jailbreak(&jb);
+    /* klog server
+      //  jailbreak_backup jb;
+      //  sys_sdk_jailbreak(&jb);
 
-    pthread_t log_thread;
-    pthread_create(&log_thread, NULL,
-                   telnet_server, NULL);
+        pthread_t log_thread;
+        pthread_create(&log_thread, NULL,
+                       telnet_server, NULL);
 
-    pthread_detach(log_thread);
+        pthread_detach(log_thread);
+        */
 
     /* UNLOAD AT STARTUP / ON RESTMODE */
     while (!unloaded)

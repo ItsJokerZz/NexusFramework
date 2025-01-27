@@ -918,6 +918,7 @@
             // 
             // toolStripTextBox3
             // 
+            this.toolStripTextBox3.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.toolStripTextBox3.Name = "toolStripTextBox3";
             this.toolStripTextBox3.Size = new System.Drawing.Size(100, 23);
             // 
@@ -958,7 +959,7 @@
             this.consoleIP_tb.ForeColor = System.Drawing.Color.White;
             this.consoleIP_tb.Name = "consoleIP_tb";
             this.consoleIP_tb.Size = new System.Drawing.Size(110, 25);
-            this.consoleIP_tb.Text = "192.168.137.67";
+            this.consoleIP_tb.Text = "192.168.137.141";
             // 
             // toolStripSeparator2
             // 

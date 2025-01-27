@@ -37,7 +37,7 @@ extern std::string find_procName_of_pid(int pid);
 extern int find_pid_by_procName(const char *proc_name);
 extern int get_proc_list(struct proc_list_entry *procs, uint64_t *num);
 extern int sys_proc_cmd(uint64_t pid, uint64_t cmd, void *data);
-extern int sys_proc_alloc(uint64_t pid, uint64_t cmd, void *data, bool free = true);
+extern int sys_proc_alloc(uint64_t pid, free_and_alloc_args *args, bool free = false);
 
 extern const char *get_username(OrbisUserServiceUserId userId = 0);
 

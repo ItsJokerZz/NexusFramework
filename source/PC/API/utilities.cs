@@ -82,7 +82,7 @@ namespace OrbisControlAPI
         {
             try
             {
-                var response = Client.GetStringAsync(url + "get_prx_version").Result;
+                var response = Client.GetStringAsync(url + "version").Result;
 
                 if (float.TryParse(response, out float number))
                     _sprxVersion = number.ToString("F2");

@@ -34,16 +34,23 @@ namespace cmds
 
         namespace process
         {
-            void load_module();
             void get_proc_list();
-            void find_pid_by_name();
-            void find_name_of_pid();
-            void load_plugin();
-            void rw_proc_mem();
-
             void get_proc_info();
 
-        } // namespace process
+            void find_pid_by_name();
+            void find_name_of_pid();
+
+            void read_proc_mem();
+            void write_proc_mem();
+            void alloc_proc_mem();
+            void free_proc_mem();
+
+            void stop_plugin();
+            void start_plugin();
+            void unload_module();
+            void load_module();
+
+        }
 
     }
 }

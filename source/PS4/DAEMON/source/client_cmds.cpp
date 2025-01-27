@@ -6,16 +6,16 @@ namespace cmds
   {
     namespace connection
     {
-      void version()
-      {
-        std::string message = std::to_string(VERSION);
-        send_response(message.c_str());
-      }
-
       void connect()
       {
         send_response("true");
         connected = true;
+      }
+
+      void version()
+      {
+        std::string message = std::to_string(VERSION);
+        send_response(message.c_str());
       }
 
       void unload()
@@ -58,7 +58,7 @@ namespace cmds
 
         if (is_port_open(RELAYS_PORT))
         {
-          char *response = perform_get_request("attach");
+          char *response = perform_get_request("attach_relay");
           if (response != NULL && strcmp(response, "done") == 0)
             attached = true;
         }
@@ -70,14 +70,14 @@ namespace cmds
 
     namespace sys_info
     {
-      void sys_type()
-      {
-        send_response(get_console_type());
-      }
-
       void get_fw()
       {
         send_response(get_fw_version());
+      }
+
+      void sys_type()
+      {
+        send_response(get_console_type());
       }
 
       void get_temp()
@@ -123,46 +123,6 @@ namespace cmds
 
     namespace sys_control
     {
-      void notify()
-      {
-        std::string msg;
-        int type = 0;
-
-        const char *type_start = strstr(data.buffers.daemon.data(), "type=");
-        if (type_start)
-        {
-          type_start += 5;
-          const char *type_end = strchr(type_start, '&');
-          if (type_end)
-          {
-            std::string type_str(type_start, type_end);
-            type = std::stoi(type_str);
-            type_start = strchr(type_end + 1, '=');
-            if (type_start)
-              type_start += 1;
-          }
-        }
-
-        if (type_start)
-        {
-          const char *msg_end = strchr(type_start, ' ');
-          if (msg_end)
-          {
-            std::string encoded_msg(type_start, msg_end);
-            char *decoded = decode_url(encoded_msg.c_str());
-            if (decoded)
-            {
-              msg = std::string(decoded);
-              free(
-                  decoded); // Free the decoded string if it was dynamically allocated
-            }
-          }
-        }
-
-        text_notify(type, msg.empty() ? nullptr : msg.c_str());
-        send_response("done");
-      }
-
       void temp_limit()
       {
         uint8_t temp = 0;
@@ -253,87 +213,50 @@ namespace cmds
         send_response("done");
       }
 
+      void notify()
+      {
+        std::string msg;
+        int type = 0;
+
+        const char *type_start = strstr(data.buffers.daemon.data(), "type=");
+        if (type_start)
+        {
+          type_start += 5;
+          const char *type_end = strchr(type_start, '&');
+          if (type_end)
+          {
+            std::string type_str(type_start, type_end);
+            type = std::stoi(type_str);
+            type_start = strchr(type_end + 1, '=');
+            if (type_start)
+              type_start += 1;
+          }
+        }
+
+        if (type_start)
+        {
+          const char *msg_end = strchr(type_start, ' ');
+          if (msg_end)
+          {
+            std::string encoded_msg(type_start, msg_end);
+            char *decoded = decode_url(encoded_msg.c_str());
+            if (decoded)
+            {
+              msg = std::string(decoded);
+              free(
+                  decoded); // Free the decoded string if it was dynamically allocated
+            }
+          }
+        }
+
+        text_notify(type, msg.empty() ? nullptr : msg.c_str());
+        send_response("done");
+      }
+
     }
 
     namespace process
     {
-      void load_module()
-      {
-        char request[BUFFER_SIZE];
-
-        std::string prx_path = extract_param("path", data.buffers.daemon);
-        std::string exec_path = extract_param("exec", data.buffers.daemon);
-
-        auto load_prx = [](const std::string &exec_path,
-                           const std::string &prx_path) -> bool
-        {
-          int prx_handle =
-              sys_sdk_proc_prx_load(const_cast<char *>(exec_path.c_str()),
-                                    const_cast<char *>(prx_path.c_str()));
-          if (prx_handle >= 0)
-          {
-            char notify_msg[BUFFER_SIZE];
-            snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s",
-                     prx_path.c_str());
-            text_notify(222, notify_msg);
-
-            nlohmann::json response = {
-                {prx_path,
-                 prx_handle}};
-            send_response(generate_json(response).c_str());
-
-            return true;
-          }
-          else
-          {
-            send_error_response(UNKNOWN_ERROR);
-            return false;
-          }
-        };
-
-        if (is_port_open(RELAYS_PORT))
-        {
-          if (!exec_path.empty() || !prx_path.empty())
-          {
-            if (!exec_path.empty() && !prx_path.empty())
-            {
-              if (exec_path.empty() || prx_path.empty())
-                send_error_response(INVALID_ARGS);
-              else
-                load_prx(exec_path, prx_path);
-
-              return;
-            }
-            else if (!prx_path.empty() && exec_path.empty())
-              snprintf(request, sizeof(request), "exec_prx?path=%s",
-                       prx_path.c_str());
-
-            send_response(perform_get_request(request));
-          }
-          else
-            send_error_response(INVALID_ARGS);
-        }
-        else
-        {
-          if (exec_path.empty() && !prx_path.empty())
-          {
-            if (!attached)
-              send_error_response(NOT_ATTACHED);
-            else
-            {
-              char request[BUFFER_SIZE];
-              snprintf(request, sizeof(request), "exec_prx?path=%s",
-                       prx_path.c_str());
-              send_response(perform_get_request(request));
-            }
-          }
-          else if (!exec_path.empty() && !prx_path.empty())
-            load_prx(exec_path, prx_path);
-          else
-            send_error_response(INVALID_ARGS);
-        }
-      }
-
       void get_proc_list()
       {
         uint64_t num = 0;
@@ -373,66 +296,6 @@ namespace cmds
         send_response(generate_json(response).c_str());
 
         free(procs);
-      }
-
-      void find_pid_by_name()
-      {
-        const char *name = strstr(data.buffers.daemon.data(), "name=");
-        if (!name)
-          return;
-
-        name += 5;
-        const char *end = strchr(name, ' ');
-        if (!end)
-          end = name + strlen(name);
-
-        std::string proc_name(name, end);
-
-        nlohmann::json response =
-            {{"pid", find_pid_by_procName(proc_name.c_str())}};
-
-        send_response(generate_json(response).c_str());
-      }
-
-      void find_name_of_pid()
-      {
-        int pid = 0;
-
-        // Extract the pid from the input buffer
-        const char *pid_str = strstr(data.buffers.daemon.data(), "pid=");
-        if (!pid_str)
-          return;
-
-        pid_str += 4;        // Skip the "pid=" part
-        pid = atoi(pid_str); // Convert to integer
-
-        if (pid == 0)
-        {
-          nlohmann::json error_response = {{"error", "Invalid pid."}};
-          send_response(generate_json(error_response).c_str());
-
-          return;
-        }
-
-        nlohmann::json response = {{"name", find_procName_of_pid(pid)}};
-        send_response(generate_json(response).c_str());
-      }
-
-      void load_plugin()
-      {
-        if (attached)
-        {
-          send_error_response(NOT_ATTACHED);
-          return;
-        }
-
-        if (perform_get_request("load_plugin") != NULL)
-          send_response("done");
-      }
-
-      void rw_proc_mem()
-      {
-        send_response("done");
       }
 
       void get_proc_info()
@@ -483,6 +346,202 @@ namespace cmds
         }
         else
           send_error_response(INVALID_ARGS);
+      }
+
+      void find_pid_by_name()
+      {
+        const char *name = strstr(data.buffers.daemon.data(), "name=");
+        if (!name)
+          return;
+
+        name += 5;
+        const char *end = strchr(name, ' ');
+        if (!end)
+          end = name + strlen(name);
+
+        std::string proc_name(name, end);
+
+        nlohmann::json response =
+            {{"pid", find_pid_by_procName(proc_name.c_str())}};
+
+        send_response(generate_json(response).c_str());
+      }
+
+      void find_name_of_pid()
+      {
+        int pid = 0;
+
+        // Extract the pid from the input buffer
+        const char *pid_str = strstr(data.buffers.daemon.data(), "pid=");
+        if (!pid_str)
+          return;
+
+        pid_str += 4;        // Skip the "pid=" part
+        pid = atoi(pid_str); // Convert to integer
+
+        if (pid == 0)
+        {
+          nlohmann::json error_response = {{"error", "Invalid pid."}};
+          send_response(generate_json(error_response).c_str());
+
+          return;
+        }
+
+        nlohmann::json response = {{"name", find_procName_of_pid(pid)}};
+        send_response(generate_json(response).c_str());
+      }
+
+      void read_proc_mem()
+      {
+        std::string address = extract_param("address", data.buffers.daemon);
+        std::string size = extract_param("size", data.buffers.daemon);
+
+        if (address.empty())
+          return;
+
+        if (size.empty())
+          return;
+
+        char request[BUFFER_SIZE];
+        snprintf(request, sizeof(request), "read_memory?address=%s&size=%s",
+                 address.c_str(), size.c_str());
+
+        send_response(perform_get_request(request));
+      }
+
+      void write_proc_mem()
+      {
+        std::string address = extract_param("address", data.buffers.daemon);
+        std::string data = extract_param("data", ::data.buffers.daemon);
+
+        if (address.empty())
+          return;
+
+        if (data.empty())
+          return;
+
+        char request[BUFFER_SIZE];
+        snprintf(request, sizeof(request), "write_memory?address=%s&data=%s",
+                 address.c_str(), data.c_str());
+
+        send_response(perform_get_request(request));
+      }
+
+      void alloc_proc_mem()
+      {
+        std::string pid = get_app_info("pid");
+        std::string length = extract_param("length", data.buffers.daemon);
+
+        if (length.empty())
+          return;
+
+        char request[BUFFER_SIZE];
+        snprintf(request, sizeof(request), "alloc_memory?pid=%s&length=%s",
+                 pid.c_str(), length.c_str());
+
+        send_response(perform_get_request(request));
+      }
+
+      void free_proc_mem()
+      {
+        std::string pid = get_app_info("pid");
+
+        std::string address = extract_param("address", data.buffers.daemon);
+        std::string length = extract_param("length", data.buffers.daemon);
+
+        if (address.empty())
+          return;
+        if (length.empty())
+          return;
+
+        char request[BUFFER_SIZE];
+        snprintf(request, sizeof(request), "free_memory?pid=%s&address=%s&length=%s",
+                 pid.c_str(), address.c_str(), length.c_str());
+
+        send_response(perform_get_request(request));
+      }
+
+      void stop_plugin() {}
+
+      void start_plugin() {}
+
+      void unload_module() {}
+
+      void load_module()
+      {
+        char request[BUFFER_SIZE];
+
+        std::string prx_path = extract_param("path", data.buffers.daemon);
+        std::string exec_path = extract_param("exec", data.buffers.daemon);
+
+        auto load_prx = [](const std::string &exec_path,
+                           const std::string &prx_path) -> bool
+        {
+          int prx_handle =
+              sys_sdk_proc_prx_load(const_cast<char *>(exec_path.c_str()),
+                                    const_cast<char *>(prx_path.c_str()));
+          if (prx_handle >= 0)
+          {
+            char notify_msg[BUFFER_SIZE];
+            snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s",
+                     prx_path.c_str());
+            text_notify(222, notify_msg);
+
+            nlohmann::json response = {
+                {prx_path,
+                 prx_handle}};
+            send_response(generate_json(response).c_str());
+
+            return true;
+          }
+          else
+          {
+            send_error_response(UNKNOWN_ERROR);
+            return false;
+          }
+        };
+
+        if (is_port_open(RELAYS_PORT))
+        {
+          if (!exec_path.empty() || !prx_path.empty())
+          {
+            if (!exec_path.empty() && !prx_path.empty())
+            {
+              if (exec_path.empty() || prx_path.empty())
+                send_error_response(INVALID_ARGS);
+              else
+                load_prx(exec_path, prx_path);
+
+              return;
+            }
+            else if (!prx_path.empty() && exec_path.empty())
+              snprintf(request, sizeof(request), "load_module?path=%s",
+                       prx_path.c_str());
+
+            send_response(perform_get_request(request));
+          }
+          else
+            send_error_response(INVALID_ARGS);
+        }
+        else
+        {
+          if (exec_path.empty() && !prx_path.empty())
+          {
+            if (!attached)
+              send_error_response(NOT_ATTACHED);
+            else
+            {
+              char request[BUFFER_SIZE];
+              snprintf(request, sizeof(request), "load_module?path=%s",
+                       prx_path.c_str());
+              send_response(perform_get_request(request));
+            }
+          }
+          else if (!exec_path.empty() && !prx_path.empty())
+            load_prx(exec_path, prx_path);
+          else
+            send_error_response(INVALID_ARGS);
+        }
       }
 
     }

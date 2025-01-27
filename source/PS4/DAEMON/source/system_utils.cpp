@@ -124,6 +124,8 @@ std::string get_apps_region()
 
 std::string get_app_info(const std::string &returnType)
 {
+  // add enum instead of string for arg
+
   std::regex ps2Pattern("^(SL|SC|CF|AL|CP|KO|AR|TC|PA|SR|GU|WL|UL|VU|HA|RO|CZ|PK|NM|MT|PB)[A-Z0-9]{2,}\\d*$");
 
   std::string titleID = get_apps_titleid();
@@ -281,15 +283,12 @@ int sys_proc_cmd(uint64_t pid, uint64_t cmd, void *data)
   return orbis_syscall(109 + 90, pid, cmd, data);
 }
 
-int sys_proc_alloc(uint64_t pid, uint64_t cmd, void *data, bool free)
+int sys_proc_alloc(uint64_t pid, free_and_alloc_args *args, bool free)
 {
-  struct free_and_alloc_args args = {
-      .address = NULL, .length = 0};
-
   if (free)
-    return sys_proc_cmd(pid, SYS_PROC_FREE, &args);
+    return sys_proc_cmd(pid, SYS_PROC_FREE, args); // Pass the pointer directly
   else
-    return sys_proc_cmd(pid, SYS_PROC_ALLOC, &args);
+    return sys_proc_cmd(pid, SYS_PROC_ALLOC, args); // Pass the pointer directly
 }
 
 const char *get_username(OrbisUserServiceUserId userId)

@@ -12,6 +12,8 @@ namespace cmds
       send_response("done");
     }
 
+    void unload_module() {}
+
     void load_module()
     {
       std::string path = extract_param("path", data.buffers.relay);
@@ -78,6 +80,8 @@ namespace cmds
       snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] SPRX Loaded:\n%s", path.c_str());
       text_notify(222, notify_msg);
     }
+
+    void stop_plugin() {}
 
     void start_plugin()
     {
@@ -164,7 +168,7 @@ namespace cmds
       text_notify(222, notify_msg);
     }
 
-    void read_proc_mem()
+    void read_memory()
     {
       std::string address = extract_param("address", data.buffers.relay);
       std::string size = extract_param("size", data.buffers.relay);
@@ -202,9 +206,16 @@ namespace cmds
 
       if (sys_sdk_proc_rw(&args) == 0)
       {
-        std::string bufferStr(buffer, byteSize); // Create a string from the buffer
+        // Convert the buffer data to hex string
+        std::string hexStr;
+        for (size_t i = 0; i < byteSize; ++i)
+        {
+          char hexByte[3]; // 2 digits + null terminator
+          snprintf(hexByte, sizeof(hexByte), "%02x", static_cast<unsigned char>(buffer[i]));
+          hexStr += hexByte;
+        }
 
-        send_response(bufferStr.c_str());
+        send_response(hexStr.c_str());
       }
       else
       {
@@ -214,7 +225,7 @@ namespace cmds
       delete[] buffer;
     }
 
-    void write_proc_mem()
+    void write_memory()
     {
       std::string address = extract_param("address", data.buffers.relay);
       std::string dataToWrite = extract_param("data", data.buffers.relay);
@@ -259,6 +270,91 @@ namespace cmds
         send_response("error: failed to write memory");
 
       delete[] buffer;
+    }
+
+    void alloc_memory()
+    {
+      std::string pid = extract_param("pid", data.buffers.relay);
+      std::string length = extract_param("length", data.buffers.relay);
+
+      if (pid.empty())
+      {
+        log_message("No pid provided");
+        send_error_response(_DEBUGGING);
+        return;
+      }
+
+      if (length.empty())
+      {
+        log_message("No length provided");
+        send_error_response(_DEBUGGING);
+        return;
+      }
+
+      uint64_t pid_value = std::stoull(pid);
+      uint64_t length_value = std::stoull(length);
+
+      struct free_and_alloc_args args = {0};
+      args.length = length_value; // Initialize length
+
+      int result = sys_proc_alloc(pid_value, &args, false);
+      if (result != 0)
+      {
+        log_message("Failed to allocate memory");
+        send_error_response(_DEBUGGING);
+        return;
+      }
+
+      // Respond with the allocated address as a hexadecimal string
+      char hex_address[20];
+      snprintf(hex_address, sizeof(hex_address), "0x%lx", args.address);
+      send_response(hex_address);
+    }
+
+    void free_memory()
+    {
+      std::string pid = extract_param("pid", data.buffers.relay);
+      std::string address = extract_param("address", data.buffers.relay);
+      std::string length = extract_param("length", data.buffers.relay);
+
+      if (pid.empty())
+      {
+        log_message("No pid provided");
+        send_error_response(_DEBUGGING);
+        return;
+      }
+
+      if (address.empty())
+      {
+        log_message("No address provided");
+        send_error_response(_DEBUGGING);
+        return;
+      }
+
+      if (length.empty())
+      {
+        log_message("No length provided");
+        send_error_response(_DEBUGGING);
+        return;
+      }
+
+      uint64_t pid_value = std::stoull(pid);
+      uint64_t address_value = std::stoull(address, nullptr, 16); // Parse as hex
+      uint64_t length_value = std::stoull(length);
+
+      struct free_and_alloc_args args = {0};
+      args.address = address_value; // Set address
+      args.length = length_value;   // Set length
+
+      int result = sys_proc_alloc(pid_value, &args, true);
+      if (result != 0)
+      {
+        log_message("Failed to free memory");
+        send_error_response(_DEBUGGING);
+        return;
+      }
+
+      send_response("Freed memory successfully");
     }
 
   }
