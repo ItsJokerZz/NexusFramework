@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Net.Sockets;
 using System.Net;
-
+using System.Net.Sockets;
 using static OrbisControlAPI.Definitions;
 
 namespace OrbisControlAPI

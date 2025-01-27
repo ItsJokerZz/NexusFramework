@@ -1,6 +1,6 @@
 #include "../headers/includes.hpp"
 
-void handle_command(void (*func)());
+void handle_request(const std::string &request);
 void *unified_process(void *arg);
 void *unified_thread(void *arg);
 

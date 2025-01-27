@@ -62,7 +62,7 @@ int orbis_syscall(int num, ...);
 
 extern bool is_port_open(int port);
 
-extern std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE> &buffer);
+extern std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE> &buffer, bool GET = true);
 extern char *perform_get_request(const char *command, int port = RELAYS_PORT);
 extern char *decode_url(const char *url);
 

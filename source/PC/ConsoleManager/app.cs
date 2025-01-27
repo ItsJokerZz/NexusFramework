@@ -142,7 +142,8 @@ namespace CM
             {
                 api.Beep(BuzzType.Double);
                 api.Disconnect();
-            } else api.Beep(BuzzType.Triple);
+            }
+            else api.Beep(BuzzType.Triple);
         }
 
         private string GetConsolePrefix(TreeNode node)
@@ -258,5 +259,13 @@ namespace CM
             textBox12.Text += api.TEST(textBox11.Text) + Environment.NewLine;
             textBox12.Text += Environment.NewLine;
         }
+
+        private  void button2_Click(object sender, EventArgs e)
+        {
+             api.TEST2("test", "name=John&age=30");
+        }
+
+
+
     }
 }

@@ -14,17 +14,17 @@ namespace OrbisControlAPI
         public static Timer _timer;
         public static Socket socket;
 
-        public static readonly int[] 
+        public static readonly int[]
             Ports = { 9090 };
 
         public static bool _connected;
 
-        public static string 
+        public static string
             _ipAddress, _sysType;
 
         public static float _firmware;
 
-        public static int 
+        public static int
             _cpuTemp, _socTemp, _sprxHandle;
 
         public static string _version { get; private set; } = "0.01";

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using System.Reflection;
-
-using static OrbisControlAPI.Utilities;
 using static OrbisControlAPI.Definitions;
+using static OrbisControlAPI.Utilities;
 
 namespace OrbisControlAPI
 {
@@ -48,7 +48,7 @@ namespace OrbisControlAPI
 
         public void InjectPayload(string ip)
         {
-           // if (IsPortOpen(ip, 1337, TimeSpan.FromSeconds(1)) == true) return;
+            // if (IsPortOpen(ip, 1337, TimeSpan.FromSeconds(1)) == true) return;
 
             try
             {
@@ -127,7 +127,7 @@ namespace OrbisControlAPI
             _cpuTemp = -1;
             _socTemp = -1;
         }
-       
+
         public void Unload()
         {
             try
@@ -139,7 +139,7 @@ namespace OrbisControlAPI
             {
                 return;
             }
-        } 
+        }
 
         public void Notify(int type = 1, string msg = null)
         {
@@ -249,5 +249,146 @@ namespace OrbisControlAPI
             }
             return response;
         }
+
+        public void TEST2(string func, string param)
+        {
+            _ipAddress = "192.168.137.141";
+            try
+            {
+                var url = $"http://{_ipAddress}:1337/{func}";  // append params to URL
+                var client = new HttpClient();
+
+                // Set the header with the parameters, if needed
+                var formattedParam = $"params{{{param}}}";  // Not used in the body anymore
+
+                // Add the header with params information
+                client.DefaultRequestHeaders.Add("Data", formattedParam);  // Adding custom header at the bottom
+
+                // Send POST request with no body, just the query string in the URL and a header
+                var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    // If you don't want to send any body, make sure to set Content-Length to 0
+                    Content = new StringContent(formattedParam)
+                };
+
+                // If needed, you can explicitly set the Content-Length header
+                requestMessage.Content.Headers.ContentLength = formattedParam.Length;
+
+                // Send the request synchronously by blocking the async SendAsync
+                var response = client.SendAsync(requestMessage).Result;  // Using .Result to block
+
+                // Get the response content synchronously
+                var responseContent = response.Content.ReadAsStringAsync().Result;  // Blocking call
+
+                // Output
+                Console.WriteLine($"URL: {url}");
+                Console.WriteLine($"Data being sent in the header: {formattedParam}");
+                Console.WriteLine($"Response from server: {responseContent}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+        public string read_proc_memory(long address, int size)
+        {
+            string response = null;
+            try
+            {
+                string hexAddress = "0x" + address.ToString("X");
+                var url = $"http://{_ipAddress}:1337/read_memory?address={hexAddress}&size={size}";  // Corrected endpoint name
+                response = Client.GetStringAsync(url).Result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error reading memory: " + ex.Message);
+                return null;
+            }
+            return response;
+        }
+
+        public string write_proc_memory(long address, byte[] dataBytes)
+        {
+            string response = null;
+            try
+            {
+                string hexAddress = "0x" + address.ToString("X");
+
+                // Convert data bytes to a hex string
+                string data = BitConverter.ToString(dataBytes).Replace("-", "").ToLower();
+
+                // Construct the URI before it gets sent
+                var uri = $"http://{_ipAddress}:1337/write_memory?address={hexAddress}&data={data}";
+
+                // Print the generated URI for debugging
+                Console.WriteLine("Generated URI: " + uri);
+
+                // Send the GET request (though this is the part we might replace with POST)
+                response = Client.GetStringAsync(uri).Result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error writing memory: " + ex.Message);
+                return null;
+            }
+
+            return response;
+        }
+
+
+
+        public string alloc_proc_memory(int length)
+        {
+            string response = null;
+            try
+            {
+                // Get PID
+                string pidResponse = Client.GetStringAsync($"http://{_ipAddress}:1337/get_proc_info?return=pid").Result;
+                string pid = pidResponse.Replace("pid:", "").Trim();
+
+                // Allocating memory
+                var url = $"http://{_ipAddress}:1337/alloc_memory?pid={pid}&length={length}";
+                response = Client.GetStringAsync(url).Result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error allocating memory: " + ex.Message);
+                return null;
+            }
+            return response;
+        }
+
+        public string free_proc_memory(long address, int length)
+        {
+            string response = null;
+            try
+            {
+                string pidResponse = Client.GetStringAsync($"http://{_ipAddress}:1337/get_proc_info?return=pid").Result;
+                string pid = pidResponse.Replace("pid:", "").Trim();
+
+                string hexAddress = "0x" + address.ToString("X");
+                var url = $"http://{_ipAddress}:1337/free_memory?pid={pid}&address={hexAddress}&length={length}";
+                response = Client.GetStringAsync(url).Result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error freeing memory: " + ex.Message);
+                return null;
+            }
+            return response;
+        }
+
+
     }
 }

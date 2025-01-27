@@ -27,33 +27,66 @@ bool is_port_open(int port)
   return false;
 }
 
-std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE> &buffer)
+std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE> &buffer, bool GET)
 {
-  const char *query_start = strchr(buffer.data(), '?');
-  if (!query_start)
-    return "";
+  if (GET)
+  {
+    const char *query_start = strchr(buffer.data(), '?');
+    if (!query_start)
+      return "";
 
-  query_start++;
+    query_start++;
 
-  const char *param_start = strstr(query_start, key);
-  if (!param_start)
-    return "";
+    const char *param_start = strstr(query_start, key);
+    if (!param_start)
+      return "";
 
-  param_start += strlen(key);
+    param_start += strlen(key);
 
-  if (*param_start != '=')
-    return "";
+    if (*param_start != '=')
+      return "";
 
-  param_start++;
+    param_start++;
 
-  const char *param_end = strchr(param_start, '&');
-  if (!param_end)
-    param_end = strchr(param_start, ' ');
+    const char *param_end = strchr(param_start, '&');
+    if (!param_end)
+      param_end = strchr(param_start, ' ');
 
-  if (!param_end)
-    param_end = param_start + strlen(param_start);
+    if (!param_end)
+      param_end = param_start + strlen(param_start);
 
-  return std::string(param_start, param_end - param_start);
+    return std::string(param_start, param_end - param_start);
+  }
+  else
+  {
+    const char *params_start = strstr(buffer.data(), "params{");
+    if (!params_start)
+      return "";
+
+    params_start += strlen("params{");
+
+    const char *params_end = strchr(params_start, '}');
+    if (!params_end)
+      return "";
+
+    std::string params_str(params_start, params_end - params_start);
+    const char *key_start = strstr(params_str.c_str(), key);
+    if (!key_start)
+      return "";
+
+    key_start += strlen(key);
+
+    if (*key_start != '=')
+      return "";
+
+    key_start++;
+
+    const char *value_end = strchr(key_start, '&');
+    if (!value_end)
+      value_end = key_start + strlen(key_start);
+
+    return std::string(key_start, value_end - key_start);
+  }
 }
 
 char *perform_get_request(const char *command, int port)

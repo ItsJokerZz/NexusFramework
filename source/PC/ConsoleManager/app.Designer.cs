@@ -112,6 +112,7 @@
             this.button3 = new System.Windows.Forms.Button();
             this.textBox11 = new System.Windows.Forms.TextBox();
             this.textBox12 = new System.Windows.Forms.TextBox();
+            this.button2 = new System.Windows.Forms.Button();
             this.consoles_p.SuspendLayout();
             this.pages.SuspendLayout();
             this.memory_p.SuspendLayout();
@@ -918,7 +919,6 @@
             // 
             // toolStripTextBox3
             // 
-            this.toolStripTextBox3.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.toolStripTextBox3.Name = "toolStripTextBox3";
             this.toolStripTextBox3.Size = new System.Drawing.Size(100, 23);
             // 
@@ -1074,12 +1074,23 @@
             this.textBox12.Size = new System.Drawing.Size(530, 79);
             this.textBox12.TabIndex = 20;
             // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(675, 142);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.TabIndex = 21;
+            this.button2.Text = "button2";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
             // app
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(75)))), ((int)(((byte)(75)))), ((int)(((byte)(75)))));
             this.ClientSize = new System.Drawing.Size(834, 516);
+            this.Controls.Add(this.button2);
             this.Controls.Add(this.textBox12);
             this.Controls.Add(this.textBox11);
             this.Controls.Add(this.button3);
@@ -1226,6 +1237,7 @@
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.TextBox textBox11;
         private System.Windows.Forms.TextBox textBox12;
+        private System.Windows.Forms.Button button2;
     }
 }
 

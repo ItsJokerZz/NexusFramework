@@ -1,8 +1,16 @@
 #include "../headers/includes.hpp"
 
-void handle_request(const std::string &request, bool isDaemon)
+void handle_request(const std::string &request)
 {
   static const std::map<std::string, std::function<void()>> daemon_commands = {
+      {"POST /test", []()
+       {
+         std::string name = extract_param("name", data.buffers.daemon, false);
+         std::string age = extract_param("age", data.buffers.daemon, false);
+         log_message("Extracted name: %s | age: %s", name.c_str(), age.c_str());
+
+         send_response("done");
+       }},
       {"GET /version", cmds::client::connection::version},
       {"GET /connect", cmds::client::connection::connect},
       {"GET /unload", cmds::client::connection::unload},
@@ -92,8 +100,7 @@ void *unified_process(void *arg)
   auto &client = isDaemon ? data.sockets.daemon.client
                           : data.sockets.relay.client;
 
-  auto &buffer = isDaemon ? data.buffers.daemon
-                          : data.buffers.relay;
+  auto &buffer = isDaemon ? data.buffers.daemon : data.buffers.relay;
 
   client = client_socket;
   std::fill(buffer.begin(), buffer.end(), 0);
@@ -105,10 +112,10 @@ void *unified_process(void *arg)
     buffer[bytes_received] = '\0';
     std::string request(buffer.data());
 
-    if (request.substr(0, 14) == "GET / HTTP/1.1")
+    if ((request.substr(0, 14) == "GET / HTTP/1.1" || request.substr(0, 15) == "POST / HTTP/1.1"))
       send_error_response(NO_COMMAND);
     else
-      handle_request(request, isDaemon);
+      handle_request(request);
   }
 
   sceNetSocketAbort(client, 0);
