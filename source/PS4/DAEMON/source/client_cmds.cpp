@@ -6,16 +6,16 @@ namespace cmds
   {
     namespace connection
     {
-      void connect()
-      {
-        send_response("true");
-        connected = true;
-      }
-
       void version()
       {
         std::string message = std::to_string(VERSION);
         send_response(message.c_str());
+      }
+
+      void connect()
+      {
+        send_response("true");
+        connected = true;
       }
 
       void unload()
@@ -44,7 +44,7 @@ namespace cmds
       void disconnect()
       {
         send_response("done");
-        
+
         if (data.sockets.daemon.client >= 0)
         {
           sceNetSocketClose(data.sockets.daemon.client);
@@ -204,9 +204,9 @@ namespace cmds
         int type = 0;
 
         type = std::stoi(type_str.c_str());
-       
+
         if (!type_str.empty())
-        text_notify(type, message.c_str());
+          text_notify(type, message.c_str());
         send_response("done");
       }
 

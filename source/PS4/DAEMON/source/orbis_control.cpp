@@ -3,8 +3,8 @@
 void handle_request(const std::string &request, bool isDaemon)
 {
   static const std::map<std::string, std::function<void()>> daemon_commands = {
-      {"GET /connect", cmds::client::connection::connect},
       {"GET /version", cmds::client::connection::version},
+      {"GET /connect", cmds::client::connection::connect},
       {"GET /unload", cmds::client::connection::unload},
       {"GET /disconnect", []()
        { handle_command(cmds::client::connection::disconnect); }},

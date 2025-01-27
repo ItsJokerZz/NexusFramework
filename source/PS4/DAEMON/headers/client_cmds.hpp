@@ -16,8 +16,8 @@ namespace cmds
 
         namespace sys_info
         {
-            void sys_type();
             void get_fw();
+            void sys_type();
             void get_temp();
             void get_user();
 
@@ -25,10 +25,10 @@ namespace cmds
 
         namespace sys_control
         {
-            void notify();
             void temp_limit();
             void set_power_state();
             void ring_buzzer();
+            void notify();
 
         } // namespace sys_control
 
