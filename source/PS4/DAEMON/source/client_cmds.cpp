@@ -199,7 +199,7 @@ namespace cmds
       void notify()
       {
         std::string type_str = extract_param("type", data.buffers.daemon);
-        std::string message = extract_param("msg", data.buffers.daemon);
+        std::string message = decode_url(extract_param("msg", data.buffers.daemon).c_str());
 
         int type = 0;
 
