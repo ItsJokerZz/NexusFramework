@@ -44,6 +44,7 @@ namespace cmds
       void disconnect()
       {
         send_response("done");
+        
         if (data.sockets.daemon.client >= 0)
         {
           sceNetSocketClose(data.sockets.daemon.client);
@@ -82,30 +83,16 @@ namespace cmds
 
       void get_temp()
       {
-        char temp[BUFFER_SIZE] = {
-            0};
-        const char *start = strstr(data.buffers.daemon.data(), "type=");
-        if (start)
-        {
-          start += 5;
-          char *end = strchr(start, '&');
-          if (end)
-            *end = '\0';
-          sscanf(start, "%s", temp);
-          start = end ? strchr(end + 1, '=') : NULL;
-          if (start)
-            start += 1;
-        }
+        std::string type_str = extract_param("type", data.buffers.daemon);
+
+        if (type_str.empty())
+          return;
 
         int tempValue = NULL;
-        if (strcmp(temp, "cpu") == 0)
-        {
+        if (strcmp(type_str.c_str(), "cpu") == 0)
           tempValue = get_cpu_temperature();
-        }
-        else if (strcmp(temp, "soc") == 0)
-        {
+        else if (strcmp(type_str.c_str(), "soc") == 0)
           tempValue = get_soc_temperature();
-        }
         else
           return;
 
@@ -173,17 +160,13 @@ namespace cmds
       void ring_buzzer()
       {
         int type = 0;
-        const char *start = strstr(data.buffers.daemon.data(), "type=");
-        if (start)
-        {
-          start += 5;
-          const char *end = strchr(start, '&');
-          if (end)
-          {
-            std::string type_str(start, end);
-            type = std::stoi(type_str);
-          }
-        }
+
+        std::string type_str = extract_param("type", data.buffers.daemon);
+
+        if (type_str.empty())
+          return;
+
+        type = std::stoi(type_str.c_str());
 
         switch (type)
         {
@@ -215,41 +198,15 @@ namespace cmds
 
       void notify()
       {
-        std::string msg;
+        std::string type_str = extract_param("type", data.buffers.daemon);
+        std::string message = extract_param("msg", data.buffers.daemon);
+
         int type = 0;
 
-        const char *type_start = strstr(data.buffers.daemon.data(), "type=");
-        if (type_start)
-        {
-          type_start += 5;
-          const char *type_end = strchr(type_start, '&');
-          if (type_end)
-          {
-            std::string type_str(type_start, type_end);
-            type = std::stoi(type_str);
-            type_start = strchr(type_end + 1, '=');
-            if (type_start)
-              type_start += 1;
-          }
-        }
-
-        if (type_start)
-        {
-          const char *msg_end = strchr(type_start, ' ');
-          if (msg_end)
-          {
-            std::string encoded_msg(type_start, msg_end);
-            char *decoded = decode_url(encoded_msg.c_str());
-            if (decoded)
-            {
-              msg = std::string(decoded);
-              free(
-                  decoded); // Free the decoded string if it was dynamically allocated
-            }
-          }
-        }
-
-        text_notify(type, msg.empty() ? nullptr : msg.c_str());
+        type = std::stoi(type_str.c_str());
+       
+        if (!type_str.empty())
+        text_notify(type, message.c_str());
         send_response("done");
       }
 
@@ -350,39 +307,29 @@ namespace cmds
 
       void find_pid_by_name()
       {
-        const char *name = strstr(data.buffers.daemon.data(), "name=");
-        if (!name)
+        std::string name = extract_param("name", data.buffers.daemon);
+
+        if (name.empty())
           return;
 
-        name += 5;
-        const char *end = strchr(name, ' ');
-        if (!end)
-          end = name + strlen(name);
-
-        std::string proc_name(name, end);
-
         nlohmann::json response =
-            {{"pid", find_pid_by_procName(proc_name.c_str())}};
+            {{"name", find_pid_by_procName(name.c_str())}};
 
         send_response(generate_json(response).c_str());
       }
 
       void find_name_of_pid()
       {
-        int pid = 0;
+        std::string pid_str = extract_param("pid", data.buffers.daemon);
 
-        // Extract the pid from the input buffer
-        const char *pid_str = strstr(data.buffers.daemon.data(), "pid=");
-        if (!pid_str)
+        if (pid_str.empty())
           return;
 
-        pid_str += 4;        // Skip the "pid=" part
-        pid = atoi(pid_str); // Convert to integer
+        int pid = atoi(pid_str.c_str()); // Convert to integer
 
         if (pid == 0)
         {
-          nlohmann::json error_response = {{"error", "Invalid pid."}};
-          send_response(generate_json(error_response).c_str());
+          send_response(_DEBUGGING);
 
           return;
         }
@@ -445,7 +392,6 @@ namespace cmds
       void free_proc_mem()
       {
         std::string pid = get_app_info("pid");
-
         std::string address = extract_param("address", data.buffers.daemon);
         std::string length = extract_param("length", data.buffers.daemon);
 
