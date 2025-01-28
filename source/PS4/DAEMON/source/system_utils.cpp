@@ -126,7 +126,8 @@ std::string get_app_info(const std::string &returnType)
 {
   // add enum instead of string for arg
 
-  std::regex ps2Pattern("^(SL|SC|CF|AL|CP|KO|AR|TC|PA|SR|GU|WL|UL|VU|HA|RO|CZ|PK|NM|MT|PB)[A-Z0-9]{2,}\\d*$");
+  std::regex ps2Pattern("^(SLES|SCES|SCED|SLUS|SCUS|SLPS|SCAJ|SLKA|SLPM|SCPS|CF00|SCKA|ALCH|CPCS|SLAJ|KOEI|ARZE|TCPS"
+                        "|SCCS|PAPX|SRPM|GUST|WLFD|ULKS|VUGJ|HAKU|ROSE|CZP2|ARP2|PKP2|SLPN|NMP2|MTP2|SCPM|PBPX)\\d*$");
 
   std::string titleID = get_apps_titleid();
   bool is_home = (titleID == HOME_MENU);
@@ -353,18 +354,15 @@ uint32_t get_soc_temperature()
 bool has_entered_restmode()
 {
   OrbisKernelEventFlag flag;
-  if (sceKernelOpenEventFlag(&flag, "SceSystemStateMgrInfo") != 0)
+
+  if ((unsigned int)sceKernelOpenEventFlag(&flag, "SceSystemStateMgrInfo") != 0)
     return false;
 
   uint64_t state;
-  if (sceKernelPollEventFlag(flag, 0xFFFF, SCE_KERNEL_EVF_WAITMODE_OR,
-                             &state) != 0)
+  if (sceKernelPollEventFlag(flag, 0xFFFF, SCE_KERNEL_EVF_WAITMODE_OR, &state) == 0)
     return false;
 
-  return (state == 1000 &&
-          sceKernelPollEventFlag(flag, 0x200000, SCE_KERNEL_EVF_WAITMODE_OR,
-                                 0) == 0) ||
-         state == 500;
+  return (state == 1000 && sceKernelPollEventFlag(flag, 0x200000, SCE_KERNEL_EVF_WAITMODE_OR, 0) == 0) || state == 500;
 }
 
 void text_notify(int type, const char *_msg)

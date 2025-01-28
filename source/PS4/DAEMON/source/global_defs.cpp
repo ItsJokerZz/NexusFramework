@@ -14,7 +14,8 @@ bool DEBUG = true,
      isDaemon = false,
      unloaded = false,
      connected = false,
-     attached = false;
+     attached = false,
+     unload_on_rest = !DEBUG;
 
 serverData data;
 

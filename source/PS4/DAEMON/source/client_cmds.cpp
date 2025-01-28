@@ -59,8 +59,9 @@ namespace cmds
 
         if (is_port_open(RELAYS_PORT))
         {
-          char *response = perform_get_request("attach_relay");
-          if (response != NULL && strcmp(response, "done") == 0)
+          std::string response = perform_http_request("attach_relay");
+
+          if (response != "" && response == "done")
             attached = true;
         }
 
@@ -349,17 +350,16 @@ namespace cmds
         if (size.empty())
           return;
 
-        char request[BUFFER_SIZE];
-        snprintf(request, sizeof(request), "read_memory?address=%s&size=%s",
-                 address.c_str(), size.c_str());
+        std::string request = "read_memory?address=" + address + "&size=" + size;
+        std::string response = perform_http_request(request.c_str());
 
-        send_response(perform_get_request(request));
+        send_response(response);
       }
 
       void write_proc_mem()
       {
-        std::string address = extract_param("address", data.buffers.daemon);
-        std::string data = extract_param("data", ::data.buffers.daemon);
+        std::string address = extract_param("address", data.buffers.daemon, false);
+        std::string data = extract_param("data", ::data.buffers.daemon, false);
 
         if (address.empty())
           return;
@@ -367,11 +367,8 @@ namespace cmds
         if (data.empty())
           return;
 
-        char request[BUFFER_SIZE];
-        snprintf(request, sizeof(request), "write_memory?address=%s&data=%s",
-                 address.c_str(), data.c_str());
-
-        send_response(perform_get_request(request));
+        std::string request = "address=" + address + "&data=" + data;
+        send_response(perform_http_request("write_memory", RELAYS_PORT, false, request).c_str());
       }
 
       void alloc_proc_mem()
@@ -382,11 +379,8 @@ namespace cmds
         if (length.empty())
           return;
 
-        char request[BUFFER_SIZE];
-        snprintf(request, sizeof(request), "alloc_memory?pid=%s&length=%s",
-                 pid.c_str(), length.c_str());
-
-        send_response(perform_get_request(request));
+        std::string request = "alloc_memory?pid=" + pid + "&length=" + length;
+        send_response(perform_http_request(request.c_str()));
       }
 
       void free_proc_mem()
@@ -400,11 +394,8 @@ namespace cmds
         if (length.empty())
           return;
 
-        char request[BUFFER_SIZE];
-        snprintf(request, sizeof(request), "free_memory?pid=%s&address=%s&length=%s",
-                 pid.c_str(), address.c_str(), length.c_str());
-
-        send_response(perform_get_request(request));
+        std::string request = "free_memory?pid=" + pid + "&address=" + address + "&length=" + length;
+        send_response(perform_http_request(request.c_str()));
       }
 
       void stop_plugin() {}
@@ -415,13 +406,10 @@ namespace cmds
 
       void load_module()
       {
-        char request[BUFFER_SIZE];
-
         std::string prx_path = extract_param("path", data.buffers.daemon);
         std::string exec_path = extract_param("exec", data.buffers.daemon);
 
-        auto load_prx = [](const std::string &exec_path,
-                           const std::string &prx_path) -> bool
+        auto load_prx = [](const std::string &exec_path, const std::string &prx_path) -> bool
         {
           int prx_handle =
               sys_sdk_proc_prx_load(const_cast<char *>(exec_path.c_str()),
@@ -434,8 +422,7 @@ namespace cmds
             text_notify(222, notify_msg);
 
             nlohmann::json response = {
-                {prx_path,
-                 prx_handle}};
+                {prx_path, prx_handle}};
             send_response(generate_json(response).c_str());
 
             return true;
@@ -443,6 +430,7 @@ namespace cmds
           else
           {
             send_error_response(UNKNOWN_ERROR);
+
             return false;
           }
         };
@@ -453,18 +441,17 @@ namespace cmds
           {
             if (!exec_path.empty() && !prx_path.empty())
             {
-              if (exec_path.empty() || prx_path.empty())
-                send_error_response(INVALID_ARGS);
-              else
-                load_prx(exec_path, prx_path);
+              load_prx(exec_path, prx_path);
 
               return;
             }
             else if (!prx_path.empty() && exec_path.empty())
-              snprintf(request, sizeof(request), "load_module?path=%s",
-                       prx_path.c_str());
-
-            send_response(perform_get_request(request));
+            {
+              std::string request = "load_module?path=" + prx_path;
+              send_response(perform_http_request("load_module", RELAYS_PORT, false, request));
+            }
+            else
+              send_error_response(INVALID_ARGS);
           }
           else
             send_error_response(INVALID_ARGS);
@@ -477,10 +464,8 @@ namespace cmds
               send_error_response(NOT_ATTACHED);
             else
             {
-              char request[BUFFER_SIZE];
-              snprintf(request, sizeof(request), "load_module?path=%s",
-                       prx_path.c_str());
-              send_response(perform_get_request(request));
+              std::string request = "load_module?path=" + prx_path;
+              send_response(perform_http_request("load_module", RELAYS_PORT, false, request));
             }
           }
           else if (!exec_path.empty() && !prx_path.empty())

@@ -63,7 +63,8 @@ int orbis_syscall(int num, ...);
 extern bool is_port_open(int port);
 
 extern std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE> &buffer, bool GET = true);
-extern char *perform_get_request(const char *command, int port = RELAYS_PORT);
+extern std::string perform_http_request(const char *command, int port = RELAYS_PORT, bool GET = true, const std::string &data = "") /*nullptr*/;
+
 extern char *decode_url(const char *url);
 
 extern std::string generate_json(const std::unordered_map<std::string, nlohmann::json> &data_entries);

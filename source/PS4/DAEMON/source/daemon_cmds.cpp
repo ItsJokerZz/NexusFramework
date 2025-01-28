@@ -227,8 +227,8 @@ namespace cmds
 
     void write_memory()
     {
-      std::string address = extract_param("address", data.buffers.relay);
-      std::string dataToWrite = extract_param("data", data.buffers.relay);
+      std::string address = extract_param("address", data.buffers.relay, false);
+      std::string dataToWrite = extract_param("data", data.buffers.relay, false);
 
       if (address.empty())
       {
@@ -246,30 +246,33 @@ namespace cmds
 
       log_message("Address: %s, Data: %s", address.c_str(), dataToWrite.c_str());
 
-      uint64_t addressVal = strtoull(address.c_str(), nullptr, 16);
-      size_t byteSize = dataToWrite.length() / 2;
-      char *buffer = new char[byteSize + 1];
-      buffer[byteSize] = '\0';
+      /*  uint64_t addressVal = strtoull(address.c_str(), nullptr, 16);
+            size_t byteSize = dataToWrite.length() / 2;
+            char *buffer = new char[byteSize + 1];
+            buffer[byteSize] = '\0';
 
-      for (size_t i = 0; i < byteSize; i++)
-      {
-        unsigned int byte;
-        sscanf(dataToWrite.c_str() + i * 2, "%2x", &byte);
-        buffer[i] = static_cast<char>(byte);
-      }
+            for (size_t i = 0; i < byteSize; i++)
+            {
+              unsigned int byte;
+              sscanf(dataToWrite.c_str() + i * 2, "%2x", &byte);
+              buffer[i] = static_cast<char>(byte);
+            }
 
-      proc_rw args;
-      args.address = addressVal;
-      args.data = static_cast<void *>(buffer);
-      args.length = byteSize;
-      args.write_flags = 1;
+            proc_rw args;
+            args.address = addressVal;
+            args.data = static_cast<void *>(buffer);
+            args.length = byteSize;
+            args.write_flags = 1;
 
-      if (sys_sdk_proc_rw(&args) == 0)
-        send_response("success: memory written");
-      else
-        send_response("error: failed to write memory");
+            if (sys_sdk_proc_rw(&args) == 0)
+              send_response("success: memory written");
+            else
+              send_response("error: failed to write memory");
 
-      delete[] buffer;
+            delete[] buffer;
+      */
+
+     send_response("POSTED");
     }
 
     void alloc_memory()

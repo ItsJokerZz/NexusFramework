@@ -89,12 +89,13 @@ std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE> &
   }
 }
 
-char *perform_get_request(const char *command, int port)
+std::string perform_http_request(const char *command, int port, bool GET, const std::string &data)
 {
-  static char buffer[BUFFER_SIZE];
+  static char buffer[BUFFER_SIZE];  // Buffer for the HTTP response
   int httpCtxId = 0, tmplId = 0, connId = 0, reqId = 0, bytesRead = 0;
-  char userAgent[64], url[256];
+  char userAgent[64], url[256], wrappedData[BUFFER_SIZE];
 
+  // Initialize HTTP context
   httpCtxId = sceHttpInit(0, 0, 1024 * 1024);
   if (httpCtxId < 0)
   {
@@ -111,6 +112,7 @@ char *perform_get_request(const char *command, int port)
     return NULL;
   }
 
+  // Create HTTP connection
   connId = sceHttpCreateConnection(tmplId, "127.0.0.1", "http", port, 1);
   if (connId < 0)
   {
@@ -120,8 +122,19 @@ char *perform_get_request(const char *command, int port)
     return NULL;
   }
 
+  // Prepare the URL
   snprintf(url, sizeof(url), "/%s", command);
-  reqId = sceHttpCreateRequest(connId, ORBIS_METHOD_GET, url, 0);
+  
+  // Determine the HTTP method (GET or POST)
+  if (GET)
+  {
+    reqId = sceHttpCreateRequest(connId, ORBIS_METHOD_GET, url, 0);
+  }
+  else
+  {
+    reqId = sceHttpCreateRequest(connId, ORBIS_METHOD_POST, url, 0);
+  }
+
   if (reqId < 0)
   {
     log_message("Failed to create HTTP request. Error code: %d", reqId);
@@ -131,18 +144,51 @@ char *perform_get_request(const char *command, int port)
     return NULL;
   }
 
-  int sendRequestResult = sceHttpSendRequest(reqId, NULL, 0);
-  if (sendRequestResult < 0 && strcmp(command, "attach") != 0)
+  // Handle POST request by wrapping data if available
+  if (!GET)
   {
-    log_message("Failed to send HTTP request. Error code: %d",
-                sendRequestResult);
-    sceHttpDeleteRequest(reqId);
-    sceHttpDeleteConnection(connId);
-    sceHttpDeleteTemplate(tmplId);
-    sceHttpTerm(httpCtxId);
-    return NULL;
+    snprintf(wrappedData, sizeof(wrappedData), "params{%s}", data.c_str());
+    size_t bodySize = strlen(wrappedData); // Size of the body data
+
+    int result = sceHttpSetRequestContentLength(reqId, bodySize);
+    if (result < 0)
+    {
+      log_message("Failed to set Content-Length. Error code: %d", result);
+      sceHttpDeleteRequest(reqId);
+      sceHttpDeleteConnection(connId);
+      sceHttpDeleteTemplate(tmplId);
+      sceHttpTerm(httpCtxId);
+      return NULL;
+    }
+
+    // Send the request with the body data
+    int sendRequestResult = sceHttpSendRequest(reqId, wrappedData, bodySize);
+    if (sendRequestResult < 0)
+    {
+      log_message("Failed to send HTTP request. Error code: %d", sendRequestResult);
+      sceHttpDeleteRequest(reqId);
+      sceHttpDeleteConnection(connId);
+      sceHttpDeleteTemplate(tmplId);
+      sceHttpTerm(httpCtxId);
+      return NULL;
+    }
+  }
+  else
+  {
+    // If GET request, send without body
+    int sendRequestResult = sceHttpSendRequest(reqId, NULL, 0);
+    if (sendRequestResult < 0 && strcmp(command, "attach") != 0)
+    {
+      log_message("Failed to send HTTP request. Error code: %d", sendRequestResult);
+      sceHttpDeleteRequest(reqId);
+      sceHttpDeleteConnection(connId);
+      sceHttpDeleteTemplate(tmplId);
+      sceHttpTerm(httpCtxId);
+      return NULL;
+    }
   }
 
+  // Read the response from the server
   bytesRead = sceHttpReadData(reqId, buffer, sizeof(buffer));
   if (bytesRead < 0)
   {
@@ -154,16 +200,9 @@ char *perform_get_request(const char *command, int port)
     return NULL;
   }
 
-  buffer[bytesRead] = '\0';
-  char *bodyStart = strstr(buffer, "\r\n\r\n");
-  if (bodyStart != NULL)
-  {
-    bodyStart += 4;
-    size_t bodyLength = bytesRead - (bodyStart - buffer);
-    memmove(buffer, bodyStart, bodyLength);
-    buffer[bodyLength] = '\0';
-  }
+  buffer[bytesRead] = '\0'; // Ensure the buffer is null-terminated
 
+  // Clean up
   sceHttpDeleteRequest(reqId);
   sceHttpDeleteConnection(connId);
   sceHttpDeleteTemplate(tmplId);

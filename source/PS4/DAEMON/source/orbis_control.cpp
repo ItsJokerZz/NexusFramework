@@ -1,71 +1,141 @@
 #include "../headers/includes.hpp"
 
+enum
+{
+  MAIN_ON_STANDBY = 500,
+  WORKING = 1000
+};
+
+static OrbisKernelEventFlag statemgr = NULL; // Kernel event flag handler
+
+int sceSystemOpenStartMgr()
+{
+  if ((unsigned int)sceKernelOpenEventFlag(&statemgr,
+                                           "SceSystemStateMgrInfo") != 0)
+    return -1;
+  return 0;
+}
+
+int sceSystemStateMgrGetCurrentState()
+{
+  uint64_t ret = 0;
+
+  // Initialize statemgr if it's not already initialized
+  if (!statemgr)
+  {
+    if (sceSystemOpenStartMgr() == -1)
+      return -1;
+  }
+
+  // Poll for the event flag
+  sceKernelPollEventFlag(statemgr, 0xFFFF, SCE_KERNEL_EVF_WAITMODE_OR, &ret);
+
+  // If system is in WORKING state and certain condition is met, change state to
+  // MAIN_ON_STANDBY
+  if ((int)ret == WORKING &&
+      sceKernelPollEventFlag(statemgr, 0x200000, SCE_KERNEL_EVF_WAITMODE_OR,
+                             0) == 0)
+    ret = MAIN_ON_STANDBY;
+
+  // Log if system state is MAIN_ON_STANDBY
+  if ((int)ret == MAIN_ON_STANDBY)
+    log_message("SceSystemStateMgrGetCurrentState MAIN_ON_STANDBY");
+
+  return (int)ret;
+}
+
+bool isRestMode()
+{
+  return sceSystemStateMgrGetCurrentState() == MAIN_ON_STANDBY;
+}
+
+bool isOn()
+{
+  return true;
+
+  // return sceSystemStateMgrGetCurrentState() == WORKING;
+}
+
 void handle_request(const std::string &request)
 {
   static const std::map<std::string, std::function<void()>> daemon_commands = {
-      {"POST /test", []()
-       {
-         std::string name = extract_param("name", data.buffers.daemon, false);
-         std::string age = extract_param("age", data.buffers.daemon, false);
-         log_message("Extracted name: %s | age: %s", name.c_str(), age.c_str());
+      {"POST /test", cmds::client::process::write_proc_mem},
 
-         send_response("done");
-       }},
       {"GET /version", cmds::client::connection::version},
       {"GET /connect", cmds::client::connection::connect},
       {"GET /unload", cmds::client::connection::unload},
-      {"GET /disconnect", []()
+      {"GET /disconnect",
+       []()
        { handle_command(cmds::client::connection::disconnect); }},
-      {"GET /attach", []()
+      {"GET /attach",
+       []()
        { handle_command(cmds::client::connection::attach); }},
 
-      {"GET /get_fw_version", []()
+      {"GET /get_fw_version",
+       []()
        { handle_command(cmds::client::sys_info::get_fw); }},
-      {"GET /get_sys_type", []()
+      {"GET /get_sys_type",
+       []()
        { handle_command(cmds::client::sys_info::sys_type); }},
-      {"GET /get_temperature", []()
+      {"GET /get_temperature",
+       []()
        { handle_command(cmds::client::sys_info::get_temp); }},
 
-      {"GET /get_username", []()
+      {"GET /get_username",
+       []()
        { handle_command(cmds::client::sys_info::get_user); }},
 
-      {"GET /get_proc_list", []()
+      {"GET /get_proc_list",
+       []()
        { handle_command(cmds::client::process::get_proc_list); }},
-      {"GET /get_proc_info", []()
+      {"GET /get_proc_info",
+       []()
        { handle_command(cmds::client::process::get_proc_info); }},
-      {"GET /get_pid_by_name", []()
+      {"GET /get_pid_by_name",
+       []()
        { handle_command(cmds::client::process::find_pid_by_name); }},
-      {"GET /get_name_of_pid", []()
+      {"GET /get_name_of_pid",
+       []()
        { handle_command(cmds::client::process::find_name_of_pid); }},
 
-      {"GET /set_temp_limit", []()
+      {"GET /set_temp_limit",
+       []()
        { handle_command(cmds::client::sys_control::temp_limit); }},
-      {"GET /set_power_state", []()
+      {"GET /set_power_state",
+       []()
        { handle_command(cmds::client::sys_control::set_power_state); }},
 
-      {"GET /ring_buzzer", []()
+      {"GET /ring_buzzer",
+       []()
        { handle_command(cmds::client::sys_control::ring_buzzer); }},
-      {"GET /send_notify", []()
+      {"GET /send_notify",
+       []()
        { handle_command(cmds::client::sys_control::notify); }},
 
-      {"GET /read_memory", []()
+      {"GET /read_memory",
+       []()
        { handle_command(cmds::client::process::read_proc_mem); }},
-      {"GET /write_memory", []()
+      {"GET /write_memory",
+       []()
        { handle_command(cmds::client::process::write_proc_mem); }},
-      {"GET /alloc_memory", []()
+      {"GET /alloc_memory",
+       []()
        { handle_command(cmds::client::process::alloc_proc_mem); }},
-      {"GET /free_memory", []()
+      {"GET /free_memory",
+       []()
        { handle_command(cmds::client::process::alloc_proc_mem); }},
-      {"GET /start_plugin", []()
+      {"GET /start_plugin",
+       []()
        { handle_command(cmds::client::process::start_plugin); }},
-      {"GET /load_module", []()
+      {"GET /load_module",
+       []()
        { handle_command(cmds::client::process::load_module); }}};
 
   static const std::map<std::string, std::function<void()>> relay_commands = {
       {"GET /attach_relay", cmds::daemon::attach_relay},
 
       {"GET /read_memory", cmds::daemon::read_memory},
-      {"GET /write_memory", cmds::daemon::write_memory},
+      {"POST /write_memory", cmds::daemon::write_memory},
       {"GET /alloc_memory", cmds::daemon::alloc_memory},
       {"GET /free_memory", cmds::daemon::free_memory},
 
@@ -75,17 +145,18 @@ void handle_request(const std::string &request)
       {"GET /test", []()
        {
          send_response("done");
-         if (!attached && strcmp(perform_get_request("attach"), "done") == 0)
+         if (!attached && perform_http_request("attach") == "done")
            attached = true;
        }}};
 
   const auto &commands = isDaemon ? daemon_commands : relay_commands;
 
-  auto it = std::find_if(commands.begin(), commands.end(),
-                         [&request](const std::pair<std::string, std::function<void()>> &pair)
-                         {
-                           return request.find(pair.first) != std::string::npos;
-                         });
+  auto it = std::find_if(
+      commands.begin(), commands.end(),
+      [&request](const std::pair<std::string, std::function<void()>> &pair)
+      {
+        return request.find(pair.first) != std::string::npos;
+      });
 
   if (it != commands.end())
     it->second();
@@ -97,8 +168,8 @@ void *unified_process(void *arg)
 {
   int client_socket = *static_cast<int *>(arg);
 
-  auto &client = isDaemon ? data.sockets.daemon.client
-                          : data.sockets.relay.client;
+  auto &client =
+      isDaemon ? data.sockets.daemon.client : data.sockets.relay.client;
 
   auto &buffer = isDaemon ? data.buffers.daemon : data.buffers.relay;
 
@@ -112,7 +183,8 @@ void *unified_process(void *arg)
     buffer[bytes_received] = '\0';
     std::string request(buffer.data());
 
-    if ((request.substr(0, 14) == "GET / HTTP/1.1" || request.substr(0, 15) == "POST / HTTP/1.1"))
+    if ((request.substr(0, 14) == "GET / HTTP/1.1" ||
+         request.substr(0, 15) == "POST / HTTP/1.1"))
       send_error_response(NO_COMMAND);
     else
       handle_request(request);
@@ -133,11 +205,14 @@ void *unified_thread(void *arg)
 
   auto create_server_socket = [&]() -> int
   {
-    server_socket = sceNetSocket(socket_name.c_str(), ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
+    server_socket = sceNetSocket(socket_name.c_str(), ORBIS_NET_AF_INET,
+                                 ORBIS_NET_SOCK_STREAM, 0);
     if (server_socket < 0)
     {
-      buffer = name + " failed to create server socket, retrying in " + std::to_string(RETRY_DELAY_SECONDS) +
-               " seconds... Attempt " + std::to_string(retries + 1) + "/" + std::to_string(MAX_RETRY_ATTEMPTS);
+      buffer = name + " failed to create server socket, retrying in " +
+               std::to_string(RETRY_DELAY_SECONDS) + " seconds... Attempt " +
+               std::to_string(retries + 1) + "/" +
+               std::to_string(MAX_RETRY_ATTEMPTS);
       log_message("%s", buffer.c_str());
     }
     return server_socket;
@@ -153,9 +228,11 @@ void *unified_thread(void *arg)
     if (DEBUG)
       memset(data.sockets.server_addr.sa_data + 2, 0, 4);
     else
-      *(uint32_t *)(data.sockets.server_addr.sa_data + 2) = sceNetHtonl(isDaemon ? 0x00000000 : 0x7F000001);
+      *(uint32_t *)(data.sockets.server_addr.sa_data + 2) =
+          sceNetHtonl(isDaemon ? 0x00000000 : 0x7F000001);
 
-    return sceNetBind(server_socket, &data.sockets.server_addr, sizeof(data.sockets.server_addr)) >= 0;
+    return sceNetBind(server_socket, &data.sockets.server_addr,
+                      sizeof(data.sockets.server_addr)) >= 0;
   };
 
   auto listen_server_socket = [&]() -> bool
@@ -171,7 +248,8 @@ void *unified_thread(void *arg)
     {
       if (++retries >= MAX_RETRY_ATTEMPTS)
       {
-        buffer = name + " failed to create server socket after " + std::to_string(MAX_RETRY_ATTEMPTS) + " attempts, unloading...";
+        buffer = name + " failed to create server socket after " +
+                 std::to_string(MAX_RETRY_ATTEMPTS) + " attempts, unloading...";
         log_message("%s", buffer.c_str());
         unloaded = true;
         break;
@@ -182,14 +260,18 @@ void *unified_thread(void *arg)
 
     if (!bind_server_socket() || !listen_server_socket())
     {
-      buffer = name + " failed to bind or listen on server socket, retrying in " + std::to_string(RETRY_DELAY_SECONDS) +
-               " seconds... Attempt " + std::to_string(retries + 1) + "/" + std::to_string(MAX_RETRY_ATTEMPTS);
+      buffer = name +
+               " failed to bind or listen on server socket, retrying in " +
+               std::to_string(RETRY_DELAY_SECONDS) + " seconds... Attempt " +
+               std::to_string(retries + 1) + "/" +
+               std::to_string(MAX_RETRY_ATTEMPTS);
 
       log_message("%s", buffer.c_str());
 
       if (++retries >= MAX_RETRY_ATTEMPTS)
       {
-        buffer = name + " failed to bind or listen after " + std::to_string(MAX_RETRY_ATTEMPTS) + " attempts, unloading...";
+        buffer = name + " failed to bind or listen after " +
+                 std::to_string(MAX_RETRY_ATTEMPTS) + " attempts, unloading...";
         log_message("%s", buffer.c_str());
         unloaded = true;
         break;
@@ -202,21 +284,26 @@ void *unified_thread(void *arg)
       continue;
     }
 
-    buffer = name + " has started a server listening on port " + std::to_string(port) + ".";
+    buffer = name + " has started a server listening on port " +
+             std::to_string(port) + ".";
     log_message("%s", buffer.c_str());
 
     while (!unloaded)
     {
-      client_socket = sceNetAccept(server_socket, &data.sockets.client_addr, &data.sockets.client_addr_len);
+      client_socket = sceNetAccept(server_socket, &data.sockets.client_addr,
+                                   &data.sockets.client_addr_len);
 
       if (client_socket < 0)
       {
-        buffer = name + " failed to accept client connection. Closing server socket and restarting...";
+        buffer = name + " failed to accept client connection. Closing server "
+                        "socket and restarting...";
         log_message("%s", buffer.c_str());
 
         if (++retries >= MAX_RETRY_ATTEMPTS)
         {
-          buffer = name + " failed to accept client connection after " + std::to_string(MAX_RETRY_ATTEMPTS) + " attempts, unloading...";
+          buffer = name + " failed to accept client connection after " +
+                   std::to_string(MAX_RETRY_ATTEMPTS) +
+                   " attempts, unloading...";
           log_message("%s", buffer.c_str());
           unloaded = true;
           break;
@@ -227,6 +314,7 @@ void *unified_thread(void *arg)
 
         sceKernelSleep(RETRY_DELAY_SECONDS);
         server_socket = create_server_socket();
+
         if (server_socket < 0)
         {
           buffer = name + " failed to recreate server socket, retrying...";
@@ -241,15 +329,17 @@ void *unified_thread(void *arg)
           continue;
         }
 
-        buffer = name + " server socket successfully reset and is listening again.";
+        buffer =
+            name + " server socket successfully reset and is listening again.";
         log_message("%s", buffer.c_str());
         continue;
       }
 
-      void *thread = isDaemon ? (void *)&data.threads.daemon : (void *)&data.threads.relay;
-      pthread_t *client_data = isDaemon
-                                   ? &((struct serverData::threads::daemon *)thread)->client
-                                   : &((struct serverData::threads::relay *)thread)->client;
+      void *thread =
+          isDaemon ? (void *)&data.threads.daemon : (void *)&data.threads.relay;
+      pthread_t *client_data =
+          isDaemon ? &((struct serverData::threads::daemon *)thread)->client
+                   : &((struct serverData::threads::relay *)thread)->client;
 
       pthread_create(client_data, NULL, unified_process, &client_socket);
       pthread_detach(*client_data);
@@ -285,7 +375,8 @@ void *telnet_server(void *arg)
   server_addr.sin_port = htons(port);
 
   // Bind the socket
-  if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+  if (bind(server_socket, (struct sockaddr *)&server_addr,
+           sizeof(server_addr)) < 0)
   {
     perror("Failed to bind socket");
     close(server_socket);
@@ -305,7 +396,8 @@ void *telnet_server(void *arg)
   while (!unloaded)
   {
     // Accept a client connection
-    client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_addr_len);
+    client_socket = accept(server_socket, (struct sockaddr *)&client_addr,
+                           &client_addr_len);
     if (client_socket < 0)
     {
       perror("Failed to accept client connection");
@@ -315,7 +407,8 @@ void *telnet_server(void *arg)
     log_message("Client connected: %s\n", inet_ntoa(client_addr.sin_addr));
 
     // Send kernel log data or any other output to the client
-    int logDevice = sceKernelOpen("/dev/klog", O_RDONLY, 0); // Open the kernel log device
+    int logDevice =
+        sceKernelOpen("/dev/klog", O_RDONLY, 0); // Open the kernel log device
     if (logDevice < 0)
     {
       perror("Failed to open kernel log device");
@@ -361,7 +454,7 @@ void *telnet_server(void *arg)
 
 extern "C" int32_t __wrap__init(size_t args, const void *argp)
 {
-  struct proc_info info;
+  struct proc_info info = {};
   sys_sdk_proc_info(&info);
 
   isDaemon = (strcmp(info.titleid, DAEMON_APP) == 0);
@@ -394,8 +487,8 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
       while ((bytesRead = read(fd, bufferRead, sizeof(bufferRead))) > 0)
       {
         bufferRead[bytesRead] = '\0';
-        if (strstr(bufferRead,
-                   "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n"))
+        if (strstr(bufferRead, "[default]\n/data/GoldHEN/plugins/ItsJokerZz/"
+                               "OrbisControl.prx\n\n"))
         {
           contentFound = true;
           break;
@@ -409,7 +502,8 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
       fd = open(file, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
       if (fd != -1)
       {
-        buffer = "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n";
+        buffer =
+            "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n";
         write(fd, buffer.c_str(), buffer.length());
         log_message("Added OrbisControl to %s", file);
         close(fd);
@@ -419,8 +513,10 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
 
   name = isDaemon ? "Daemon" : "Relay";
   buffer = "[OrbisControl]\n" + name + " started";
-  pthread_t &thread = isDaemon ? data.threads.daemon.server : data.threads.relay.server;
-  if (thread == -1 && pthread_create(&thread, nullptr, unified_thread, nullptr) != 0)
+  pthread_t &thread =
+      isDaemon ? data.threads.daemon.server : data.threads.relay.server;
+  if (thread == -1 &&
+      pthread_create(&thread, nullptr, unified_thread, nullptr) != 0)
     return 1;
 
   text_notify(222, buffer.c_str());
@@ -442,14 +538,31 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
         pthread_detach(log_thread);
         */
 
-    /* UNLOAD AT STARTUP / ON RESTMODE */
-    while (!unloaded)
+    jailbreak_backup jb;
+    bool wasRestMode = false;
+    while (!unloaded /*&& (!DEBUG || !(isOn() && isRestMode()))*/)
     {
-      if (DEBUG && has_entered_restmode())
-        unloaded = true;
+      if (isRestMode())
+        wasRestMode = true;
+      else if (!isRestMode() && wasRestMode)
+      {
+        if (!DEBUG)
+          unloaded = true;
+
+        // load sprx, set unloaded to true, and just reload.
+
+        sys_sdk_jailbreak(&jb);
+
+        text_notify(222, "re-jailbroke; for safety");
+
+        wasRestMode = false;
+        unloaded = !DEBUG; // CAN REMOVE
+      }
 
       sceKernelSleep(1);
     }
+
+    unloaded = true;
 
     if (data.sockets.daemon.server >= 0)
     {

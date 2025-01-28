@@ -38,7 +38,7 @@ struct ErrorMessage
 
 extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
 
-extern bool DEBUG, isDaemon, unloaded, connected, attached;
+extern bool DEBUG, isDaemon, unloaded, connected, attached, unload_on_rest;
 
 struct serverData
 {
