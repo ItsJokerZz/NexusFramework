@@ -5,7 +5,7 @@
 #define DAEMON_PORT 1337
 #define RELAYS_PORT 5000
 #define RPC_PORT 7000
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 8192
 #define HOME_MENU "NPXS21001" /* SceShellUI */
 
 #define RETRY_DELAY_SECONDS 5

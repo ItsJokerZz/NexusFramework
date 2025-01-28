@@ -252,7 +252,7 @@ namespace OrbisControlAPI
 
         public void TEST2(string func, string param)
         {
-            _ipAddress = "192.168.137.141";
+            _ipAddress = "192.168.137.206";
             try
             {
                 var url = $"http://{_ipAddress}:1337/{func}";  // append params to URL
