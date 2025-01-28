@@ -27,6 +27,35 @@ bool is_port_open(int port)
   return false;
 }
 
+std::string decode_url(const std::string &url)
+{
+  std::string decoded;
+  decoded.reserve(url.size()); // Reserve space for the decoded string
+
+  for (size_t i = 0; i < url.size(); ++i)
+  {
+    if (url[i] == '%')
+    {
+      // Ensure there are at least two more characters to form a valid hex value
+      if (i + 2 < url.size() && isxdigit(url[i + 1]) && isxdigit(url[i + 2]))
+      {
+        int value;
+        sscanf(url.c_str() + i + 1, "%2x", &value);
+        decoded += static_cast<char>(value);
+        i += 2; // Skip past the 2 hex digits
+      }
+      else
+        decoded += '%';
+    }
+    else if (url[i] == '+')
+      decoded += ' '; // Convert '+' to space
+    else
+      decoded += url[i]; // Copy the regular character
+  }
+
+  return decoded;
+}
+
 std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE> &buffer, bool GET)
 {
   if (GET)
@@ -91,7 +120,7 @@ std::string extract_param(const char *key, const std::array<char, BUFFER_SIZE> &
 
 std::string perform_http_request(const char *command, int port, bool GET, const std::string &data)
 {
-  static char buffer[BUFFER_SIZE];  // Buffer for the HTTP response
+  static char buffer[BUFFER_SIZE]; // Buffer for the HTTP response
   int httpCtxId = 0, tmplId = 0, connId = 0, reqId = 0, bytesRead = 0;
   char userAgent[64], url[256], wrappedData[BUFFER_SIZE];
 
@@ -124,7 +153,7 @@ std::string perform_http_request(const char *command, int port, bool GET, const 
 
   // Prepare the URL
   snprintf(url, sizeof(url), "/%s", command);
-  
+
   // Determine the HTTP method (GET or POST)
   if (GET)
   {
@@ -209,48 +238,6 @@ std::string perform_http_request(const char *command, int port, bool GET, const 
   sceHttpTerm(httpCtxId);
 
   return buffer;
-}
-
-char *decode_url(const char *url)
-{
-  size_t len = strlen(url);
-  char *decoded = (char *)malloc(len + 1);
-
-  if (decoded == NULL)
-    return NULL;
-
-  char *d = decoded;
-  for (const char *s = url; *s; ++s)
-  {
-    if (*s == '%')
-    {
-      // Ensure there are at least two more characters to form a valid hex value
-      if (s[1] && s[2] && isxdigit(s[1]) && isxdigit(s[2]))
-      {
-        int value;
-        sscanf(s + 1, "%2x", &value);
-        *d++ = (char)value;
-        s += 2; // Skip past the 2 hex digits
-      }
-      else
-      {
-        // Invalid percent-encoding, just copy the '%' character
-        *d++ = '%';
-      }
-    }
-    else if (*s == '+')
-    {
-      *d++ = ' '; // Convert '+' to space
-    }
-    else
-    {
-      *d++ = *s; // Copy the regular character
-    }
-  }
-
-  *d = '\0'; // Null-terminate the decoded string
-
-  return decoded;
 }
 
 std::string generate_json(const std::unordered_map<std::string, nlohmann::json> &data_entries)

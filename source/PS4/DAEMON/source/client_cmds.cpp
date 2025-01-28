@@ -200,11 +200,9 @@ namespace cmds
       void notify()
       {
         std::string type_str = extract_param("type", data.buffers.daemon);
-        std::string message = decode_url(extract_param("msg", data.buffers.daemon).c_str());
+        std::string message = decode_url(extract_param("msg", data.buffers.daemon));
 
-        int type = 0;
-
-        type = std::stoi(type_str.c_str());
+        int type = std::stoi(type_str.c_str());
 
         if (!type_str.empty())
           text_notify(type, message.c_str());
