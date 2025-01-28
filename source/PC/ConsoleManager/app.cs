@@ -263,7 +263,7 @@ namespace CM
         private void button2_Click(object sender, EventArgs e)
         {
             // Construct a long data string
-            string longData = new string('B', 3000); // Data with 5000 'B' characters
+            string longData = new string('B', 3500); // Data with 5000 'B' characters
 
             // Construct the parameter string with long address and data
             string parameters = $"address=0x0&data={longData}";
