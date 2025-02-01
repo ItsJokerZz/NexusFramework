@@ -16,7 +16,7 @@ namespace cmds
 
     void load_module()
     {
-      std::string path = extract_param("path", data.buffers.relay);
+      std::string path = extract_param("path", data.buffer);
 
       if (path.empty())
       {
@@ -85,7 +85,7 @@ namespace cmds
 
     void start_plugin()
     {
-      std::string plugin = extract_param("plugin", data.buffers.relay);
+      std::string plugin = extract_param("plugin", data.buffer);
 
       if (plugin.empty())
       {
@@ -170,8 +170,8 @@ namespace cmds
 
     void read_memory()
     {
-      std::string address = extract_param("address", data.buffers.relay);
-      std::string size = extract_param("size", data.buffers.relay);
+      std::string address = extract_param("address", data.buffer);
+      std::string size = extract_param("size", data.buffer);
 
       if (address.empty())
       {
@@ -227,8 +227,8 @@ namespace cmds
 
     void write_memory()
     {
-      std::string address = extract_param("address", data.buffers.relay, false);
-      std::string dataToWrite = extract_param("data", data.buffers.relay, false);
+      std::string address = extract_param("address", data.buffer, false);
+      std::string dataToWrite = extract_param("data", data.buffer, false);
 
       if (address.empty())
       {
@@ -276,8 +276,8 @@ namespace cmds
 
     void alloc_memory()
     {
-      std::string pid = extract_param("pid", data.buffers.relay);
-      std::string length = extract_param("length", data.buffers.relay);
+      std::string pid = extract_param("pid", data.buffer);
+      std::string length = extract_param("length", data.buffer);
 
       if (pid.empty())
       {
@@ -315,9 +315,9 @@ namespace cmds
 
     void free_memory()
     {
-      std::string pid = extract_param("pid", data.buffers.relay);
-      std::string address = extract_param("address", data.buffers.relay);
-      std::string length = extract_param("length", data.buffers.relay);
+      std::string pid = extract_param("pid", data.buffer);
+      std::string address = extract_param("address", data.buffer);
+      std::string length = extract_param("length", data.buffer);
 
       if (pid.empty())
       {

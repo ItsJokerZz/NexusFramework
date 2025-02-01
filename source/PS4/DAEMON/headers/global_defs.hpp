@@ -5,7 +5,7 @@
 #define DAEMON_PORT 1337
 #define RELAYS_PORT 5000
 #define RPC_PORT 7000
-#define BUFFER_SIZE 16384 //16kb
+#define BUFFER_SIZE 16384     // 16kb
 #define HOME_MENU "NPXS21001" /* SceShellUI */
 
 #define RETRY_DELAY_SECONDS 5
@@ -36,54 +36,32 @@ struct ErrorMessage
   const char *message;
 };
 
-extern std::array<ErrorMessage, ERROR_COUNT> error_messages;
+extern std::array<ErrorMessage, ERROR_COUNT>
+    error_messages;
 
-extern bool DEBUG, isDaemon, unloaded, connected, attached, unload_on_rest;
+extern bool DEBUG, isDaemon, unloaded,
+    connected, attached, unload_on_rest;
 
 struct serverData
 {
-  struct sockets
+  struct
   {
-    struct daemon
-    {
-      int server = -1;
-      int client = -1;
+    int server = -1, client = -1;
+    OrbisNetSockaddr server_addr = {},
+                     client_addr = {};
 
-    } daemon;
-
-    struct relay
-    {
-      int server = -1;
-      int client = -1;
-    } relay;
-
-    OrbisNetSockaddr server_addr = {};
-    OrbisNetSockaddr client_addr = {};
     socklen_t client_addr_len = {};
-
   } sockets;
 
-  struct buffers
+  struct
   {
-    std::array<char, BUFFER_SIZE> relay = {};
-    std::array<char, BUFFER_SIZE> daemon = {};
-  } buffers;
-
-  struct threads
-  {
-    struct daemon
-    {
-      pthread_t server = -1;
-      pthread_t client = -1;
-    } daemon;
-
-    struct relay
-    {
-      pthread_t server = -1;
-      pthread_t client = -1;
-    } relay;
-
+    pthread_t server = -1,
+              client = -1;
   } threads;
+
+  std::array<char,
+             BUFFER_SIZE>
+      buffer = {};
 };
 
 extern serverData data;

@@ -255,7 +255,6 @@ void send_file_response(const char *file_path, const char *save_as)
   char header[512];
   char buffer[BUFFER_SIZE];
 
-  int socket = isDaemon ? data.sockets.daemon.client : data.sockets.relay.client;
   bool *toggle = isDaemon ? &connected : &attached;
 
   FILE *file = fopen(file_path, "rb");
@@ -279,7 +278,7 @@ void send_file_response(const char *file_path, const char *save_as)
   }
 
   int header_length = snprintf(header, sizeof(header), RESPONSE_OK_FILE, file_size, filename);
-  if (sceNetSend(socket, header, header_length, 0) < header_length)
+  if (sceNetSend(data.sockets.client, header, header_length, 0) < header_length)
   {
     fclose(file);
     *toggle = false;
@@ -289,7 +288,7 @@ void send_file_response(const char *file_path, const char *save_as)
   ssize_t bytes_read;
   while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0)
   {
-    if (sceNetSend(socket, buffer, bytes_read, 0) < bytes_read)
+    if (sceNetSend(data.sockets.client, buffer, bytes_read, 0) < bytes_read)
     {
       fclose(file);
       *toggle = false;
@@ -304,8 +303,6 @@ void send_response(const char *message)
 {
   char response[BUFFER_SIZE];
 
-  int socket =
-      isDaemon ? data.sockets.daemon.client : data.sockets.relay.client;
   bool *toggle = isDaemon ? &connected : &attached;
 
   int message_length = snprintf(response, sizeof(response), RESPONSE_OK,
@@ -317,7 +314,7 @@ void send_response(const char *message)
     response[message_length] = '\0';
   }
 
-  ssize_t bytes_sent = sceNetSend(socket, response, strlen(response), 0);
+  ssize_t bytes_sent = sceNetSend(data.sockets.client, response, strlen(response), 0);
 
   if (bytes_sent < 0 || bytes_sent < strlen(response))
     *toggle = false;

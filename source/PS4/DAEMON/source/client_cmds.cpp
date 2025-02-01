@@ -20,20 +20,12 @@ namespace cmds
 
       void unload()
       {
-        if (data.sockets.daemon.server >= 0)
+        if (data.sockets.client >= 0)
         {
-          sceNetSocketClose(data.sockets.daemon.server);
-          data.sockets.daemon.server = -1;
+          sceNetSocketClose(data.sockets.client);
+          data.sockets.client = -1;
 
-          pthread_cancel(data.threads.daemon.server);
-        }
-
-        if (data.sockets.daemon.client >= 0)
-        {
-          sceNetSocketClose(data.sockets.daemon.client);
-          data.sockets.daemon.client = -1;
-
-          pthread_cancel(data.threads.daemon.client);
+          pthread_cancel(data.threads.client);
         }
 
         unloaded = true;
@@ -45,10 +37,10 @@ namespace cmds
       {
         send_response("done");
 
-        if (data.sockets.daemon.client >= 0)
+        if (data.sockets.client >= 0)
         {
-          sceNetSocketClose(data.sockets.daemon.client);
-          data.sockets.daemon.client = -1;
+          sceNetSocketClose(data.sockets.client);
+          data.sockets.client = -1;
         }
         connected = false;
       }
@@ -84,7 +76,7 @@ namespace cmds
 
       void get_temp()
       {
-        std::string type_str = extract_param("type", data.buffers.daemon);
+        std::string type_str = extract_param("type", data.buffer);
 
         if (type_str.empty())
           return;
@@ -115,7 +107,7 @@ namespace cmds
       {
         uint8_t temp = 0;
 
-        std::string limit_str = extract_param("limit", data.buffers.daemon);
+        std::string limit_str = extract_param("limit", data.buffer);
 
         if (!limit_str.empty())
         {
@@ -139,7 +131,7 @@ namespace cmds
       {
         int state = 0;
 
-        std::string state_str = extract_param("state", data.buffers.daemon);
+        std::string state_str = extract_param("state", data.buffer);
 
         if (!state_str.empty())
         {
@@ -162,7 +154,7 @@ namespace cmds
       {
         int type = 0;
 
-        std::string type_str = extract_param("type", data.buffers.daemon);
+        std::string type_str = extract_param("type", data.buffer);
 
         if (type_str.empty())
           return;
@@ -199,8 +191,8 @@ namespace cmds
 
       void notify()
       {
-        std::string type_str = extract_param("type", data.buffers.daemon);
-        std::string message = decode_url(extract_param("msg", data.buffers.daemon));
+        std::string type_str = extract_param("type", data.buffer);
+        std::string message = decode_url(extract_param("msg", data.buffer));
 
         int type = std::stoi(type_str.c_str());
 
@@ -267,7 +259,7 @@ namespace cmds
             {"minFW", get_app_info("minFW")},
             {"image", get_app_info("image")}};
 
-        std::string return_str = extract_param("return", data.buffers.daemon);
+        std::string return_str = extract_param("return", data.buffer);
         if (return_str.empty())
         {
           send_error_response(INVALID_ARGS);
@@ -306,7 +298,7 @@ namespace cmds
 
       void find_pid_by_name()
       {
-        std::string name = extract_param("name", data.buffers.daemon);
+        std::string name = extract_param("name", data.buffer);
 
         if (name.empty())
           return;
@@ -319,7 +311,7 @@ namespace cmds
 
       void find_name_of_pid()
       {
-        std::string pid_str = extract_param("pid", data.buffers.daemon);
+        std::string pid_str = extract_param("pid", data.buffer);
 
         if (pid_str.empty())
           return;
@@ -339,8 +331,8 @@ namespace cmds
 
       void read_proc_mem()
       {
-        std::string address = extract_param("address", data.buffers.daemon);
-        std::string size = extract_param("size", data.buffers.daemon);
+        std::string address = extract_param("address", data.buffer);
+        std::string size = extract_param("size", data.buffer);
 
         if (address.empty())
           return;
@@ -356,8 +348,8 @@ namespace cmds
 
       void write_proc_mem()
       {
-        std::string address = extract_param("address", data.buffers.daemon, false);
-        std::string data = extract_param("data", ::data.buffers.daemon, false);
+        std::string address = extract_param("address", data.buffer, false);
+        std::string data = extract_param("data", ::data.buffer, false);
 
         if (address.empty())
           return;
@@ -373,7 +365,7 @@ namespace cmds
       {
         // check if not ShellUI and if not get the pid of the current app, require param
         std::string pid = get_app_info("pid");
-        std::string length = extract_param("length", data.buffers.daemon);
+        std::string length = extract_param("length", data.buffer);
 
         if (length.empty())
           return;
@@ -386,8 +378,8 @@ namespace cmds
       {
         // check if not ShellUI and if not get the pid of the current app, require param
         std::string pid = get_app_info("pid");
-        std::string address = extract_param("address", data.buffers.daemon);
-        std::string length = extract_param("length", data.buffers.daemon);
+        std::string address = extract_param("address", data.buffer);
+        std::string length = extract_param("length", data.buffer);
 
         if (address.empty())
           return;
@@ -406,8 +398,8 @@ namespace cmds
 
       void load_module()
       {
-        std::string prx_path = extract_param("path", data.buffers.daemon);
-        std::string exec_path = extract_param("exec", data.buffers.daemon);
+        std::string prx_path = extract_param("path", data.buffer);
+        std::string exec_path = extract_param("exec", data.buffer);
 
         auto load_prx = [](const std::string &exec_path, const std::string &prx_path) -> bool
         {
