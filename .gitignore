@@ -1,9 +1,12 @@
 /source/PC/.vs
 /source/PC/API/bin
 /source/PC/API/obj
+
 /source/PC/ConsoleManager/bin
 /source/PC/ConsoleManager/obj
+
 /source/PS4/DAEMON/build
+
 *.prx
 *.bin
 *.map
