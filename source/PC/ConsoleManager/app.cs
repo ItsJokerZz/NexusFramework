@@ -2,8 +2,10 @@
 using System;
 using System.Drawing;
 using System.Linq;
+using System.IO;
 using System.Windows.Forms;
 using static OrbisControlAPI.OCAPI;
+using Newtonsoft.Json.Linq;
 
 namespace CM
 {
@@ -260,17 +262,91 @@ namespace CM
             textBox12.Text += Environment.NewLine;
         }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         private void button2_Click(object sender, EventArgs e)
         {
-            // Construct a long data string
-            string longData = new string('B', 3500); // Data with 5000 'B' characters
+            // Assuming 'gameVersion' is the base address where the actual address will be found
+            ulong gameVersion = 0x547EF00 + 16;  // Calculating the address
+            Console.WriteLine($"Game Version: 0x{gameVersion:X}");
 
-            // Construct the parameter string with long address and data
-            string parameters = $"address=0x0&data={longData}";
+            // Read 8 bytes from the calculated address
+            ulong baseAddress = ReadMemoryAndParse(gameVersion.ToString("X"), 8) + 8;
 
-            // Pass the parameters to the TEST2 method
-            api.TEST2("test", parameters);
+            // Log the base address in hex format to verify it's correct
+            Console.WriteLine($"Base Address (0x{baseAddress:X})");
+
+            // Fetch the value at the base address (this is the actual data you want to read, assumed 4 bytes for an int)
+            int originalValue = (int)ReadMemoryAndParse(baseAddress.ToString("X"), 4);
+            Console.WriteLine($"Original Value: {originalValue}");
         }
+
+        private ulong ReadMemoryAndParse(string address, int size)
+        {
+            // Construct the command for the C++ API
+            string command = $"read_memory?address={address}&size={size}";
+
+            // Send the command to the C++ API
+            string response = api.TEST(command);
+
+            // Parse the response if it's valid
+            if (string.IsNullOrEmpty(response) || response.Contains("error"))
+            {
+                Console.WriteLine("Error reading memory.");
+                return 0;
+            }
+
+            try
+            {
+                // Parse the JSON response
+                JObject jsonResponse = JObject.Parse(response);
+
+                // Extract the "RESPONSE" field from the JSON object
+                string hexResponse = jsonResponse["DATA"]?["RESPONSE"]?.ToString();
+
+                if (string.IsNullOrEmpty(hexResponse))
+                {
+                    Console.WriteLine("No valid RESPONSE data found.");
+                    return 0;
+                }
+
+                // Now, depending on the size requested (8 bytes or 4 bytes), parse the response.
+                if (size == 8)
+                {
+                    // Read 8 bytes (ulong)
+                    return Convert.ToUInt64(hexResponse, 16);
+                }
+                else if (size == 4)
+                {
+                    // Read 4 bytes (int), but cast to ulong for consistency
+                    return (ulong)Convert.ToInt32(hexResponse, 16);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error parsing memory data: {ex.Message}");
+            }
+
+            return 0;
+        }
+
+
 
 
 

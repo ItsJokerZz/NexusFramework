@@ -371,6 +371,7 @@ namespace cmds
 
       void alloc_proc_mem()
       {
+        // check if not ShellUI and if not get the pid of the current app, require param
         std::string pid = get_app_info("pid");
         std::string length = extract_param("length", data.buffers.daemon);
 
@@ -383,6 +384,7 @@ namespace cmds
 
       void free_proc_mem()
       {
+        // check if not ShellUI and if not get the pid of the current app, require param
         std::string pid = get_app_info("pid");
         std::string address = extract_param("address", data.buffers.daemon);
         std::string length = extract_param("length", data.buffers.daemon);

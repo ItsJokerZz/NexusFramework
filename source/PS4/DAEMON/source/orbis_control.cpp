@@ -465,6 +465,7 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
   if (isDaemon)
   {
     if (is_port_open(port))
+    // maybe send unload command instead to ensure previous one is unloaded?
     {
       if (!DEBUG)
         text_notify(222, buffer.c_str());

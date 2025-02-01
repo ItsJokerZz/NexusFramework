@@ -250,7 +250,7 @@ namespace OrbisControlAPI
             return response;
         }
 
-        public void TEST2(string func, string param)
+        public string TEST2(string func, string param)
         {
             _ipAddress = "192.168.137.206";
             try
@@ -280,17 +280,20 @@ namespace OrbisControlAPI
                 // Get the response content synchronously
                 var responseContent = response.Content.ReadAsStringAsync().Result;  // Blocking call
 
-                // Output
+                // Output for debugging purposes (optional)
                 Console.WriteLine($"URL: {url}");
                 Console.WriteLine($"Data being sent in the header: {formattedParam}");
                 Console.WriteLine($"Response from server: {responseContent}");
+
+                // Return the response content
+                return responseContent;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
+                return null;  // Or some other indication of error
             }
         }
-
 
 
 
