@@ -6,7 +6,7 @@ namespace OrbisControlAPI
 {
     public class OCAPI
     {
-        private static readonly float CurrentVersion = 0.30f;
+        private static readonly float CurrentVersion = 0.35f;
 
         public enum ConsoleTypes { CEX, KIT, TEST }
         public enum BuzzerModes { Continuous = -1, Stop, Single, Double, Triple }
@@ -37,14 +37,20 @@ namespace OrbisControlAPI
 
             internal void Clear()
             {
-                Version = Firmware = 
-                    ConsoleType = CPUTemp = SoCTemp = 0;
+                Version = 0;
+                Firmware = 0;
+                ConsoleType = 0;
+                CPUTemp = 0;
+                SoCTemp = 0;
 
-                IP = Name =
-                    Username = string.Empty;
+                IP = string.Empty;
+                Name = string.Empty;
+                Username = string.Empty;
 
-                Connected = Attached = false;
+                Connected = false;
+                Attached = false;
             }
+
         }
 
         public class ProcessInfo
@@ -69,8 +75,8 @@ namespace OrbisControlAPI
 
         }
 
-        public static TargetInfo Target { get; } = new TargetInfo();
-        public static ProcessInfo Process { get; } = new ProcessInfo();
+        public static TargetInfo Target = new TargetInfo();
+        public static ProcessInfo Process = new ProcessInfo();
 
         public string Version => CurrentVersion.ToString("0.00");
         public string Firmware => Target.Firmware.ToString("0.00");
@@ -79,7 +85,7 @@ namespace OrbisControlAPI
         public bool Connected => Target.Connected;
         public bool Attached => Target.Attached;
 
-        /* ADD FIND CONSOLE OPTION HERE */
+        /* ADD FIND CONSOLE FUNCTION HERE */
 
         public void InjectPayload(string address)
         {
@@ -93,7 +99,9 @@ namespace OrbisControlAPI
 
             Target.SetVersion(float.TryParse(PerformRequest("version"), out var version) ? version : 0f);
             Target.SetFirmware(float.TryParse(PerformRequest("get_fw_version"), out var fw) ? fw : 0f);
-            switch (PerformRequest("get_sys_type"))
+
+            var consoleType = PerformRequest("get_sys_type");
+            switch (consoleType)
             {
                 case "CEX":
                     Target.SetConsoleType((int)ConsoleTypes.CEX);
@@ -108,24 +116,36 @@ namespace OrbisControlAPI
                     Target.SetConsoleType(-1);
                     break;
             }
+
             Target.SetCPUTemp(int.TryParse(PerformRequest("get_temperature", "type=cpu"), out var cpuTemp) ? cpuTemp : 0);
             Target.SetSoCTemp(int.TryParse(PerformRequest("get_temperature", "type=soc"), out var socTemp) ? socTemp : 0);
 
             Target.SetConnected(PerformRequest("connect")?.Contains("true") == true);
             Target.SetUsername(PerformRequest("get_username"));
+
+            PrintTargetInfo();
         }
-       
+
         public void GetProcessInfo() // make string, add enum, and add arg for return type
         {
             if (!Target.Connected && !Target.Attached) return;
         }
 
+        public void Connect()
+        {
+            Target.SetConnected(true);
+            PerformRequest("connect");
+
+            GetTargetInfo();
+        }
+        
         public void Connect(string address)
         {
             Target.Clear();
             Target.SetIP(address);
+            PerformRequest("connect");
             Target.SetConnected(true);
-            GetTargetInfo(); PrintTargetInfo();
+            GetTargetInfo();
         }
 
         public void Disconnect()
@@ -135,9 +155,25 @@ namespace OrbisControlAPI
             Target.Clear();
         }
 
+        public void Disconnect(string address)
+        {
+            if (!Target.Connected) return;
+            Target.SetIP(address.Trim());
+            PerformRequest("disconnect");
+            Target.Clear();
+        }
+
         public void Unload()
         {
-            if (!IsPortOpen(TimeSpan.FromSeconds(10), Target.IP)) return;
+            if (!IsPortOpen(TimeSpan.FromSeconds(5), Target.IP)) return;
+            PerformRequest("unload");
+            Target.Clear();
+        }
+        
+        public void Unload(string address)
+        {
+            Target.SetIP(address.Trim());
+            if (!IsPortOpen(TimeSpan.FromSeconds(5), Target.IP)) return;
             PerformRequest("unload");
             Target.Clear();
         }

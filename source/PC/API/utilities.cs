@@ -9,6 +9,8 @@ namespace OrbisControlAPI
 {
     internal class Utilities
     {
+        internal enum HttpMethodType { GET, POST, PUT }
+
         internal static readonly HttpClient Client = new HttpClient();
 
         internal static string ConvertConsoleTypeToString()
@@ -81,6 +83,7 @@ namespace OrbisControlAPI
             }
             catch (Exception ex)
             {
+                if (!ex.Message.Contains("machine actively refused"))
                 Console.WriteLine("Error checking port: " + ex.Message);
             }
             return false;
@@ -90,18 +93,29 @@ namespace OrbisControlAPI
         {
             try
             {
-                if (!IsPortOpen(TimeSpan.FromSeconds(10), address))
+                if (!IsPortOpen(TimeSpan.FromSeconds(5), address))
                     Client.GetStringAsync($"http://{OCAPI.Target.IP}:1337/").Wait();
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine("InjectPayload error: " + ex.Message);
                 using (var binLoaderSocket = GetBinLoaderSocket(address, 9090))
                 {
                     if (binLoaderSocket != null)
                     {
-                        string filePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "OrbisControl.bin");
-                        binLoaderSocket.SendFile(filePath);
+                        var resourceName = "OrbisControlAPI.OrbisControl.bin";
+                        using (var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
+                        {
+                            if (resourceStream != null)
+                            {
+                                using (var memoryStream = new MemoryStream())
+                                {
+                                    resourceStream.CopyTo(memoryStream);
+                                    memoryStream.Seek(0, SeekOrigin.Begin);
+                                    binLoaderSocket.Send(memoryStream.ToArray());
+                                }
+                            }
+                        }
+
                         binLoaderSocket.Close();
                     }
                 }
@@ -134,6 +148,53 @@ namespace OrbisControlAPI
                 return null;
             }
         }
+        
+        private string _PerformRequest(string command, string args = "", HttpMethodType method = HttpMethodType.GET, string param = "")
+        {
+            if (string.IsNullOrEmpty(OCAPI.Target.IP))
+                throw new ArgumentException("IP address cannot be null or empty.", nameof(OCAPI.Target.IP));
 
+            string url = $"http://{OCAPI.Target.IP}:1337/{command}" + (string.IsNullOrEmpty(args) ? "" : $"?{args}");
+            Console.WriteLine("Request URL: " + url);
+
+            try
+            {
+                var request = (HttpWebRequest)WebRequest.Create(url);
+                request.Method = method.ToString();
+
+                // Add custom header for the parameter if present
+                if (!string.IsNullOrEmpty(param))
+                {
+                    var formattedParam = $"params{{{param}}}";
+                    request.Headers.Add("Data", formattedParam);
+
+                    // For POST, add body content
+                    if (method == HttpMethodType.POST)
+                    {
+                        request.ContentLength = formattedParam.Length;
+                        request.ContentType = "application/x-www-form-urlencoded";
+                        using (var writer = new StreamWriter(request.GetRequestStream()))
+                        {
+                            writer.Write(formattedParam);  // Add parameter to body for POST
+                        }
+                    }
+                }
+
+                // Perform the request (works for both GET and POST)
+                using (var response = (HttpWebResponse)request.GetResponse())
+                using (var reader = new StreamReader(response.GetResponseStream()))
+                    return reader.ReadToEnd();
+            }
+            catch (WebException ex) when (ex.Message.Contains("connection was closed"))
+            {
+                OCAPI.Target.Clear();
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in PerformRequest: " + ex.Message);
+                return null;
+            }
+        }
     }
 }

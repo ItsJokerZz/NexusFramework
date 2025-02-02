@@ -153,7 +153,11 @@ namespace CM
                 api.AlarmBuzzer(BuzzerModes.Double);
                 api.Disconnect();
             }
-            else api.AlarmBuzzer(BuzzerModes.Triple);
+            else
+            {
+                api.AlarmBuzzer(BuzzerModes.Triple);
+                api.Unload(GetConsoleIP(selectedNode));
+            }
         }
 
         private string GetConsolePrefix(TreeNode node)
@@ -220,7 +224,8 @@ namespace CM
 
         private void unloadToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            api.Unload(); DisconnectFromConsole(true);
+            if (selectedNode != null)
+                DisconnectFromConsole(true);
         }
 
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
