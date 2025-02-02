@@ -87,9 +87,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\API\API.csproj">
       <Project>{745623f7-eeea-41b4-9f5d-2c7b1e85e53c}</Project>
       <Name>API</Name>
