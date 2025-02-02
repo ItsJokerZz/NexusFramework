@@ -40,7 +40,7 @@ namespace cmds
         return;
       }
 
-      char response[BUFFER_SIZE];
+      char response[1024];
       snprintf(response, sizeof(response), "%i,%d,%s", pid, result, path.c_str());
       send_response(response);
 
@@ -76,7 +76,7 @@ namespace cmds
         log_message("Unable to find module_start or module_stop!");
       }
 
-      char notify_msg[BUFFER_SIZE];
+      char notify_msg[1024];
       snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] SPRX Loaded:\n%s", path.c_str());
       text_notify(222, notify_msg);
     }
@@ -121,7 +121,7 @@ namespace cmds
       log_message("Plugin %s loaded successfully with module ID: %d", plugin.c_str(), result);
 
       // Prepare response
-      char response[BUFFER_SIZE];
+      char response[1024];
       snprintf(response, sizeof(response), "%i,%d,%s", pid, result, plugin.c_str());
       send_response(response);
 
@@ -163,7 +163,7 @@ namespace cmds
 
       // Log success and notify
       log_message("plugin_load exited successfully with 0x%08x", prx_ret);
-      char notify_msg[BUFFER_SIZE];
+      char notify_msg[1024];
       snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] Plugin Loaded: %s", plugin.c_str());
       text_notify(222, notify_msg);
     }
@@ -177,6 +177,7 @@ namespace cmds
       {
         log_message("No address provided");
         send_error_response(_DEBUGGING);
+        
         return;
       }
 
@@ -184,15 +185,17 @@ namespace cmds
       {
         log_message("No size provided");
         send_error_response(_DEBUGGING);
+
         return;
       }
 
-      uint64_t addressVal = std::stoull(address, nullptr, 16); // Convert hex string to uint64_t
-      size_t byteSize = std::stoul(size);                      // Convert string to size_t
+      uint64_t addressVal = std::stoull(address, nullptr, 16);
+      size_t byteSize = std::stoul(size); 
 
       if (byteSize > 1024 * 1024)
       {
-        send_response("error: byteSize too large");
+        send_response("Byte size too large");
+
         return;
       }
 
@@ -206,11 +209,10 @@ namespace cmds
 
       if (sys_sdk_proc_rw(&args) == 0)
       {
-        // Convert the buffer data to hex string
         std::string hexStr;
         for (size_t i = 0; i < byteSize; ++i)
         {
-          char hexByte[3]; // 2 digits + null terminator
+          char hexByte[3];
           snprintf(hexByte, sizeof(hexByte), "%02x", static_cast<unsigned char>(buffer[i]));
           hexStr += hexByte;
         }
@@ -218,9 +220,7 @@ namespace cmds
         send_response(hexStr.c_str());
       }
       else
-      {
-        send_response("error: failed to read memory");
-      }
+        send_response("Failed to read memory");
 
       delete[] buffer;
     }
@@ -276,7 +276,7 @@ namespace cmds
 
     void alloc_memory()
     {
-      std::string pid = extract_param("pid", data.buffer);
+      std::string pid = get_app_info("pid");
       std::string length = extract_param("length", data.buffer);
 
       if (pid.empty())
@@ -315,7 +315,7 @@ namespace cmds
 
     void free_memory()
     {
-      std::string pid = extract_param("pid", data.buffer);
+      std::string pid = get_app_info("pid");
       std::string address = extract_param("address", data.buffer);
       std::string length = extract_param("length", data.buffer);
 

@@ -105,14 +105,12 @@
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStrip = new System.Windows.Forms.ToolStrip();
             this.addConsole_b = new System.Windows.Forms.Button();
-            this.sysInfo_t = new System.Windows.Forms.Timer(this.components);
             this.settings_b = new System.Windows.Forms.Button();
             this.button10 = new System.Windows.Forms.Button();
             this.logo = new System.Windows.Forms.PictureBox();
             this.button3 = new System.Windows.Forms.Button();
             this.textBox11 = new System.Windows.Forms.TextBox();
             this.textBox12 = new System.Windows.Forms.TextBox();
-            this.button2 = new System.Windows.Forms.Button();
             this.consoles_p.SuspendLayout();
             this.pages.SuspendLayout();
             this.memory_p.SuspendLayout();
@@ -997,11 +995,6 @@
             this.addConsole_b.UseVisualStyleBackColor = false;
             this.addConsole_b.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
-            // sysInfo_t
-            // 
-            this.sysInfo_t.Interval = 1000;
-            this.sysInfo_t.Tick += new System.EventHandler(this.timer1_Tick);
-            // 
             // settings_b
             // 
             this.settings_b.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
@@ -1075,23 +1068,12 @@
             this.textBox12.Size = new System.Drawing.Size(530, 79);
             this.textBox12.TabIndex = 20;
             // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(675, 142);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 21;
-            this.button2.Text = "button2";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
             // app
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(75)))), ((int)(((byte)(75)))), ((int)(((byte)(75)))));
             this.ClientSize = new System.Drawing.Size(834, 516);
-            this.Controls.Add(this.button2);
             this.Controls.Add(this.textBox12);
             this.Controls.Add(this.textBox11);
             this.Controls.Add(this.button3);
@@ -1112,7 +1094,7 @@
             this.MaximizeBox = false;
             this.Name = "app";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Console Manager by ItsJokerZz for GoldHEN";
+            this.Text = "Console Manager for GoldHEN by ItsJokerZz";
             this.consoles_p.ResumeLayout(false);
             this.consoles_p.PerformLayout();
             this.pages.ResumeLayout(false);
@@ -1206,7 +1188,6 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label12;
-        private System.Windows.Forms.Timer sysInfo_t;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label label13;
         private System.Windows.Forms.GroupBox groupBox6;
@@ -1238,7 +1219,6 @@
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.TextBox textBox11;
         private System.Windows.Forms.TextBox textBox12;
-        private System.Windows.Forms.Button button2;
     }
 }
 

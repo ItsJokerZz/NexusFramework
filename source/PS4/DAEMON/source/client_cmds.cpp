@@ -89,7 +89,7 @@ namespace cmds
         else
           return;
 
-        char message[BUFFER_SIZE];
+        char message[1024];
         snprintf(message, sizeof(message), "%i", tempValue);
         send_response(message);
       }
@@ -370,7 +370,7 @@ namespace cmds
         if (length.empty())
           return;
 
-        std::string request = "alloc_memory?pid=" + pid + "&length=" + length;
+        std::string request = "alloc_memory?length=" + length;
         send_response(perform_http_request(request.c_str()));
       }
 
@@ -386,7 +386,7 @@ namespace cmds
         if (length.empty())
           return;
 
-        std::string request = "free_memory?pid=" + pid + "&address=" + address + "&length=" + length;
+        std::string request = "free_memory?address=" + address + "&length=" + length;
         send_response(perform_http_request(request.c_str()));
       }
 
@@ -408,7 +408,7 @@ namespace cmds
                                     const_cast<char *>(prx_path.c_str()));
           if (prx_handle >= 0)
           {
-            char notify_msg[BUFFER_SIZE];
+            char notify_msg[1024];
             snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s",
                      prx_path.c_str());
             text_notify(222, notify_msg);

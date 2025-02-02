@@ -54,6 +54,7 @@ void handle_request(const std::string &request)
        { handle_command(cmds::client::connection::disconnect); }},
       {"GET /attach", []()
        { handle_command(cmds::client::connection::attach); }},
+      
       {"GET /get_fw_version", []()
        { handle_command(cmds::client::sys_info::get_fw); }},
       {"GET /get_sys_type", []()
@@ -62,6 +63,7 @@ void handle_request(const std::string &request)
        { handle_command(cmds::client::sys_info::get_temp); }},
       {"GET /get_username", []()
        { handle_command(cmds::client::sys_info::get_user); }},
+      
       {"GET /get_proc_list", []()
        { handle_command(cmds::client::process::get_proc_list); }},
       {"GET /get_proc_info", []()
@@ -70,6 +72,7 @@ void handle_request(const std::string &request)
        { handle_command(cmds::client::process::find_pid_by_name); }},
       {"GET /get_name_of_pid", []()
        { handle_command(cmds::client::process::find_name_of_pid); }},
+     
       {"GET /set_temp_limit", []()
        { handle_command(cmds::client::sys_control::temp_limit); }},
       {"GET /set_power_state", []()
@@ -78,6 +81,7 @@ void handle_request(const std::string &request)
        { handle_command(cmds::client::sys_control::ring_buzzer); }},
       {"GET /send_notify", []()
        { handle_command(cmds::client::sys_control::notify); }},
+      
       {"GET /read_memory", []()
        { handle_command(cmds::client::process::read_proc_mem); }},
       {"GET /write_memory", []()

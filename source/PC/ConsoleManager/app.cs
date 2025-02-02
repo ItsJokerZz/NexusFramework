@@ -2,10 +2,10 @@
 using System;
 using System.Drawing;
 using System.Linq;
-using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Threading;
 using static OrbisControlAPI.OCAPI;
-using Newtonsoft.Json.Linq;
 
 namespace CM
 {
@@ -25,7 +25,7 @@ namespace CM
             memory_b.Click += (s, e) => ChangePage(s, memory_p);
             settings_b.Click += (s, e) => ChangePage(s, memory_p);
 
-            radioButton4.CheckedChanged += (s, e) => api.Beep(BuzzType.Stop);
+            radioButton4.CheckedChanged += (s, e) => api.AlarmBuzzer(BuzzerModes.Stop);
 
             label9.Text = $"OCAPI Version: {api.Version}";
         }
@@ -91,7 +91,7 @@ namespace CM
 
                 if (!api.Connected)
                     ConnectToConsole(consoleName);
-                else if (api.IPAddress == consoleName
+                else if (Target.IP == consoleName
                     && api.Connected) DisconnectFromConsole();
             }
         }
@@ -109,19 +109,28 @@ namespace CM
             {
                 api.Notify(222, "[OCAPI] Console Manager: Connected Successfully!");
 
-                Invoke((MethodInvoker)delegate
+                Task.Run(() =>
                 {
-                    active_l.Text = $"Active Console: {GetConsolePrefix(selectedNode)}";
-                    label6.Text = $"Firmware: {api.Firmware}";
-                    label7.Text = $"CPU Temperature: {api.Temperature(Temp.getCPU)} C";
-                    label15.Text = $"SOC Temperature: {api.Temperature(Temp.getSOC)} C";
-                    label12.Text = $"Console Type: {api.SystemType}";
-                    label10.Text = $"SPRX Version: {api.SprxVersion}";
-                    label11.Text = $"Status: Connected";
-                    sysInfo_t.Enabled = true;
+                    while (api.Connected)
+                    {
+                        Invoke((MethodInvoker)delegate
+                        {
+                            api.GetTargetInfo();
+
+                            active_l.Text = $"Active Console: {GetConsolePrefix(selectedNode)}";
+                            label6.Text = $"Firmware: {api.Firmware}";
+                            label7.Text = $"CPU Temperature: {Target.CPUTemp} C";
+                            label15.Text = $"SOC Temperature: {Target.SoCTemp} C";
+                            label12.Text = $"Console Type: {api.ConsoleType}";
+                            label10.Text = $"SPRX Version: {Target.Version}";
+                            label11.Text = "Status: Connected";
+                        });
+
+                        Thread.Sleep(1000);
+                    }
                 });
 
-                api.Beep(BuzzType.Single);
+                api.AlarmBuzzer(BuzzerModes.Single);
             }
         }
 
@@ -136,16 +145,15 @@ namespace CM
                 label12.Text = "Console Type: ???";
                 label10.Text = "SPRX Version: ?.??";
                 label11.Text = "Status: Not Ready";
-                sysInfo_t.Enabled = false;
             });
 
 
             if (!unloading)
             {
-                api.Beep(BuzzType.Double);
+                api.AlarmBuzzer(BuzzerModes.Double);
                 api.Disconnect();
             }
-            else api.Beep(BuzzType.Triple);
+            else api.AlarmBuzzer(BuzzerModes.Triple);
         }
 
         private string GetConsolePrefix(TreeNode node)
@@ -197,28 +205,17 @@ namespace CM
             panelToShow.Dock = DockStyle.Fill;
         }
 
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-            if (!api.Connected) return;
-
-            Invoke((MethodInvoker)delegate
-            {
-                label7.Text = $"CPU Temperature: {api.Temperature(Temp.getCPU)} C";
-                label15.Text = $"SOC Temperature: {api.Temperature(Temp.getSOC)} C";
-            });
-        }
-
         private void button6_Click(object sender, EventArgs e)
         {
-            if (radioButton1.Checked) api.Beep(BuzzType.Single);
-            if (radioButton2.Checked) api.Beep(BuzzType.Double);
-            if (radioButton3.Checked) api.Beep(BuzzType.Triple);
-            if (radioButton4.Checked) api.Beep(BuzzType.Continuous);
+            if (radioButton1.Checked) api.AlarmBuzzer(BuzzerModes.Single);
+            if (radioButton2.Checked) api.AlarmBuzzer(BuzzerModes.Double);
+            if (radioButton3.Checked) api.AlarmBuzzer(BuzzerModes.Triple);
+            if (radioButton4.Checked) api.AlarmBuzzer(BuzzerModes.Continuous);
         }
 
         private void button7_Click(object sender, EventArgs e)
         {
-            api.SetTempThreshold((int)numericUpDown1.Value);
+            api.SetFanThreshold((int)numericUpDown1.Value);
         }
 
         private void unloadToolStripMenuItem_Click(object sender, EventArgs e)
@@ -233,122 +230,34 @@ namespace CM
 
         private void button9_Click(object sender, EventArgs e)
         {
-            int procHandle = api.LoadModule(textBox8.Text, textBox7.Text);
+          //  int procHandle = api.LoadModule(textBox8.Text, textBox7.Text);
         }
 
         private void button8_Click(object sender, EventArgs e)
         {
-            if (int.TryParse(textBox10.Text, out int moduleId))
-                api.UnloadModule(textBox9.Text, moduleId);
+           // if (int.TryParse(textBox10.Text, out int moduleId))
+           //     api.UnloadModule(textBox9.Text, moduleId);
         }
 
         private void button10_Click(object sender, EventArgs e)
         {
-            var subnets = new[] { "192.168.137" };
-            var consoles = api.FindConsoles(subnets, 243, 243);
+          //  var subnets = new[] { "192.168.137" };
+          //  var consoles = api.FindConsoles(subnets, 243, 243);
 
-            if (consoles.Count() != 0)
-            {
-                Console.WriteLine("Found console(s):");
-                foreach (var console in consoles)
-                    Console.WriteLine(console);
-            }
+          //  if (consoles.Count() != 0)
+          //  {
+          //      Console.WriteLine("Found console(s):");
+          //      foreach (var console in consoles)
+          //          Console.WriteLine(console);
+          //  }
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
-            textBox12.Text += $"{textBox11.Text}:" + Environment.NewLine;
-            textBox12.Text += api.TEST(textBox11.Text) + Environment.NewLine;
-            textBox12.Text += Environment.NewLine;
+          //  textBox12.Text += $"{textBox11.Text}:" + Environment.NewLine;
+          //  textBox12.Text += api.TEST(textBox11.Text) + Environment.NewLine;
+          //  textBox12.Text += Environment.NewLine;
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            // Assuming 'gameVersion' is the base address where the actual address will be found
-            ulong gameVersion = 0x547EF00 + 16;  // Calculating the address
-            Console.WriteLine($"Game Version: 0x{gameVersion:X}");
-
-            // Read 8 bytes from the calculated address
-            ulong baseAddress = ReadMemoryAndParse(gameVersion.ToString("X"), 8) + 8;
-
-            // Log the base address in hex format to verify it's correct
-            Console.WriteLine($"Base Address (0x{baseAddress:X})");
-
-            // Fetch the value at the base address (this is the actual data you want to read, assumed 4 bytes for an int)
-            int originalValue = (int)ReadMemoryAndParse(baseAddress.ToString("X"), 4);
-            Console.WriteLine($"Original Value: {originalValue}");
-        }
-
-        private ulong ReadMemoryAndParse(string address, int size)
-        {
-            // Construct the command for the C++ API
-            string command = $"read_memory?address={address}&size={size}";
-
-            // Send the command to the C++ API
-            string response = api.TEST(command);
-
-            // Parse the response if it's valid
-            if (string.IsNullOrEmpty(response) || response.Contains("error"))
-            {
-                Console.WriteLine("Error reading memory.");
-                return 0;
-            }
-
-            try
-            {
-                // Parse the JSON response
-                JObject jsonResponse = JObject.Parse(response);
-
-                // Extract the "RESPONSE" field from the JSON object
-                string hexResponse = jsonResponse["DATA"]?["RESPONSE"]?.ToString();
-
-                if (string.IsNullOrEmpty(hexResponse))
-                {
-                    Console.WriteLine("No valid RESPONSE data found.");
-                    return 0;
-                }
-
-                // Now, depending on the size requested (8 bytes or 4 bytes), parse the response.
-                if (size == 8)
-                {
-                    // Read 8 bytes (ulong)
-                    return Convert.ToUInt64(hexResponse, 16);
-                }
-                else if (size == 4)
-                {
-                    // Read 4 bytes (int), but cast to ulong for consistency
-                    return (ulong)Convert.ToInt32(hexResponse, 16);
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error parsing memory data: {ex.Message}");
-            }
-
-            return 0;
-        }
-
-
-
-
 
     }
 }

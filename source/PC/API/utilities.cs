@@ -1,119 +1,139 @@
 ﻿using System;
+using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
-using static OrbisControlAPI.Definitions;
+using System.Reflection;
 
 namespace OrbisControlAPI
 {
-    public class Utilities
+    internal class Utilities
     {
-        public static bool ConnectToBinLoader(string ip, string port, bool ret = false)
+        internal static readonly HttpClient Client = new HttpClient();
+
+        internal static string ConvertConsoleTypeToString()
         {
-            WebClient client = new WebClient();
+            if (OCAPI.Target?.ConsoleType == (int)OCAPI.ConsoleTypes.CEX)
+                return "CEX";
+            if (OCAPI.Target?.ConsoleType == (int)OCAPI.ConsoleTypes.KIT)
+                return "KIT";
+            if (OCAPI.Target?.ConsoleType == (int)OCAPI.ConsoleTypes.TEST)
+                return "TEST";
 
-            if (!System.Net.IPAddress.TryParse(ip, out var ipAddress)) return false;
-            if (!int.TryParse(port, out var portNumber)) return false;
-
-            try
-            {
-                string response = client.DownloadString($"http://{ipAddress}:9090/status");
-
-                if (response.Contains("{ \"status\": \"ready\" }"))
-                {
-                    try
-                    {
-                        socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                        socket.ReceiveTimeout = 3000;
-                        socket.SendTimeout = 3000;
-                        socket.Connect(new IPEndPoint(ipAddress, portNumber));
-
-                        ret = true;
-                    }
-                    catch
-                    {
-                        ret = false;
-                    }
-                }
-                else ret = false;
-            }
-            catch
-            {
-                ret = false;
-            }
-
-            return ret;
+            return null;
         }
 
-        public static bool IsPortOpen(string ip, int port, TimeSpan timeout)
+        internal static void PrintTargetInfo(/* remove me later */)
         {
+            foreach (var property in typeof(OCAPI.TargetInfo).GetProperties())
+                Console.WriteLine($"{property.Name}: {property.GetValue(OCAPI.Target)}");
+        }
+
+        internal static Socket GetBinLoaderSocket(string ip, int port)
+        {
+            if (!IPAddress.TryParse(ip, out var address))
+                return null;
             try
             {
-                using (var client = new TcpClient())
+                using (var webClient = new WebClient())
                 {
-                    var result = client.BeginConnect(ip, port, null, null);
-                    var success = result.AsyncWaitHandle.WaitOne(timeout);
-                    if (!success) return false;
-
-                    client.EndConnect(result);
-                    return true;
+                    string status = webClient.DownloadString($"http://{address}:9090/status");
+                    if (status.Contains("{ \"status\": \"ready\" }"))
+                    {
+                        var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+                        {
+                            SendTimeout = 3000,
+                            ReceiveTimeout = 3000
+                        };
+                        socket.Connect(new IPEndPoint(address, port));
+                        return socket;
+                    }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine("Error: " + ex.Message);
+            }
+            return null;
+        }
+
+        internal bool ConnectToBinLoader(string ip, string port)
+        {
+            if (!int.TryParse(port, out int portNumber))
                 return false;
-            }
+            using (var socket = GetBinLoaderSocket(ip, portNumber))
+                return socket != null;
         }
 
-        public static void UpdateFirmware(string url)
+        internal static bool IsPortOpen(TimeSpan timeout, string address, int port = 1337)
         {
             try
             {
-                var response = Client.GetStringAsync(url + "get_fw_version").Result;
-                float.TryParse(response, out _firmware);
+                using (var tcpClient = new TcpClient())
+                {
+                    IAsyncResult asyncResult = tcpClient.BeginConnect(address, port, null, null);
+                    if (asyncResult.AsyncWaitHandle.WaitOne(timeout))
+                    {
+                        tcpClient.EndConnect(asyncResult);
+                        return true;
+                    }
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return;
+                Console.WriteLine("Error checking port: " + ex.Message);
             }
+            return false;
         }
 
-        public static void UpdateSprxVersion(string url)
+        internal static void InjectPayload(string address)
         {
             try
             {
-                var response = Client.GetStringAsync(url + "version").Result;
-
-                if (float.TryParse(response, out float number))
-                    _sprxVersion = number.ToString("F2");
+                if (!IsPortOpen(TimeSpan.FromSeconds(10), address))
+                    Client.GetStringAsync($"http://{OCAPI.Target.IP}:1337/").Wait();
             }
-            catch
+            catch (Exception ex)
             {
-                return;
+                Console.WriteLine("InjectPayload error: " + ex.Message);
+                using (var binLoaderSocket = GetBinLoaderSocket(address, 9090))
+                {
+                    if (binLoaderSocket != null)
+                    {
+                        string filePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "OrbisControl.bin");
+                        binLoaderSocket.SendFile(filePath);
+                        binLoaderSocket.Close();
+                    }
+                }
             }
         }
 
-        public static void UpdateTemperature(string url)
+        internal static string PerformRequest(string command, string args = "")
         {
-            if (!_connected) return;
+            if (string.IsNullOrEmpty(OCAPI.Target.IP))
+                throw new ArgumentException("IP address cannot be null or empty.", nameof(OCAPI.Target.IP));
+
+            string url = $"http://{OCAPI.Target.IP}:1337/{command}" + (string.IsNullOrEmpty(args) ? "" : $"?{args}");
 
             try
             {
-                var response = Client.GetStringAsync(url + "get_temperature?type=cpu").Result;
-                int.TryParse(response, out _cpuTemp);
-
-                var _response = Client.GetStringAsync(url + "get_temperature?type=soc").Result;
-                int.TryParse(_response, out _socTemp);
+                var request = (HttpWebRequest)WebRequest.Create(url);
+                request.Method = "GET";
+                using (var response = (HttpWebResponse)request.GetResponse())
+                using (var reader = new StreamReader(response.GetResponseStream()))
+                    return reader.ReadToEnd();
             }
-            catch { return; }
-        }
-
-        public static void UpdateSysType(string url)
-        {
-            try
+            catch (WebException ex) when (ex.Message.Contains("connection was closed"))
             {
-                _sysType = Client.GetStringAsync(url + "get_sys_type").Result;
+                OCAPI.Target.Clear();
+                return null;
             }
-            catch { return; }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error in PerformRequest: " + ex.Message);
+                return null;
+            }
         }
+
     }
 }
