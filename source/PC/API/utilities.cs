@@ -122,40 +122,12 @@ namespace OrbisControlAPI
             }
         }
 
-        internal static string PerformRequest(string command, string args = "")
+         internal static string PerformRequest(string command, string args = "", HttpMethodType method = HttpMethodType.GET, string param = "")
         {
             if (string.IsNullOrEmpty(OCAPI.Target.IP))
                 throw new ArgumentException("IP address cannot be null or empty.", nameof(OCAPI.Target.IP));
 
             string url = $"http://{OCAPI.Target.IP}:1337/{command}" + (string.IsNullOrEmpty(args) ? "" : $"?{args}");
-
-            try
-            {
-                var request = (HttpWebRequest)WebRequest.Create(url);
-                request.Method = "GET";
-                using (var response = (HttpWebResponse)request.GetResponse())
-                using (var reader = new StreamReader(response.GetResponseStream()))
-                    return reader.ReadToEnd();
-            }
-            catch (WebException ex) when (ex.Message.Contains("connection was closed"))
-            {
-                OCAPI.Target.Clear();
-                return null;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error in PerformRequest: " + ex.Message);
-                return null;
-            }
-        }
-        
-        private string _PerformRequest(string command, string args = "", HttpMethodType method = HttpMethodType.GET, string param = "")
-        {
-            if (string.IsNullOrEmpty(OCAPI.Target.IP))
-                throw new ArgumentException("IP address cannot be null or empty.", nameof(OCAPI.Target.IP));
-
-            string url = $"http://{OCAPI.Target.IP}:1337/{command}" + (string.IsNullOrEmpty(args) ? "" : $"?{args}");
-            Console.WriteLine("Request URL: " + url);
 
             try
             {

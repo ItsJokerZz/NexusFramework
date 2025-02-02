@@ -1,6 +1,0 @@
-C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\API2\obj\Release\netstandard2.0\API2.csproj.AssemblyReference.cache
-C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\API2\obj\Release\netstandard2.0\API2.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\API2\obj\Release\netstandard2.0\API2.AssemblyInfoInputs.cache
-C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\API2\obj\Release\netstandard2.0\API2.AssemblyInfo.cs
-C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\API2\obj\Release\netstandard2.0\API2.csproj.CoreCompileInputs.cache
-C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\API2\obj\Release\netstandard2.0\API2.sourcelink.json

@@ -460,7 +460,7 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
 
     unloaded = true;
 
-    log_message("[OrbisControl] Unloaded!");
+    log_message("Unload signal has been received, unloading!");
     text_notify(222, "[OrbisControl] Unloaded!");
     sceSystemServiceLoadExec("exit", 0);
   }

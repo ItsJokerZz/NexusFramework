@@ -89,6 +89,8 @@ namespace OrbisControlAPI
 
         public void InjectPayload(string address)
         {
+            if (Target.Connected || IsPortOpen(TimeSpan.FromSeconds(5), Target.IP)) return;
+
             Target.SetIP(address);
             Utilities.InjectPayload(Target.IP);
         }
