@@ -18,8 +18,7 @@ echo "--------------------------------------------------------------------------
 
 cd PAYLOAD
 make
-cp OrbisControl.bin ../../PC/ConsoleManager/bin/Debug
-cp OrbisControl.bin ../../PC/ConsoleManager/bin/Release
+cp OrbisControl.bin ../../PC/API/
 cd ..
 
 echo "-----------------------------------------------------------------------------"

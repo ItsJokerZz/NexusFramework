@@ -6,22 +6,25 @@ namespace cmds
     {
         namespace connection
         {
+            void setup();
+            void status();
             void version();
             void connect();
             void unload();
             void disconnect();
             void attach();
 
-        } // namespace connection
+        }
 
         namespace sys_info
         {
+            void get_name();
             void get_fw();
             void sys_type();
             void get_temp();
             void get_user();
 
-        } // namespace sys_info
+        }
 
         namespace sys_control
         {
@@ -30,7 +33,7 @@ namespace cmds
             void ring_buzzer();
             void notify();
 
-        } // namespace sys_control
+        }
 
         namespace process
         {

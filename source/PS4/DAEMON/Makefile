@@ -2,7 +2,7 @@ TOOLCHAIN     := $(OO_PS4_TOOLCHAIN)
 PROJDIR       := source
 INTDIR        := build
 
-VERSION       := 0.63
+VERSION       := 0.64
 TARGET        := OrbisControl.prx
 
 VERSION_FILE  := $(INTDIR)/.version

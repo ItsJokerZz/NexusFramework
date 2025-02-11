@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dark.Net;
+using System;
 using System.Windows.Forms;
 
 namespace CM
@@ -13,7 +14,11 @@ namespace CM
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new app());
+           // new1 ConsoleManager = new new1();
+            App ConsoleManager = new App();
+            DarkNet.Instance.SetWindowThemeForms(ConsoleManager, Theme.Auto);
+            DarkNet.Instance.SetCurrentProcessTheme(Theme.Auto);
+            Application.Run(ConsoleManager);
         }
     }
 }

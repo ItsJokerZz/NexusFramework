@@ -2,20 +2,24 @@
 using System;
 using System.Drawing;
 using System.Linq;
+using System.Net.Sockets;
+using System.Net;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Threading;
 using static OrbisControlAPI.OCAPI;
+using System.Diagnostics;
 
 namespace CM
 {
-    public partial class app : Form
+    public partial class App : Form
     {
         private readonly OCAPI api = new OCAPI();
         private TreeNode selectedNode;
 
-        public app()
+        public App()
         {
+
             InitializeComponent();
 
             details_p.Dock = DockStyle.Fill;
@@ -101,34 +105,39 @@ namespace CM
             return node.Text.Substring(node.Text.IndexOf(" : ") + 3);
         }
 
-        private void ConnectToConsole(string consoleIP)
+        private async void ConnectToConsole(string consoleIP)
         {
-            api.Connect(consoleIP);
+            // Connect off the UI thread in case api.Connect is blocking.
+            await Task.Run(() => api.Connect(consoleIP));
 
             if (api.Connected)
             {
                 api.Notify(222, "[OCAPI] Console Manager: Connected Successfully!");
+                active_l.Text = $"Active Console: {Target.Name}"; /*{GetConsolePrefix(selectedNode)}*/
+                label6.Text = $"Firmware: {Target.Firmware}";
+                label7.Text = $"CPU Temperature: {Target.CPUTemp} C";
+                label15.Text = $"SOC Temperature: {Target.SoCTemp} C";
+                label12.Text = $"Console Type: {Target.ConsoleType}";
+                label10.Text = $"SPRX Version: {Target.Version}";
+                label2.Text = $"Current User: {Target.Username}";
+                label11.Text = "Status: Connected";
 
-                Task.Run(() =>
+                // Start your periodic update loop.
+                while (api.Connected)
                 {
-                    while (api.Connected)
-                    {
-                        Invoke((MethodInvoker)delegate
-                        {
-                            api.GetTargetInfo();
+                    // Run the blocking GetTargetInfo off the UI thread.
+                    await Task.Run(() => api.GetTargetInfo());
 
-                            active_l.Text = $"Active Console: {GetConsolePrefix(selectedNode)}";
-                            label6.Text = $"Firmware: {api.Firmware}";
-                            label7.Text = $"CPU Temperature: {Target.CPUTemp} C";
-                            label15.Text = $"SOC Temperature: {Target.SoCTemp} C";
-                            label12.Text = $"Console Type: {api.ConsoleType}";
-                            label10.Text = $"SPRX Version: {Target.Version}";
-                            label11.Text = "Status: Connected";
-                        });
+                    // Now update the UI. (We are now back on the UI thread.)
+                    active_l.Text = $"Active Console: {Target.Name}"; /*{GetConsolePrefix(selectedNode)}*/
+                    label7.Text = $"CPU Temperature: {Target.CPUTemp} C";
+                    label15.Text = $"SOC Temperature: {Target.SoCTemp} C";
+                    label2.Text = $"Current User: {Target.Username}";
+                    label11.Text = "Status: Connected";
 
-                        Thread.Sleep(1000);
-                    }
-                });
+                    // Wait one second between updates.
+                    await Task.Delay(1000);
+                }
 
                 api.AlarmBuzzer(BuzzerModes.Single);
             }
@@ -144,6 +153,7 @@ namespace CM
                 label15.Text = $"SOC Temperature: ?? C";
                 label12.Text = "Console Type: ???";
                 label10.Text = "SPRX Version: ?.??";
+                label2.Text = string.Empty;
                 label11.Text = "Status: Not Ready";
             });
 
@@ -264,5 +274,22 @@ namespace CM
           //  textBox12.Text += Environment.NewLine;
         }
 
+        private void details_b_Click(object sender, EventArgs e)
+        {
+
+        }
+      
+        private void button2_Click(object sender, EventArgs e)
+        {
+            api.FindConsoles(consoles =>
+            {
+                // Join all the data for each console and print it
+                foreach (var console in consoles)
+                {
+                    Debug.WriteLine($"IP: {console.IP}, System Name: {console.SystemName}, Firmware: {console.Firmware}, " +
+                                     $"Orbis Control: {console.OrbisControl}, Console Type: {console.ConsoleType}");
+                }
+            });
+        }
     }
 }

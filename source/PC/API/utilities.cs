@@ -1,60 +1,60 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection;
+using static OrbisControlAPI.OCAPI;
 
 namespace OrbisControlAPI
 {
-    internal class Utilities
+    public class Utilities
     {
         internal enum HttpMethodType { GET, POST, PUT }
 
         internal static readonly HttpClient Client = new HttpClient();
 
-        internal static string ConvertConsoleTypeToString()
-        {
-            if (OCAPI.Target?.ConsoleType == (int)OCAPI.ConsoleTypes.CEX)
-                return "CEX";
-            if (OCAPI.Target?.ConsoleType == (int)OCAPI.ConsoleTypes.KIT)
-                return "KIT";
-            if (OCAPI.Target?.ConsoleType == (int)OCAPI.ConsoleTypes.TEST)
-                return "TEST";
-
-            return null;
-        }
-
         internal static void PrintTargetInfo(/* remove me later */)
         {
-            foreach (var property in typeof(OCAPI.TargetInfo).GetProperties())
-                Console.WriteLine($"{property.Name}: {property.GetValue(OCAPI.Target)}");
+            foreach (var property in typeof(TargetInfo).GetProperties())
+                Console.WriteLine($"{property.Name}: {property.GetValue(Target)}");
         }
 
         internal static Socket GetBinLoaderSocket(string ip, int port)
         {
             if (!IPAddress.TryParse(ip, out var address))
+            {
+                Debug.WriteLine($"Invalid IP address: {ip}");
                 return null;
+            }
             try
             {
+                Debug.WriteLine($"Checking status of BinLoader at http://{address}:9090/status");
                 using (var webClient = new WebClient())
                 {
                     string status = webClient.DownloadString($"http://{address}:9090/status");
                     if (status.Contains("{ \"status\": \"ready\" }"))
                     {
+                        Debug.WriteLine($"BinLoader is ready, attempting to connect to {address}:{port}");
                         var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
                         {
                             SendTimeout = 3000,
                             ReceiveTimeout = 3000
                         };
                         socket.Connect(new IPEndPoint(address, port));
+                        Debug.WriteLine("Connection successful.");
                         return socket;
+                    }
+                    else
+                    {
+                        Debug.WriteLine("BinLoader not ready.");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: " + ex.Message);
+                Debug.WriteLine($"Error in GetBinLoaderSocket: {ex.Message}");
             }
             return null;
         }
@@ -62,39 +62,59 @@ namespace OrbisControlAPI
         internal bool ConnectToBinLoader(string ip, string port)
         {
             if (!int.TryParse(port, out int portNumber))
+            {
+                Debug.WriteLine($"Invalid port number: {port}");
                 return false;
+            }
             using (var socket = GetBinLoaderSocket(ip, portNumber))
-                return socket != null;
+            {
+                if (socket != null)
+                {
+                    Debug.WriteLine($"Successfully connected to BinLoader at {ip}:{portNumber}");
+                    return true;
+                }
+                else
+                {
+                    Debug.WriteLine($"Failed to connect to BinLoader at {ip}:{portNumber}");
+                    return false;
+                }
+            }
         }
 
-        internal static bool IsPortOpen(TimeSpan timeout, string address, int port = 1337)
+        internal static bool IsPortOpen(string address, int port = 1337)
         {
             try
             {
+                Debug.WriteLine($"Checking if port {port} is open on {address}");
                 using (var tcpClient = new TcpClient())
                 {
-                    IAsyncResult asyncResult = tcpClient.BeginConnect(address, port, null, null);
-                    if (asyncResult.AsyncWaitHandle.WaitOne(timeout))
+                    var result = tcpClient.BeginConnect(address, port, null, null);
+                    var success = result.AsyncWaitHandle.WaitOne(1000);
+                    if (success && tcpClient.Connected)
                     {
-                        tcpClient.EndConnect(asyncResult);
+                        Debug.WriteLine($"Port {port} is open on {address}");
                         return true;
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"Port {port} is not open on {address}");
+                        return false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                if (!ex.Message.Contains("machine actively refused"))
-                Console.WriteLine("Error checking port: " + ex.Message);
+                Debug.WriteLine($"Error checking port {port} on {address}: {ex.Message}");
+                return false;
             }
-            return false;
         }
 
         internal static void InjectPayload(string address)
         {
             try
             {
-                if (!IsPortOpen(TimeSpan.FromSeconds(5), address))
-                    Client.GetStringAsync($"http://{OCAPI.Target.IP}:1337/").Wait();
+                if (!IsPortOpen(address))
+                    Client.GetStringAsync($"http://{Target.IP}:1337/").Wait();
             }
             catch
             {
@@ -122,49 +142,39 @@ namespace OrbisControlAPI
             }
         }
 
-         internal static string PerformRequest(string command, string args = "", HttpMethodType method = HttpMethodType.GET, string param = "")
+        internal static string PerformRequest(string command, string args = "", HttpMethodType method = HttpMethodType.GET, string param = "")
         {
-            if (string.IsNullOrEmpty(OCAPI.Target.IP))
-                throw new ArgumentException("IP address cannot be null or empty.", nameof(OCAPI.Target.IP));
+            if (string.IsNullOrEmpty(Target.IP))
+                throw new ArgumentException("IP address cannot be null or empty.", nameof(Target.IP));
 
-            string url = $"http://{OCAPI.Target.IP}:1337/{command}" + (string.IsNullOrEmpty(args) ? "" : $"?{args}");
+            string url = $"http://{Target.IP}:1337/{command}" + (string.IsNullOrEmpty(args) ? "" : $"?{args}");
 
             try
             {
-                var request = (HttpWebRequest)WebRequest.Create(url);
-                request.Method = method.ToString();
-
-                // Add custom header for the parameter if present
-                if (!string.IsNullOrEmpty(param))
+                using (var client = new WebClient())
                 {
-                    var formattedParam = $"params{{{param}}}";
-                    request.Headers.Add("Data", formattedParam);
-
-                    // For POST, add body content
-                    if (method == HttpMethodType.POST)
+                    if (!string.IsNullOrEmpty(param))
                     {
-                        request.ContentLength = formattedParam.Length;
-                        request.ContentType = "application/x-www-form-urlencoded";
-                        using (var writer = new StreamWriter(request.GetRequestStream()))
+                        var formattedParam = $"params{{{param}}}";
+                        client.Headers.Add("Data", formattedParam);
+
+                        if (method == HttpMethodType.POST)
                         {
-                            writer.Write(formattedParam);  // Add parameter to body for POST
+                            client.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
+                            return client.UploadString(url, formattedParam);
                         }
                     }
-                }
 
-                // Perform the request (works for both GET and POST)
-                using (var response = (HttpWebResponse)request.GetResponse())
-                using (var reader = new StreamReader(response.GetResponseStream()))
-                    return reader.ReadToEnd();
+                    return client.DownloadString(url);
+                }
             }
             catch (WebException ex) when (ex.Message.Contains("connection was closed"))
             {
-                OCAPI.Target.Clear();
+                Target.Clear();
                 return null;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error in PerformRequest: " + ex.Message);
                 return null;
             }
         }

@@ -7,7 +7,7 @@ std::array<ErrorMessage, ERROR_COUNT> error_messages = {{
     {"Not connected to the server. Check your connection."},
     {"Not attached to process. Open an app and attach."},
     {"An unknown error occurred. Please try again later."},
-    {"Invalid parameters provided. Please verify and retry."},
+    {"Invalid parameters provided. Please verify and retry."}
 }};
 
 bool DEBUG = true,
@@ -19,5 +19,5 @@ bool DEBUG = true,
 
 serverData data;
 
-uint16_t port = UINT16_MAX;
+uint16_t port = 0;
 std::string name = "";

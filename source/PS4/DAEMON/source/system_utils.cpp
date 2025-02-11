@@ -13,7 +13,8 @@ std::string get_local_ip()
   remote_addr.sin_addr.s_addr = inet_addr("8.8.8.8");
   remote_addr.sin_port = htons(53);
 
-  if (connect(sock, reinterpret_cast<sockaddr *>(&remote_addr), sizeof(remote_addr)) == -1)
+  if (connect(sock, reinterpret_cast<sockaddr *>(&remote_addr),
+              sizeof(remote_addr)) == -1)
   {
     close(sock);
     return "";
@@ -21,7 +22,8 @@ std::string get_local_ip()
 
   sockaddr_in local_addr{};
   socklen_t addrlen = sizeof(local_addr);
-  if (getsockname(sock, reinterpret_cast<sockaddr *>(&local_addr), &addrlen) == -1)
+  if (getsockname(sock, reinterpret_cast<sockaddr *>(&local_addr), &addrlen) ==
+      -1)
   {
     close(sock);
     return "";
@@ -70,10 +72,7 @@ std::string get_apps_name()
   return parse_apps_sfo_param("TITLE");
 }
 
-std::string get_apps_version()
-{
-  return parse_apps_sfo_param("VERSION");
-}
+std::string get_apps_version() { return parse_apps_sfo_param("VERSION"); }
 
 std::string get_apps_minFW()
 {
@@ -126,38 +125,43 @@ std::string get_app_info(const std::string &returnType)
 {
   // add enum instead of string for arg
 
-  std::regex ps2Pattern("^(SLES|SCES|SCED|SLUS|SCUS|SLPS|SCAJ|SLKA|SLPM|SCPS|CF00|SCKA|ALCH|CPCS|SLAJ|KOEI|ARZE|TCPS"
-                        "|SCCS|PAPX|SRPM|GUST|WLFD|ULKS|VUGJ|HAKU|ROSE|CZP2|ARP2|PKP2|SLPN|NMP2|MTP2|SCPM|PBPX)\\d*$");
+  std::regex ps2Pattern("^(SLES|SCES|SCED|SLUS|SCUS|SLPS|SCAJ|SLKA|SLPM|SCPS|"
+                        "CF00|SCKA|ALCH|CPCS|SLAJ|KOEI|ARZE|TCPS"
+                        "|SCCS|PAPX|SRPM|GUST|WLFD|ULKS|VUGJ|HAKU|ROSE|CZP2|"
+                        "ARP2|PKP2|SLPN|NMP2|MTP2|SCPM|PBPX)\\d*$");
 
   std::string titleID = get_apps_titleid();
   bool is_home = (titleID == HOME_MENU);
   std::string exec = is_home ? "SceShellUI" : find_exec_by_titleID();
   std::string pid = std::to_string(find_pid_by_procName(exec.c_str()));
 
-  std::string type = (titleID.rfind("CUSA", 0) == 0) ? "PS4"
-                                                     : (std::regex_match(titleID, ps2Pattern)
-                                                            ? "PS1/PS2"
-                                                            : "Homebrew");
+  std::string type =
+      (titleID.rfind("CUSA", 0) == 0)
+          ? "PS4"
+          : (std::regex_match(titleID, ps2Pattern) ? "PS1/PS2" : "Homebrew");
 
-  const std::unordered_map<std::string, std::function<std::string()>> resultMap = {
-      {"pid", [&]()
-       { return pid; }},
-      {"titleId", [&]()
-       { return titleID; }},
-      {"name", [&]()
-       { return get_apps_name(); }},
-      {"region", [&]()
-       { return is_home ? "" : get_apps_region(); }},
-      {"exec", [&]()
-       { return is_home ? (exec + " (eboot.bin)") : exec; }},
-      {"version", [&]()
-       { return is_home ? "" : get_apps_version(); }},
-      {"minFW", [&]()
-       { return is_home ? "" : get_apps_minFW(); }},
-      {"type", [&]()
-       { return is_home ? "" : type; }},
-      {"image", [&]()
-       { return is_home ? "" : "/user/appmeta/" + titleID + "/icon0.png"; }}};
+  const std::unordered_map<std::string, std::function<std::string()>>
+      resultMap = {
+          {"pid", [&]()
+           { return pid; }},
+          {"titleID", [&]()
+           { return titleID; }},
+          {"name", [&]()
+           { return get_apps_name(); }},
+          {"region", [&]()
+           { return is_home ? "" : get_apps_region(); }},
+          {"exec", [&]()
+           { return is_home ? (exec + " (eboot.bin)") : exec; }},
+          {"version", [&]()
+           { return is_home ? "" : get_apps_version(); }},
+          {"minFW", [&]()
+           { return is_home ? "" : get_apps_minFW(); }},
+          {"type", [&]()
+           { return is_home ? "" : type; }},
+          {"image", [&]()
+           {
+             return is_home ? "" : "/user/appmeta/" + titleID + "/icon0.png";
+           }}};
 
   auto it = resultMap.find(returnType);
   return (it != resultMap.end()) ? it->second() : "";
@@ -223,7 +227,9 @@ std::string find_procName_of_pid(int pid)
   struct proc_list_entry *proc_list = nullptr;
   uint64_t pnum;
 
-  if (get_proc_list(nullptr, &pnum) || !(proc_list = (struct proc_list_entry *)malloc(pnum * sizeof(struct proc_list_entry))))
+  if (get_proc_list(nullptr, &pnum) ||
+      !(proc_list = (struct proc_list_entry *)malloc(
+            pnum * sizeof(struct proc_list_entry))))
     return ""; // Return an empty string on failure
 
   if (get_proc_list(proc_list, &pnum))
@@ -236,7 +242,8 @@ std::string find_procName_of_pid(int pid)
   {
     if (proc_list[i].pid == pid)
     {
-      std::string proc_name(proc_list[i].p_comm, 32); // Create a string from the first 32 characters
+      std::string proc_name(proc_list[i].p_comm,
+                            32); // Create a string from the first 32 characters
       free(proc_list);
       return proc_name;
     }
@@ -251,7 +258,9 @@ int find_pid_by_procName(const char *proc_name)
   struct proc_list_entry *proc_list = nullptr;
   uint64_t pnum;
 
-  if (get_proc_list(nullptr, &pnum) || !(proc_list = (struct proc_list_entry *)malloc(pnum * sizeof(struct proc_list_entry))))
+  if (get_proc_list(nullptr, &pnum) ||
+      !(proc_list = (struct proc_list_entry *)malloc(
+            pnum * sizeof(struct proc_list_entry))))
     return -1; // Return -1 to indicate failure
 
   if (get_proc_list(proc_list, &pnum))
@@ -292,25 +301,75 @@ int sys_proc_alloc(uint64_t pid, free_and_alloc_args *args, bool free)
     return sys_proc_cmd(pid, SYS_PROC_ALLOC, args); // Pass the pointer directly
 }
 
-const char *get_username(OrbisUserServiceUserId userId)
+std::string get_console_name()
 {
-  static char username[ORBIS_USER_SERVICE_MAX_USER_NAME_LENGTH + 1];
-  OrbisUserServiceLoginUserIdList idList = {};
+  char buffer[65]{};
+  int ret = sceSystemServiceParamGetString(
+      ORBIS_SYSTEM_SERVICE_PARAM_ID_SYSTEM_NAME, buffer, sizeof(buffer));
+  return std::string(buffer);
+}
 
-  if (sceUserServiceGetInitialUser(&userId) == 0 && userId != -1)
+std::string get_disk_info(std::string infoType)
+{
+  struct statfs s;
+
+  const char *MOUNT_POINT = "/user";
+
+  long blocks_used = 0, percentUsed = -1;
+  double totalSpace = 0, usedSpace = 0, freeSpace = 0;
+
+  if (orbis_syscall(396, MOUNT_POINT, &s) != 0)
   {
-    if (sceUserServiceGetUserName(userId, username, sizeof(username)) == 0)
-      return username;
+    log_message("Cannot open %s", MOUNT_POINT);
+    return "";
   }
 
-  if (sceUserServiceGetLoginUserIdList(&idList) == 0)
+  if (s.f_blocks > 0)
   {
-    if (sceUserServiceGetUserName(idList.userId[0], username,
-                                  sizeof(username)) == 0)
-      return username;
+    blocks_used = s.f_blocks - s.f_bfree;
+    percentUsed = static_cast<long>(
+        blocks_used * 100.0 / (blocks_used + s.f_bavail) + 0.5);
   }
 
-  return "USER";
+  totalSpace = s.f_blocks * (s.f_bsize / 1024.0 / 1024.0 / 1024.0);
+  freeSpace = s.f_bavail * (s.f_bsize / 1024.0 / 1024.0 / 1024.0);
+  usedSpace = totalSpace - freeSpace;
+
+  auto formatSize = [](double size) -> std::string
+  {
+    std::string unit = "GB";
+    double displaySize = size;
+
+    if (size >= 1024.0)
+    {
+      unit = "TB";
+      displaySize = size / 1024.0;
+    }
+    else if (size < 1.0)
+    {
+      unit = "MB";
+      displaySize = size * 1024.0;
+    }
+
+    int integerPart = static_cast<int>(displaySize);
+    int fractionalPartRounded =
+        static_cast<int>((displaySize - integerPart) * 100.0 + 0.5);
+
+    return std::to_string(integerPart) + "." +
+           (fractionalPartRounded < 10 ? "0" : "") +
+           std::to_string(fractionalPartRounded) + " " + unit;
+  };
+
+  if (infoType == "percentUsed")
+    return std::to_string(percentUsed) + "%";
+  if (infoType == "totalSpace")
+    return formatSize(totalSpace);
+  if (infoType == "usedSpace")
+    return formatSize(usedSpace);
+  if (infoType == "freeSpace")
+    return formatSize(freeSpace);
+
+  return "";
 }
 
 const char *get_console_type()
@@ -322,7 +381,7 @@ const char *get_console_type()
   return "CEX";
 }
 
-const char *get_fw_version(void)
+const char *get_fw_version()
 {
   static char versionString[0x1C];
   OrbisKernelSwVersion versionInfo;
@@ -359,10 +418,35 @@ bool has_entered_restmode()
     return false;
 
   uint64_t state;
-  if (sceKernelPollEventFlag(flag, 0xFFFF, SCE_KERNEL_EVF_WAITMODE_OR, &state) == 0)
+  if (sceKernelPollEventFlag(flag, 0xFFFF, SCE_KERNEL_EVF_WAITMODE_OR,
+                             &state) == 0)
     return false;
 
-  return (state == 1000 && sceKernelPollEventFlag(flag, 0x200000, SCE_KERNEL_EVF_WAITMODE_OR, 0) == 0) || state == 500;
+  return (state == 1000 &&
+          sceKernelPollEventFlag(flag, 0x200000, SCE_KERNEL_EVF_WAITMODE_OR,
+                                 0) == 0) ||
+         state == 500;
+}
+
+const char *get_username(OrbisUserServiceUserId userId)
+{
+  static char username[ORBIS_USER_SERVICE_MAX_USER_NAME_LENGTH + 1];
+  OrbisUserServiceLoginUserIdList idList = {};
+
+  if (sceUserServiceGetInitialUser(&userId) == 0 && userId != -1)
+  {
+    if (sceUserServiceGetUserName(userId, username, sizeof(username)) == 0)
+      return username;
+  }
+
+  if (sceUserServiceGetLoginUserIdList(&idList) == 0)
+  {
+    if (sceUserServiceGetUserName(idList.userId[0], username,
+                                  sizeof(username)) == 0)
+      return username;
+  }
+
+  return "USER";
 }
 
 void text_notify(int type, const char *_msg)

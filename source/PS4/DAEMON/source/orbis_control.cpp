@@ -46,15 +46,23 @@ bool isOn()
 void handle_request(const std::string &request)
 {
   static const std::map<std::string, std::function<void()>> daemon_commands = {
+      /* MAKE SETUP FUNC THAT WILL RETURN ALL NEEDED INFO SO A LOT OF THIS CAN
+              BE MADE TO REQUIRE THE COMMAND HANDLER UNLESS ITS STATUS*/
+
       {"POST /test", cmds::client::process::write_proc_mem},
-      {"GET /version", cmds::client::connection::version},
+
+      {"GET /setup", cmds::client::connection::setup},
+      {"GET /status", cmds::client::connection::status},   // maybe later try to implement another like
+      {"GET /version", cmds::client::connection::version}, // console status to check if rest or awake
       {"GET /connect", cmds::client::connection::connect},
       {"GET /unload", cmds::client::connection::unload},
       {"GET /disconnect", []()
        { handle_command(cmds::client::connection::disconnect); }},
       {"GET /attach", []()
        { handle_command(cmds::client::connection::attach); }},
-      
+
+      {"GET /get_console_name", []()
+       { handle_command(cmds::client::sys_info::get_name); }},
       {"GET /get_fw_version", []()
        { handle_command(cmds::client::sys_info::get_fw); }},
       {"GET /get_sys_type", []()
@@ -63,7 +71,7 @@ void handle_request(const std::string &request)
        { handle_command(cmds::client::sys_info::get_temp); }},
       {"GET /get_username", []()
        { handle_command(cmds::client::sys_info::get_user); }},
-      
+
       {"GET /get_proc_list", []()
        { handle_command(cmds::client::process::get_proc_list); }},
       {"GET /get_proc_info", []()
@@ -72,7 +80,7 @@ void handle_request(const std::string &request)
        { handle_command(cmds::client::process::find_pid_by_name); }},
       {"GET /get_name_of_pid", []()
        { handle_command(cmds::client::process::find_name_of_pid); }},
-     
+
       {"GET /set_temp_limit", []()
        { handle_command(cmds::client::sys_control::temp_limit); }},
       {"GET /set_power_state", []()
@@ -81,7 +89,7 @@ void handle_request(const std::string &request)
        { handle_command(cmds::client::sys_control::ring_buzzer); }},
       {"GET /send_notify", []()
        { handle_command(cmds::client::sys_control::notify); }},
-      
+
       {"GET /read_memory", []()
        { handle_command(cmds::client::process::read_proc_mem); }},
       {"GET /write_memory", []()
@@ -116,7 +124,7 @@ void handle_request(const std::string &request)
                          {
                            return request.find(pair.first) != std::string::npos;
                          });
-  
+
   if (it != commands.end())
     it->second();
   else
@@ -254,7 +262,7 @@ void *unified_thread(void *arg)
     sceNetSocketAbort(data.sockets.server, 0);
     sceNetSocketClose(data.sockets.server);
   }
-  
+
   return nullptr;
 }
 
@@ -358,6 +366,45 @@ void *telnet_server(void *arg)
   return NULL;
 }
 
+void *send_udp_signal(void *arg)
+{
+  const char *target_ip = "255.255.255.255";
+  const int target_port = 13337;
+  const char *message = "UDP_SEARCH_KEY*";
+
+  while (true)
+  {
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0)
+    {
+      log_message("Failed to create UDP socket");
+      sceKernelSleep(10);
+      continue;
+    }
+
+    int broadcast = 1;
+    setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
+
+    sockaddr_in target_addr{};
+    target_addr.sin_family = AF_INET;
+    target_addr.sin_port = htons(target_port);
+    inet_pton(AF_INET, target_ip, &target_addr.sin_addr);
+
+    ssize_t sent_bytes = sendto(sock, message, strlen(message), 0,
+                                (struct sockaddr *)&target_addr, sizeof(target_addr));
+
+    if (sent_bytes < 0)
+      log_message("Failed to send UDP signal");
+    else
+      log_message("UDP signal sent to %s:%d", target_ip, target_port);
+
+    close(sock);
+    sceKernelSleep(10);
+  }
+
+  return nullptr;
+}
+
 extern "C" int32_t __wrap__init(size_t args, const void *argp)
 {
   struct proc_info info = {};
@@ -375,7 +422,7 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
       if (!DEBUG)
         text_notify(222, message.c_str());
       else
-        unloaded = true; // for testing purposes until i can get the socket to rebind efficiently on wakeup. 
+        unloaded = true; // for testing purposes until i can get the socket to rebind efficiently on wakeup.
 
       return 1;
     }
@@ -428,16 +475,21 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
     sceKernelLoadStartModule("libSceUserService.sprx", 0, NULL, 0, NULL, NULL);
     sceUserServiceInitialize2();
 
-     /* klog server
-      //  jailbreak_backup jb;
-      //  sys_sdk_jailbreak(&jb);
+    /* klog server
+     //  jailbreak_backup jb;
+     //  sys_sdk_jailbreak(&jb);
 
-        pthread_t log_thread;
-        pthread_create(&log_thread, NULL,
-                       telnet_server, NULL);
+       pthread_t log_thread;
+       pthread_create(&log_thread, NULL,
+                      telnet_server, NULL);
 
-        pthread_detach(log_thread);
-        */
+       pthread_detach(log_thread);
+       */
+
+    pthread_t udpSearch_t;
+    pthread_create(&udpSearch_t, NULL, send_udp_signal, NULL);
+
+    pthread_detach(udpSearch_t);
 
     jailbreak_backup jb;
     bool wasRestMode = false;
@@ -450,8 +502,9 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
       {
         if (!DEBUG)
           unloaded = true;
+
         sys_sdk_jailbreak(&jb);
-        text_notify(222, "re-jailbroke; for safety");
+        text_notify(222, "jailbroke again for safety");
         wasRestMode = false;
         unloaded = !DEBUG;
       }

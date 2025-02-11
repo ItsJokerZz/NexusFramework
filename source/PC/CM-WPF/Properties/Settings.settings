@@ -1,0 +1,32 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)">
+  <Profiles>
+    <Profile Name="(Default)" />
+  </Profiles>
+  <Settings>
+    <Setting Name="PrimaryColor" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#0072CE</Value>
+    </Setting>
+    <Setting Name="GrayColor" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#2a2a2a</Value>
+    </Setting>
+    <Setting Name="TextColor" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#FFFFFF</Value>
+    </Setting>
+    <Setting Name="BackgroundColor" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#0F0F0F</Value>
+    </Setting>
+    <Setting Name="CardColor" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#161616</Value>
+    </Setting>
+    <Setting Name="ShadowColor" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#1A1A1A</Value>
+    </Setting>
+    <Setting Name="TextSecondaryColor" Type="System.String" Scope="User">
+      <Value Profile="(Default)">#9CA3AF</Value>
+    </Setting>
+    <Setting Name="IsDarkMode" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

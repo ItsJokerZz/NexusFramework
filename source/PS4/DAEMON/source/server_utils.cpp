@@ -331,18 +331,11 @@ void send_response(const nlohmann::json &response_data)
 
 void send_error_response(ErrorCode error_code)
 {
-  bool *toggle = isDaemon ? &connected : &attached;
+  const char *message = (error_code >= 0 && error_code < ERROR_COUNT)
+                            ? error_messages[error_code].message
+                            : error_messages[UNKNOWN_ERROR].message;
 
-  const char *message = error_messages[UNKNOWN_ERROR].message;
-
-  if (error_code >= 0 && error_code < ERROR_COUNT)
-    message = error_messages[error_code].message;
-
-  nlohmann::json error_data = {{std::to_string(error_code), message}};
-  std::unordered_map<std::string, nlohmann::json> data_entries = {
-      {"ERROR", error_data}};
-  std::string log_string = generate_json(data_entries);
-  send_response(log_string.c_str()); // Call send_response
+  send_response(generate_json({{"ERROR", {{std::to_string(error_code), message}}}}).c_str());
 }
 
 void handle_command(void (*func)())
@@ -354,5 +347,5 @@ void handle_command(void (*func)())
   else
     send_error_response(toggle == &connected
                             ? NOT_CONNECTED
-                            : NOT_ATTACHED); // Modifying toggle
+                            : NOT_ATTACHED);
 }

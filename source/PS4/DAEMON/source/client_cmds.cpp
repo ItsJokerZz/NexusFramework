@@ -6,16 +6,32 @@ namespace cmds
   {
     namespace connection
     {
+      void setup()
+      {
+        nlohmann::json config = {
+          {"NAME", get_console_name()},
+          {"FW", get_fw_version()},
+          {"TYPE", get_console_type()},
+          {"OCAPI", std::to_string(VERSION).substr(0, 4)}
+      };
+
+      send_response(config);
+      }
+
+      void status()
+      {
+        send_response(std::string("Server is running."));
+      }
+
       void version()
       {
-        std::string message = std::to_string(VERSION);
-        send_response(message.c_str());
+        send_response(std::to_string(VERSION).c_str());
       }
 
       void connect()
       {
-        send_response("true");
         connected = true;
+        send_response("true");
       }
 
       void unload()
@@ -35,14 +51,16 @@ namespace cmds
 
       void disconnect()
       {
-        send_response("done");
 
         if (data.sockets.client >= 0)
         {
           sceNetSocketClose(data.sockets.client);
           data.sockets.client = -1;
         }
+
         connected = false;
+
+        send_response("done");
       }
 
       void attach()
@@ -53,8 +71,8 @@ namespace cmds
         {
           std::string response = perform_http_request("attach_relay");
 
-          if (response != "" && response == "done")
-            attached = true;
+          // if (response != "" && response == "done") /*prolly not needed*/
+          attached = true;
         }
 
         send_response("done");
@@ -64,6 +82,11 @@ namespace cmds
 
     namespace sys_info
     {
+      void get_name()
+      {
+        send_response(get_console_name().c_str());
+      }
+
       void get_fw()
       {
         send_response(get_fw_version());
@@ -97,6 +120,10 @@ namespace cmds
       void get_user()
       {
         send_response(get_username());
+      }
+
+      void get_disk_info()
+      {
       }
 
     }
@@ -251,7 +278,7 @@ namespace cmds
         std::unordered_map<std::string, std::string> info_map = {
             {"pid", get_app_info("pid")},
             {"region", get_app_info("region")},
-            {"titleId", get_app_info("titleId")},
+            {"titleID", get_app_info("titleID")},
             {"type", get_app_info("type")},
             {"name", get_app_info("name")},
             {"exec", get_app_info("exec")},
@@ -269,15 +296,15 @@ namespace cmds
 
         if (return_str == "all")
         {
-          std::string all_info;
+          nlohmann::json all_info_json;
+
           for (const auto &pair : info_map)
           {
             if (!pair.second.empty())
-              all_info += pair.first + ": " + pair.second + "\n";
+              all_info_json[pair.first] = pair.second;
           }
 
-          send_response(all_info.c_str());
-
+          send_response(all_info_json.dump().c_str());
           return;
         }
 
@@ -398,8 +425,8 @@ namespace cmds
 
       void load_module()
       {
-        std::string prx_path = extract_param("path", data.buffer);
         std::string exec_path = extract_param("exec", data.buffer);
+        std::string prx_path = extract_param("path", data.buffer);
 
         auto load_prx = [](const std::string &exec_path, const std::string &prx_path) -> bool
         {

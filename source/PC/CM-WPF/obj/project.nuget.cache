@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "2NmAPZen/BQ=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Dakota\\Documents\\GitHub\\OrbisControl\\source\\PC\\CM-WPF\\CM-WPF.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Dakota\\.nuget\\packages\\darknet\\2.3.0\\darknet.2.3.0.nupkg.sha512"
+  ],
+  "logs": []
+}

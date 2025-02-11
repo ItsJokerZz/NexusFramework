@@ -23,24 +23,25 @@ enum power_state
 extern std::string console_type;
 extern std::string get_local_ip();
 
+extern std::string parse_apps_sfo_param(const std::string &key);
+extern std::string get_app_info(const std::string &returnType);
 extern std::string get_apps_titleid();
 extern std::string get_apps_name();
 extern std::string get_apps_version();
 extern std::string get_apps_minFW();
 extern std::string get_apps_region();
-extern std::string get_app_info(const std::string &returnType);
-extern std::string parse_apps_sfo_param(const std::string &key);
 
 extern std::string find_exec_by_titleID();
 extern std::string find_procName_of_pid(int pid);
 
 extern int find_pid_by_procName(const char *proc_name);
 extern int get_proc_list(struct proc_list_entry *procs, uint64_t *num);
+
 extern int sys_proc_cmd(uint64_t pid, uint64_t cmd, void *data);
 extern int sys_proc_alloc(uint64_t pid, free_and_alloc_args *args, bool free = false);
 
-extern const char *get_username(OrbisUserServiceUserId userId = 0);
-
+extern std::string get_disk_info(std::string infoType = "percentUsed");
+extern std::string get_console_name();
 extern const char *get_console_type();
 extern const char *get_fw_version();
 
@@ -48,6 +49,8 @@ extern uint32_t get_cpu_temperature();
 extern uint32_t get_soc_temperature();
 
 extern bool has_entered_restmode();
+
+extern const char *get_username(OrbisUserServiceUserId userId = 0);
 
 void text_notify(int type, const char *_msg);
 void image_notify(const char *IconUri, const char *text);

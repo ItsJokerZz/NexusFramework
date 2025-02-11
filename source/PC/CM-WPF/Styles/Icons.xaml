@@ -1,0 +1,60 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <Geometry x:Key="PackageIcon">M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16zM3.29 7L12 12l8.71-5M12 22V12</Geometry>
+    <Geometry x:Key="FileCodeIcon">M7 8L3 12l4 4M17 8l4 4-4 4M14 4l-6 16</Geometry>
+    <Geometry x:Key="DllIcon">M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4M14 2v6h6M9 18l3-3-3-3M5 12l-3 3 3 3</Geometry>
+    <Geometry x:Key="PrxIcon">M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2zM14 2v6h6M8 16h8M8 12h8</Geometry>
+    <Geometry x:Key="RefreshIcon">M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8M21 3v5h-5M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16M3 21v-5h5</Geometry>
+    <Geometry x:Key="PowerIcon">M18.36 6.64A9 9 0 0 1 20.77 15M6.16 6.16L17.84 17.84M12 2v4M2 12h4M12 18v4M18 12h4</Geometry>
+    <Geometry x:Key="CubeIcon">M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96L12 12.01l8.73-5.05 M12 22.08V12</Geometry>
+    <Geometry x:Key="DocumentIcon">M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8</Geometry>
+    <Geometry x:Key="ThermometerIcon">M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z</Geometry>
+    <Geometry x:Key="SignalIcon">M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 4v16</Geometry>
+    <Geometry x:Key="RouterIcon">M2 14h20v8H2v-8zm0 0a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2M6.01 18H6M10.01 18H10M15 10v4M17.84 7.17a4 4 0 0 0-5.66 0M20.66 4.34a8 8 0 0 0-11.31 0</Geometry>
+    <Geometry x:Key="MonitorIcon">M2 3h20v14H2V3zm0 0a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2M8 21h8M12 17v4</Geometry>
+    <Geometry x:Key="PlusIcon">M12 5v14M5 12h14</Geometry>
+    <Geometry x:Key="MoonIcon">M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z</Geometry>
+    <Geometry x:Key="BellIcon">M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0</Geometry>
+    <Geometry x:Key="ChevronRightIcon">M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z</Geometry>
+    <Geometry x:Key="ControllerIcon">M21 6H3a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2zM6 14v-4M8 12H4M15 12h5</Geometry>
+
+    <!-- Signal Bar geometries -->
+    <Geometry x:Key="SignalBar1">M2 20h.01</Geometry>
+    <Geometry x:Key="SignalBar2">M7 20v-4</Geometry>
+    <Geometry x:Key="SignalBar3">M12 20v-8</Geometry>
+    <Geometry x:Key="SignalBar4">M17 20V8</Geometry>
+    <Geometry x:Key="SignalBar5">M22 4v16</Geometry>
+
+    <ControlTemplate x:Key="IconTemplate">
+        <Path Data="{TemplateBinding Tag}"
+              Stroke="{TemplateBinding Foreground}"
+              StrokeThickness="2"
+              StrokeStartLineCap="Round"
+              StrokeEndLineCap="Round"
+              StrokeLineJoin="Round"
+              Fill="Transparent"/>
+    </ControlTemplate>
+
+    <Style x:Key="IconButton" TargetType="Button">
+        <Setter Property="Width" Value="24"/>
+        <Setter Property="Height" Value="24"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Path Data="{Binding Content.(Path.Data), RelativeSource={RelativeSource TemplatedParent}}"
+                              Stroke="{Binding Content.(Path.Fill), RelativeSource={RelativeSource TemplatedParent}}"
+                              StrokeThickness="1.5"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              StrokeLineJoin="Round"/>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary> 

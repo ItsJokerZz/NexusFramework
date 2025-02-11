@@ -7,6 +7,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "API\API.csproj", "{7
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CM", "ConsoleManager\CM.csproj", "{04020C67-B0DA-41DB-87D7-72C38D17E6BE}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CM-WPF", "CM-WPF\CM-WPF.csproj", "{9884A1B5-4CC0-4835-8D86-350BA678954B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{745623F7-EEEA-41B4-9F5D-2C7B1E85E53C} = {745623F7-EEEA-41B4-9F5D-2C7B1E85E53C}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +26,10 @@ Global
 		{04020C67-B0DA-41DB-87D7-72C38D17E6BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{04020C67-B0DA-41DB-87D7-72C38D17E6BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{04020C67-B0DA-41DB-87D7-72C38D17E6BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9884A1B5-4CC0-4835-8D86-350BA678954B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9884A1B5-4CC0-4835-8D86-350BA678954B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9884A1B5-4CC0-4835-8D86-350BA678954B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9884A1B5-4CC0-4835-8D86-350BA678954B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
