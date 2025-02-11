@@ -15,7 +15,7 @@ namespace OrbisControlAPI
     public class OCAPI
     {
         #region Variables
-        private static readonly float CurrentVersion = 0.50f;
+        private static readonly float CurrentVersion = 0.60f;
 
         private readonly string ConsoleList =
             Path.Combine(Environment.GetFolderPath(
