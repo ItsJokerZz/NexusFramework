@@ -456,15 +456,27 @@ void ring_buzzer(int type) { sceKernelIccSetBuzzer(type); }
 
 void set_temperature_limit(uint8_t limit)
 {
-    int fd = open("/dev/icc_fan", O_RDONLY);
-    if (fd < 0)
-        return;
+    if (limit < 50)
+        limit = 50;
 
-    char data[10] = {0x00, 0x00, 0x00, 0x00, 0x00, static_cast<char>(limit),
-                     0x00, 0x00, 0x00, 0x00};
-    ioctl(fd, 0xC01C8F07, data);
-    close(fd);
+    if (limit > 80)
+        limit = 80;
+
+    int fd = open("/dev/icc_fan", O_RDONLY, 0);
+    if (fd == 0)
+    {
+        char data[10] = {
+            0x00, 0x00, 0x00, 0x00, 0x00,
+            static_cast<char>(limit),
+            0x00, 0x00, 0x00, 0x00};
+
+
+        ioctl(fd, 0xC01C8F07, data);
+
+        close(fd);
+    }
 }
+
 
 void set_power_state(power_state state)
 {

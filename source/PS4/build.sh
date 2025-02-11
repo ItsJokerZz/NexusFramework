@@ -7,6 +7,7 @@ echo "--------------------------------------------------------------------------
 cd DAEMON
 make master
 cd ..
+cp DAEMON/OrbisControl.prx ../PC/API/
 
 BUILD=$(cat DAEMON/build/.number)
 VERSION=$(grep -oP '^VERSION\s*:=\s*\K[^\s]*' DAEMON/Makefile)
@@ -18,11 +19,10 @@ echo "--------------------------------------------------------------------------
 
 cd PAYLOAD
 make
-cp OrbisControl.bin ../../PC/API/
 cd ..
+cp PAYLOAD/OrbisControl.bin ../PC/API/
 
 echo "-----------------------------------------------------------------------------"
-
 echo
 echo "------------- OrbisControl v$VERSION"b$BUILD ON $(date +"%m/%d/%Y @ %I:%M:%S %p") "-------------"
 echo "-----------------------------------------------------------------------------"

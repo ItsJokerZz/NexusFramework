@@ -161,6 +161,7 @@ namespace CM
             if (!unloading)
             {
                 api.AlarmBuzzer(BuzzerModes.Double);
+                Task.Delay(5000);
                 api.Disconnect();
             }
             else
@@ -279,18 +280,13 @@ namespace CM
         {
 
         }
-      
+
         private void button2_Click(object sender, EventArgs e)
         {
-            api.FindConsoles(consoles =>
-            {
-                // Join all the data for each console and print it
-                foreach (var console in consoles)
-                {
-                    Debug.WriteLine($"IP: {console.IP}, System Name: {console.SystemName}, Firmware: {console.Firmware}, " +
-                                     $"Orbis Control: {console.OrbisControl}, Console Type: {console.ConsoleType}");
-                }
-            });
+            api.SetupConsole("192.168.137.206");
+
         }
+
+
     }
 }

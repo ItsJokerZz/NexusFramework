@@ -82,5 +82,8 @@ C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\obj\Debug\net8.0-
 C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\obj\Debug\net8.0-windows\CM-WPF.pdb
 C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\obj\Debug\net8.0-windows\CM-WPF.genruntimeconfig.cache
 C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\obj\Debug\net8.0-windows\ref\CM-WPF.dll
-C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\bin\Debug\net8.0-windows\Newtonsoft.Json.dll
-C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\bin\Debug\net8.0-windows\Newtonsoft.Json.xml
+C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\bin\Debug\net8.0-windows\System.IO.Pipelines.dll
+C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\bin\Debug\net8.0-windows\System.Text.Encodings.Web.dll
+C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\bin\Debug\net8.0-windows\System.Text.Json.dll
+C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\bin\Debug\net8.0-windows\runtimes\browser\lib\net8.0\System.Text.Encodings.Web.dll
+C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\obj\Debug\net8.0-windows\Styles\Controls\Slider.baml

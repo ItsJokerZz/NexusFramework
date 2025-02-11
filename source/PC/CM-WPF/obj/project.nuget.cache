@@ -1,10 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "2NmAPZen/BQ=",
+  "dgSpecHash": "+qIrQlbgx5Q=",
   "success": true,
   "projectFilePath": "C:\\Users\\Dakota\\Documents\\GitHub\\OrbisControl\\source\\PC\\CM-WPF\\CM-WPF.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Dakota\\.nuget\\packages\\darknet\\2.3.0\\darknet.2.3.0.nupkg.sha512"
+    "C:\\Users\\Dakota\\.nuget\\packages\\darknet\\2.3.0\\darknet.2.3.0.nupkg.sha512",
+    "C:\\Users\\Dakota\\.nuget\\packages\\system.io.pipelines\\9.0.0\\system.io.pipelines.9.0.0.nupkg.sha512",
+    "C:\\Users\\Dakota\\.nuget\\packages\\system.text.encodings.web\\9.0.0\\system.text.encodings.web.9.0.0.nupkg.sha512",
+    "C:\\Users\\Dakota\\.nuget\\packages\\system.text.json\\9.0.0\\system.text.json.9.0.0.nupkg.sha512"
   ],
   "logs": []
 }

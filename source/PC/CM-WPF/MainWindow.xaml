@@ -392,7 +392,7 @@
                                                         <TextBlock Text="Current Version" 
                                                                   Style="{StaticResource CardLabel}"
                                                                   FontSize="12"/>
-                                                        <TextBlock Text="{Binding DLLVersion}"
+                                                        <TextBlock Text="{Binding DLLVersion}" 
                                                                   Style="{StaticResource CardValue}"
                                                                   FontSize="14"
                                                                   Margin="0,2,0,8"/>
@@ -475,51 +475,86 @@
                                                         <RowDefinition Height="*"/>
                                                     </Grid.RowDefinitions>
 
-                                                    <StackPanel Grid.Row="0" Margin="0,0,0,16">
-                                                        <TextBlock Text="Fan Threshold" 
-                                                                 Foreground="{DynamicResource ColorTextSecondary}"
-                                                                 FontSize="14"
-                                                                 Margin="0,0,0,8"/>
-                                                        <Grid>
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="120"/>
-                                                            </Grid.ColumnDefinitions>
-                                                            <ComboBox Grid.Column="0" 
-                                                                      Margin="0,0,8,0"
-                                                                      Style="{StaticResource DarkComboBox}"
-                                                                      SelectedIndex="4">
-                                                                <ComboBoxItem Content="50°C" Style="{StaticResource DarkComboBoxItem}"/>
-                                                                <ComboBoxItem Content="55°C" Style="{StaticResource DarkComboBoxItem}"/>
-                                                                <ComboBoxItem Content="60°C" Style="{StaticResource DarkComboBoxItem}"/>
-                                                                <ComboBoxItem Content="65°C" Style="{StaticResource DarkComboBoxItem}"/>
-                                                                <ComboBoxItem Content="70°C" Style="{StaticResource DarkComboBoxItem}"/>
-                                                                <ComboBoxItem Content="75°C" Style="{StaticResource DarkComboBoxItem}"/>
-                                                                <ComboBoxItem Content="80°C" Style="{StaticResource DarkComboBoxItem}"/>
-                                                                <ComboBoxItem Content="85°C" Style="{StaticResource DarkComboBoxItem}"/>
-                                                            </ComboBox>
-                                                            <Button Content="Set Threshold"
-                                                                    Grid.Column="1"
-                                                                    Style="{StaticResource PrimaryButtonStyle}"/>
+                                                    <StackPanel Grid.Row="0">
+                                                        <!-- Fan Threshold Section -->
+                                                        <Grid Margin="0,0,0,24">
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </Grid.RowDefinitions>
+                                                            
+                                                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                                                <TextBlock Text="Fan Threshold" 
+                                                                          Foreground="{DynamicResource ColorTextSecondary}"
+                                                                          FontSize="14"
+                                                                          HorizontalAlignment="Left"/>
+                                                                <TextBlock Text="{Binding Value, ElementName=FanThresholdSlider, StringFormat={}{0:0}°C}"
+                                                                          Foreground="{DynamicResource ColorText}"
+                                                                          FontSize="14"
+                                                                          HorizontalAlignment="Right"/>
+                                                            </Grid>
+                                                            
+                                                            <Grid Grid.Row="1" Height="28">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="8"/>
+                                                                    <ColumnDefinition Width="60"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                <Slider x:Name="FanThresholdSlider"
+                                                                        Grid.Column="0"
+                                                                        Minimum="50"
+                                                                        Maximum="85"
+                                                                        Value="70"
+                                                                        TickFrequency="5"
+                                                                        IsSnapToTickEnabled="True"
+                                                                        Style="{StaticResource DarkSlider}"
+                                                                        VerticalAlignment="Center"/>
+                                                                <Button Content="Set"
+                                                                        Grid.Column="2"
+                                                                        Style="{StaticResource PrimaryButtonStyle}"
+                                                                        Height="28"
+                                                                        Click="SetFanThreshold_Click"/>
+                                                            </Grid>
                                                         </Grid>
-                                                    </StackPanel>
 
-                                                    <StackPanel Grid.Row="1" Margin="0,0,0,16">
-                                                        <TextBlock Text="Console Buzzer" 
-                                                                 Foreground="{DynamicResource ColorTextSecondary}"
-                                                                 FontSize="14"
-                                                                 Margin="0,0,0,8"/>
-                                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                                            <RadioButton Content="Single" IsChecked="True"/>
-                                                            <RadioButton Content="Double" Margin="16,0"/>
-                                                            <RadioButton Content="Triple" Margin="0,0,16,0"/>
-                                                            <RadioButton Content="Continuous"/>
-                                                        </StackPanel>
-                                                        <Button Content="Activate Buzzer"
-                                                                Style="{StaticResource PrimaryButtonStyle}"
-                                                                Height="34"
-                                                                HorizontalAlignment="Left"
-                                                                Width="120"/>
+                                                        <!-- Console Buzzer Section -->
+                                                        <Grid Margin="0,0,0,24">
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </Grid.RowDefinitions>
+                                                            
+                                                            <TextBlock Text="Console Buzzer" 
+                                                                      Grid.Row="0"
+                                                                      Foreground="{DynamicResource ColorTextSecondary}"
+                                                                      FontSize="14"
+                                                                      Margin="0,0,0,8"/>
+                                                            
+                                                            <Grid Grid.Row="1">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="8"/>
+                                                                    <ColumnDefinition Width="120"/>
+                                                                </Grid.ColumnDefinitions>
+                                                                
+                                                                <StackPanel Grid.Column="0" 
+                                                                            Orientation="Horizontal">
+                                                                    <RadioButton Content="Single" 
+                                                                                IsChecked="True" 
+                                                                                Margin="0,0,16,0"/>
+                                                                    <RadioButton Content="Double" 
+                                                                                Margin="0,0,16,0"/>
+                                                                    <RadioButton Content="Triple" 
+                                                                                Margin="0,0,16,0"/>
+                                                                    <RadioButton Content="Continuous"/>
+                                                                </StackPanel>
+                                                                
+                                                                <Button Content="Activate Buzzer"
+                                                                        Grid.Column="2"
+                                                                        Style="{StaticResource PrimaryButtonStyle}"
+                                                                        Height="28"/>
+                                                            </Grid>
+                                                        </Grid>
                                                     </StackPanel>
 
                                                     <Grid Grid.Row="2">

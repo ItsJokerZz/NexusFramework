@@ -10,6 +10,7 @@ using static OrbisControlAPI.OCAPI;
 using System.Windows.Threading;
 using System.Windows.Shapes;
 using System.Diagnostics;
+using System.Linq;
 
 namespace ConsoleManager
 {
@@ -49,6 +50,12 @@ namespace ConsoleManager
             UpdateSystemInfo();
             UpdateProcessList();
             UpdateDiskInfo();
+
+            int id = api.GetProcessIdByName("SceShellUI");
+            Debug.WriteLine(id);
+
+            string name = api.GetNameOfProcessByID(id);
+            Debug.WriteLine(name);
         }
 
         private DispatcherTimer autoRefreshTimer;
@@ -337,6 +344,14 @@ namespace ConsoleManager
 
         private void AddConsoleToPanel(FoundConsole console)
         {
+            // Find the console in the API's console list
+            var existingConsole = api.Consoles.FirstOrDefault(c => c.IP == console.IP);
+            string displayName = existingConsole?.CustomName;  // Get CustomName first
+            if (string.IsNullOrEmpty(displayName))  // If CustomName is null or empty
+            {
+                displayName = console.SystemName ?? "PS4";  // Fall back to SystemName or "PS4"
+            }
+
             var consoleBox = new Border
             {
                 Style = (Style)FindResource("CardBorder"),
@@ -348,7 +363,7 @@ namespace ConsoleManager
             
             content.Children.Add(new TextBlock
             {
-                Text = console.SystemName ?? "PS4",
+                Text = displayName,
                 FontWeight = FontWeights.SemiBold,
                 FontSize = 14,
                 Foreground = (Brush)FindResource("ColorText"),
@@ -404,6 +419,14 @@ namespace ConsoleManager
 
         private Border CreateConsoleItem(string name, string ip)
         {
+            // Find the console in the API's console list
+            var console = api.Consoles.FirstOrDefault(c => c.IP == ip);
+            string displayName = console?.CustomName;  // Get CustomName first
+            if (string.IsNullOrEmpty(displayName))  // If CustomName is null or empty
+            {
+                displayName = console?.Name ?? name ?? "PS4";  // Fall back to Name, then provided name, then "PS4"
+            }
+
             var consoleBox = new Border
             {
                 Style = (Style)FindResource("CardBorder"),
@@ -420,7 +443,7 @@ namespace ConsoleManager
 
             var nameBlock = new TextBlock
             {
-                Text = name,
+                Text = displayName,
                 FontWeight = FontWeights.SemiBold,
                 FontSize = 14,
                 Foreground = (Brush)FindResource("ColorText")
@@ -650,19 +673,9 @@ namespace ConsoleManager
             }
             else
             {
-                // Reset all values and stop animation
-                FirmwareVersion = "?.??";
-                ConsoleType = "????";
-                CPUTemperature = "?? °C";
-                SoCTemperature = "?? °C";
-                PRXVersion = "?.??";
+             
+                ResetHomePageData();
 
-                signalTimer.Stop();
-                currentSignalLevel = 0;
-                foreach (Path bar in SignalCanvas.Children)
-                {
-                    bar.Opacity = 0.2;
-                }
             }
 
             OnPropertyChanged(nameof(FirmwareVersion));
@@ -765,17 +778,17 @@ namespace ConsoleManager
         private void ResetHomePageData()
         {
             // Reset system info
-            FirmwareVersion = "?.??";
-            ConsoleType = "????";
-            CPUTemperature = "?? °C";
-            SoCTemperature = "?? °C";
-            PRXVersion = "?.??";
+            FirmwareVersion = "----";
+            ConsoleType = "----";
+            CPUTemperature = "---";
+            SoCTemperature = "---";
+            PRXVersion = "----";
 
             // Reset disk info
             DiskUsagePercentage = 0;
-            TotalDiskSpace = "?.?? GB";
-            FreeDiskSpace = "?.?? GB";
-            UsedDiskSpace = "?.?? GB";
+            TotalDiskSpace = "----";
+            FreeDiskSpace = "----";
+            UsedDiskSpace = "----";
 
             // Clear process list
             ProcessListComboBox.Items.Clear();
@@ -802,6 +815,7 @@ namespace ConsoleManager
 
         private void DisconnectFromConsole(string ip)
         {
+            api.AlarmBuzzer(BuzzerModes.Double);
             api.Disconnect(ip);
             ResetHomePageData();
         }
@@ -810,6 +824,13 @@ namespace ConsoleManager
         {
             api.Unload(ip);
             ResetHomePageData();
+        }
+
+        private void SetFanThreshold_Click(object sender, RoutedEventArgs e)
+        {
+           
+            int threshold = (int)FanThresholdSlider.Value;
+            api.SetFanThreshold(threshold);
         }
     }
 }

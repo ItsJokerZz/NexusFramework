@@ -21,6 +21,7 @@
                 <ResourceDictionary Source="Styles/Controls/TextBlock.xaml"/>
                 <ResourceDictionary Source="Styles/Controls/Overlay.xaml"/>
                 <ResourceDictionary Source="Styles/Controls/ContextMenu.xaml"/>
+                <ResourceDictionary Source="Styles/Controls/Slider.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>

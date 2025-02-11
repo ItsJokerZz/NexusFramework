@@ -159,22 +159,20 @@ namespace cmds
       void temp_limit()
       {
         uint8_t temp = 0;
+        std::string limit = extract_param("limit", data.buffer);
 
-        std::string limit_str = extract_param("limit", data.buffer);
-
-        if (!limit_str.empty())
+        if (!limit.empty())
         {
-          if (sscanf(limit_str.c_str(), "%hhu", &temp) != 1)
+          if (sscanf(limit.c_str(), "%hhu", &temp) != 1)
           {
             send_error_response(INVALID_ARGS);
 
             return;
           }
 
-          // if (set_temperature_limit(temp))
+          set_temperature_limit(temp);
+
           send_response("done");
-          // else
-          //  send_error_response(UNKNOWN_ERROR);
         }
         else
           send_error_response(INVALID_ARGS);
@@ -359,7 +357,7 @@ namespace cmds
           return;
 
         nlohmann::json response =
-            {{"name", find_pid_by_procName(name.c_str())}};
+            {{"PID", find_pid_by_procName(name.c_str())}};
 
         send_response(generate_json(response).c_str());
       }
@@ -371,16 +369,9 @@ namespace cmds
         if (pid_str.empty())
           return;
 
-        int pid = atoi(pid_str.c_str()); // Convert to integer
+        int pid = atoi(pid_str.c_str());
 
-        if (pid == 0)
-        {
-          send_response(_DEBUGGING);
-
-          return;
-        }
-
-        nlohmann::json response = {{"name", find_procName_of_pid(pid)}};
+        nlohmann::json response = {{"NAME", find_procName_of_pid(pid)}};
         send_response(generate_json(response).c_str());
       }
 

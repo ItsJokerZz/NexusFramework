@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -18,87 +17,57 @@ namespace OrbisControlAPI
         internal static Socket GetBinLoaderSocket(string ip, int port)
         {
             if (!IPAddress.TryParse(ip, out var address))
-            {
-                Debug.WriteLine($"Invalid IP address: {ip}");
                 return null;
-            }
+
             try
             {
-                Debug.WriteLine($"Checking status of BinLoader at http://{address}:9090/status");
                 using (var webClient = new WebClient())
                 {
                     string status = webClient.DownloadString($"http://{address}:9090/status");
                     if (status.Contains("{ \"status\": \"ready\" }"))
                     {
-                        Debug.WriteLine($"BinLoader is ready, attempting to connect to {address}:{port}");
                         var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
                         {
                             SendTimeout = 3000,
                             ReceiveTimeout = 3000
                         };
+
                         socket.Connect(new IPEndPoint(address, port));
-                        Debug.WriteLine("Connection successful.");
+
                         return socket;
-                    }
-                    else
-                    {
-                        Debug.WriteLine("BinLoader not ready.");
                     }
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"Error in GetBinLoaderSocket: {ex.Message}");
+                return null;
             }
+
             return null;
         }
 
         internal bool ConnectToBinLoader(string ip, string port)
         {
             if (!int.TryParse(port, out int portNumber))
-            {
-                Debug.WriteLine($"Invalid port number: {port}");
                 return false;
-            }
+
             using (var socket = GetBinLoaderSocket(ip, portNumber))
-            {
-                if (socket != null)
-                {
-                    Debug.WriteLine($"Successfully connected to BinLoader at {ip}:{portNumber}");
-                    return true;
-                }
-                else
-                {
-                    Debug.WriteLine($"Failed to connect to BinLoader at {ip}:{portNumber}");
-                    return false;
-                }
-            }
+                return socket != null;
         }
 
         internal static bool IsPortOpen(string address, int port = 1337)
         {
             try
             {
-                Debug.WriteLine($"Checking if port {port} is open on {address}");
                 using (var tcpClient = new TcpClient())
                 {
                     var result = tcpClient.BeginConnect(address, port, null, null);
                     var success = result.AsyncWaitHandle.WaitOne(1000);
-                    if (success && tcpClient.Connected)
-                    {
-                        Debug.WriteLine($"Port {port} is open on {address}");
-                        return true;
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"Port {port} is not open on {address}");
-                        return false;
-                    }
+                    return success && tcpClient.Connected;
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.WriteLine($"Error checking port {port} on {address}: {ex.Message}");
                 return false;
             }
         }
@@ -136,26 +105,75 @@ namespace OrbisControlAPI
             }
         }
 
-        internal static string PerformRequest(string command, string args = "", HttpMethodType method = HttpMethodType.GET, string param = "")
+        internal static void UploadDaemon(string address)
         {
-            if (string.IsNullOrEmpty(Target.IP))
-                throw new ArgumentException("IP address cannot be null or empty.", nameof(Target.IP));
+            try
+            {
+                string targetDirectory = "/data/GoldHEN/plugins/ItsJokerZz";
+                string fileName = "OrbisControl.prx";
+                Uri uri = new Uri($"ftp://{address}:2121{targetDirectory}/{fileName}");
 
+                byte[] fileContents;
+                using (var resourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"OrbisControlAPI.{fileName}"))
+                {
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        resourceStream.CopyTo(memoryStream);
+                        fileContents = memoryStream.ToArray();
+                    }
+                }
+
+                FtpWebRequest checkFileRequest = (FtpWebRequest)WebRequest.Create(uri);
+                checkFileRequest.Method = WebRequestMethods.Ftp.GetFileSize;
+
+                try
+                {
+                    using (FtpWebResponse response = (FtpWebResponse)checkFileRequest.GetResponse())
+                        return;
+                }
+                catch (WebException ex)
+                {
+                    if (ex.Response is FtpWebResponse ftpResponse && ftpResponse.StatusCode == FtpStatusCode.ActionNotTakenFileUnavailable)
+                    { } else return;
+                }
+
+                FtpWebRequest uploadRequest = (FtpWebRequest)WebRequest.Create(uri);
+                uploadRequest.Method = WebRequestMethods.Ftp.UploadFile;
+                uploadRequest.ContentLength = fileContents.Length;
+
+                using (Stream requestStream = uploadRequest.GetRequestStream())
+                    requestStream.Write(fileContents, 0, fileContents.Length);
+            }
+            catch (WebException ex)
+            {
+                if (ex.Response is FtpWebResponse ftpResponse)
+                {
+                    Console.WriteLine($"FTP error: {ftpResponse.StatusCode} - {ftpResponse.StatusDescription}");
+                }
+                else
+                {
+                    Console.WriteLine($"FTP error: {ex.Message}");
+                }
+            }
+        }
+
+        internal static string PerformRequest(string command, string args = "", HttpMethodType method = HttpMethodType.GET, string parameters = "")
+        {
             string url = $"http://{Target.IP}:1337/{command}" + (string.IsNullOrEmpty(args) ? "" : $"?{args}");
 
             try
             {
                 using (var client = new WebClient())
                 {
-                    if (!string.IsNullOrEmpty(param))
+                    if (!string.IsNullOrEmpty(parameters))
                     {
-                        var formattedParam = $"params{{{param}}}";
-                        client.Headers.Add("Data", formattedParam);
+                        var formattedParams = $"params{{{parameters}}}";
+                        client.Headers.Add("Data", formattedParams);
 
                         if (method == HttpMethodType.POST)
                         {
                             client.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
-                            return client.UploadString(url, formattedParam);
+                            return client.UploadString(url, formattedParams);
                         }
                     }
 
@@ -167,7 +185,7 @@ namespace OrbisControlAPI
                 Target.Clear();
                 return null;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return null;
             }

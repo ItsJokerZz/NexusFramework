@@ -96,7 +96,7 @@ void handle_request(const std::string &request)
       {"GET /alloc_memory", []()
        { handle_command(cmds::client::process::alloc_proc_mem); }},
       {"GET /free_memory", []()
-       { handle_command(cmds::client::process::alloc_proc_mem); }},
+       { handle_command(cmds::client::process::free_proc_mem); }},
       {"GET /start_plugin", []()
        { handle_command(cmds::client::process::start_plugin); }},
       {"GET /load_module", []()

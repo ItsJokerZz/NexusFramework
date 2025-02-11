@@ -1,12 +1,12 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using static OrbisControlAPI.Utilities;
 
@@ -15,7 +15,7 @@ namespace OrbisControlAPI
     public class OCAPI
     {
         #region Variables
-        private static readonly float CurrentVersion = 0.60f;
+        private static readonly float CurrentVersion = 0.63f;
 
         private readonly string ConsoleList =
             Path.Combine(Environment.GetFolderPath(
@@ -34,7 +34,7 @@ namespace OrbisControlAPI
             Continuous = -1, Stop,
             Single, Double, Triple
         }
-        
+
         public enum PowerStates
         {
             Off = 31, Reboot = 30, RestMode = 1
@@ -200,7 +200,7 @@ namespace OrbisControlAPI
 
         public static TargetInfo Target = new TargetInfo();
         public static ProcessInfo Process = new ProcessInfo();
-        
+
         #endregion
 
         #region Properties
@@ -235,22 +235,23 @@ namespace OrbisControlAPI
                 Target.SetIP(consoleIP);
             }
 
-            var json = PerformRequest("setup");
-            var jsonObject = JsonConvert.DeserializeObject<Dictionary<string,
-                Dictionary<string, Dictionary<string, string>>>>(json);
-
-            var response = jsonObject["DATA"]["RESPONSE"];
-            string firmware = response["FW"];
-            string systemName = response["NAME"];
-            string orbisControl = response["OCAPI"];
-            string consoleType = response["TYPE"];
-
-            foreach (var console in FoundConsoles.Values)
+            string json = PerformRequest("setup");
+            using (JsonDocument doc = JsonDocument.Parse(json))
             {
-                console.Firmware = firmware;
-                console.SystemName = systemName;
-                console.OrbisControl = orbisControl;
-                console.ConsoleType = consoleType;
+                JsonElement response = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE");
+
+                string firmware = response.GetProperty("FW").GetString();
+                string systemName = response.GetProperty("NAME").GetString();
+                string orbisControl = response.GetProperty("OCAPI").GetString();
+                string consoleType = response.GetProperty("TYPE").GetString();
+
+                foreach (var console in FoundConsoles.Values)
+                {
+                    console.Firmware = firmware;
+                    console.SystemName = systemName;
+                    console.OrbisControl = orbisControl;
+                    console.ConsoleType = consoleType;
+                }
             }
 
             onComplete?.Invoke(FoundConsoles.Values.ToArray());
@@ -279,6 +280,8 @@ namespace OrbisControlAPI
             if (string.IsNullOrWhiteSpace(ip) || Consoles.Any(c => c.IP == ip)) return;
             Consoles.Add(new ConsoleEntry { IP = ip, CustomName = customName, Name = name });
             SaveConsoles();
+
+            Console.WriteLine(ip + Environment.NewLine + customName + Environment.NewLine + name);
         }
 
         public void RemoveConsole(string ip)
@@ -301,19 +304,48 @@ namespace OrbisControlAPI
                 SaveConsoles();
             }
         }
-        
+
         #endregion
 
         public OCAPI() => LoadConsoles();
 
         #region Connection Management
-        public bool CheckConnectionStatus(string address)
+        public bool GetConnectionStatus(string address)
         {
             Target.SetIP(address);
 
             if (!IsPortOpen(Target.IP)) return false;
 
             return !string.IsNullOrEmpty(PerformRequest("status"));
+        }
+
+        public void SetupConsole(string address, bool autoAtach = false)
+        {
+            // add more expection handling here
+
+            Target.Clear();
+            Target.SetIP(address);
+
+            string systemName = PerformRequest("get_console_name") == null ? "PS4" : PerformRequest("get_console_name");
+
+            AddConsole(Target.IP, null, systemName);
+            UploadDaemon(Target.IP);
+
+            if (!IsPortOpen(Target.IP))
+                InjectPayload(Target.IP);
+
+            if (!IsPortOpen(Target.IP))
+                throw new Exception("Failed to properly inject the payload. Please try again, this time you may simply try to run, Connect(...) and then InjectPayload(...).");
+
+            if (GetConnectionStatus(Target.IP))
+            {
+                Connect(Target.IP);
+
+                if (ProcessInfo.Current.Name != "SceShellUI" && autoAtach)
+                    Attach();
+            }
+            else
+                throw new Exception("Finished setting up, but failed to connect! Re-try calling SetupConsole(...) and/or now simply try to connect.");
         }
 
         public void InjectPayload(string address)
@@ -348,7 +380,9 @@ namespace OrbisControlAPI
 
         public void Disconnect(string address = null)
         {
-            if (!Target.Connected) return;
+            if (!Target.Connected)
+                throw new Exception("Please check the connection to the target before proceeding!");
+
             if (address != null) Target.SetIP(address.Trim());
             PerformRequest("disconnect");
             Target.Clear();
@@ -361,71 +395,101 @@ namespace OrbisControlAPI
             PerformRequest("unload");
             Target.Clear();
         }
-       
+
         public void GetTargetInfo()
         {
-            if (!Target.Connected) return;
+            if (!Target.Connected)
+                throw new Exception("Please check the connection to the target before proceeding!");
 
             Target.SetVersion(float.TryParse(PerformRequest("version"), out var version) ? version : 0f);
             Target.SetName(PerformRequest("get_console_name"));
 
-            switch (PerformRequest("get_sys_type"))
+            string sysTypeResponse = PerformRequest("get_sys_type");
+            using (JsonDocument doc = JsonDocument.Parse(sysTypeResponse))
             {
-                case "CEX":
-                    Target.SetConsoleType(ConsoleTypes.CEX.ToString());
-                    break;
-                case "KIT":
-                    Target.SetConsoleType(ConsoleTypes.KIT.ToString());
-                    break;
-                case "TEST":
-                    Target.SetConsoleType(ConsoleTypes.TEST.ToString());
-                    break;
+                string sysType = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE").GetString();
+
+                switch (sysType)
+                {
+                    case "CEX":
+                        Target.SetConsoleType(ConsoleTypes.CEX.ToString());
+                        break;
+                    case "KIT":
+                        Target.SetConsoleType(ConsoleTypes.KIT.ToString());
+                        break;
+                    case "TEST":
+                        Target.SetConsoleType(ConsoleTypes.TEST.ToString());
+                        break;
+                }
             }
 
-            Target.SetName(PerformRequest("get_console_name"));
+            string fwResponse = PerformRequest("get_fw_version");
+            using (JsonDocument doc = JsonDocument.Parse(fwResponse))
+            {
+                string fwVersionString = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE").GetString();
+                float fwVersion = float.TryParse(fwVersionString, out var fw) ? fw : 0f;
+                Target.SetFirmware(fwVersion);
+            }
 
             string diskInfo = PerformRequest("get_disk_info", "return=all");
-            string totalSpace = JObject.Parse(diskInfo)["DATA"]?["RESPONSE"]?["totalSpace"]?.ToString();
-            string freeSpace = JObject.Parse(diskInfo)["DATA"]?["RESPONSE"]?["freeSpace"]?.ToString();
-            string usedSpace = JObject.Parse(diskInfo)["DATA"]?["RESPONSE"]?["usedSpace"]?.ToString();
-            string percentage = JObject.Parse(diskInfo)["DATA"]?["RESPONSE"]?["percentUsed"]?.ToString();
+            using (JsonDocument doc = JsonDocument.Parse(diskInfo))
+            {
+                var data = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE");
 
-            TargetInfo.Storage.SetTotal(totalSpace);
-            TargetInfo.Storage.SetFree(freeSpace);
-            TargetInfo.Storage.SetUsed(usedSpace);
-            TargetInfo.Storage.SetPercentageUsed(percentage);
+                string totalSpace = data.GetProperty("totalSpace").GetString();
+                string freeSpace = data.GetProperty("freeSpace").GetString();
+                string usedSpace = data.GetProperty("usedSpace").GetString();
+                string percentage = data.GetProperty("percentUsed").GetString();
 
-            Target.SetFirmware(float.TryParse(PerformRequest("get_fw_version"), out var fw) ? fw : 0f);
+                TargetInfo.Storage.SetTotal(totalSpace);
+                TargetInfo.Storage.SetFree(freeSpace);
+                TargetInfo.Storage.SetUsed(usedSpace);
+                TargetInfo.Storage.SetPercentageUsed(percentage);
+            }
+
             Target.SetCPUTemp(int.TryParse(PerformRequest("get_temperature", "type=cpu"), out var cpuTemp) ? cpuTemp : 0);
             Target.SetSoCTemp(int.TryParse(PerformRequest("get_temperature", "type=soc"), out var socTemp) ? socTemp : 0);
             Target.SetConnected(PerformRequest("connect")?.Contains("true") == true);
-            Target.SetUsername(PerformRequest("get_username"));
+
+            string usernameResponse = PerformRequest("get_username");
+            using (JsonDocument doc = JsonDocument.Parse(usernameResponse))
+            {
+                string username = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE").GetString();
+                Target.SetUsername(username);
+            }
         }
-       
+
         #endregion
 
         #region System Control
         public void SendNotification(string message = null, string image = NotificationImages.DefaultIconNotification)
         {
-            if (!Target.Connected) return;
+            if (!Target.Connected)
+                throw new Exception("Please check the connection to the target before proceeding!");
+
             PerformRequest("send_notify", $"image={image}&msg={message}");
         }
 
         public void AlarmBuzzer(BuzzerModes mode)
         {
-            if (!Target.Connected) return;
+            //  if (!Target.Connected)
+            //     throw new Exception("Please check the connection to the target before proceeding!");
+
             PerformRequest("ring_buzzer", $"type={(int)mode}");
         }
 
         public void SetFanThreshold(int limit)
         {
-            if (!Target.Connected) return;
+            if (!Target.Connected)
+                throw new Exception("Please check the connection to the target before proceeding!");
+
             PerformRequest("set_temp_limit", $"limit={limit}");
         }
 
         public void SetPowerState(PowerStates state)
         {
-            if (!Target.Connected) return;
+            if (!Target.Connected)
+                throw new Exception("Please check the connection to the target before proceeding!");
 
             PerformRequest("set_power_state", $"state={(int)state}");
         }
@@ -435,7 +499,8 @@ namespace OrbisControlAPI
         #region Process Management
         public void GetProcessInfo()
         {
-            if (!Target.Connected) return;
+            if (!Target.Connected)
+                throw new Exception("Please check the connection to the target before proceeding!");
 
             var return_string = "pid";
             var pidResponse = PerformRequest("get_proc_info", $"return={return_string}");
@@ -473,36 +538,191 @@ namespace OrbisControlAPI
         {
             var json = PerformRequest("get_proc_list");
 
-            var jsonObject = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(json);
+            using (JsonDocument doc = JsonDocument.Parse(json))
+            {
+                var data = doc.RootElement.GetProperty("DATA");
 
-            var data = jsonObject["DATA"];
-            string[] result = new string[data.Count];
-            data.Values.CopyTo(result, 0);
+                List<string> list = new List<string>();
 
-            List<string> list = new List<string>();
-            foreach (var item in result)
-                list.Add(item);
+                foreach (var item in data.EnumerateObject())
+                {
+                    list.Add(item.Value.GetString());
+                }
 
-            ProcessInfo.SetList(list.ToArray());
+                ProcessInfo.SetList(list.ToArray());
+            }
         }
 
-        public string GetPIDByName() { return ""; }
-        public string GetNameOfPID() { return ""; }
-        
+        public int GetProcessIdByName(string name)
+        {
+            string jsonResponse = PerformRequest("get_pid_by_name", $"name={name}");
+            JsonDocument doc = JsonDocument.Parse(jsonResponse);
+            return doc.RootElement.GetProperty("DATA").GetProperty("PID").GetInt32();
+        }
+
+        public string GetNameOfProcessByID(int pid)
+        {
+            string jsonResponse = PerformRequest("get_name_of_pid", $"pid={pid}");
+            JsonDocument doc = JsonDocument.Parse(jsonResponse);
+            return doc.RootElement.GetProperty("DATA").GetProperty("NAME").GetString();
+        }
+
+        public ulong AllocateMemory(int size)
+        {
+            if (!Target.Connected && !Target.Attached)
+                throw new Exception("Please check the connection/attachment to the target before proceeding!");
+
+            string response = PerformRequest("alloc_memory", $"length={size}");
+
+            using (JsonDocument doc = JsonDocument.Parse(response))
+            {
+                string addressString = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE").GetString();
+
+                if (addressString.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+                    addressString = addressString.Substring(2);
+
+                if (ulong.TryParse(addressString, System.Globalization.NumberStyles.HexNumber, null, out ulong address))
+                    return address;
+                else return 0;
+
+            }
+        }
+
+        public void FreeMemory(ulong address, int length)
+        {
+            if (!Target.Connected && !Target.Attached)
+                throw new Exception("Please check the connection/attachment to the target before proceeding!");
+
+            string hexAddress = $"0x{address:X}";
+            PerformRequest("free_memory", $"address={hexAddress}&length={length}");
+        }
+
+        public T ReadMemory<T>(ulong address, int? length = null)
+        {
+            if (!Target.Connected && !Target.Attached)
+                throw new Exception("Please check the connection/attachment to the target before proceeding!");
+
+            if (typeof(T) == typeof(string))
+            {
+                if (length == null)
+                {
+                    StringBuilder str = new StringBuilder();
+                    ulong offset = 0;
+
+                    while (true)
+                    {
+                        string byteResponse = PerformRequest("read_memory", $"address=0x{address + offset:X}&size=1").ToLower();
+
+                        using (JsonDocument doc = JsonDocument.Parse(byteResponse))
+                        {
+                            string memoryDataString = doc.RootElement.GetProperty("data").GetProperty("response").GetString();
+
+                            if (byteResponse.Contains("error") || byteResponse.Contains("failed"))
+                                break;
+
+                            byte value = Convert.ToByte(memoryDataString, 16);
+                            if (value == 0) break;
+
+                            str.Append(Convert.ToChar(value));
+                            offset++;
+                        }
+                    }
+
+                    return (T)(object)str.ToString();
+                }
+                else
+                {
+                    byte[] byteArray = ReadMemory<byte[]>(address, length.Value);
+                    StringBuilder str = new StringBuilder();
+
+                    for (int i = 0; i < byteArray.Length; i++)
+                    {
+                        if (byteArray[i] == 0) break;
+                        str.Append(Convert.ToChar(byteArray[i]));
+                    }
+
+                    return (T)(object)str.ToString();
+                }
+            }
+
+            if (length == null)
+                throw new ArgumentException("Size is required for non-string types");
+
+            string response = PerformRequest("read_memory", $"address=0x{address:X}&size={length.Value}").ToLower();
+
+            using (JsonDocument doc = JsonDocument.Parse(response))
+            {
+                string memoryDataString = doc.RootElement.GetProperty("data").GetProperty("response").GetString();
+
+                if (response.Contains("error") || response.Contains("failed"))
+                    return default;
+
+                if (memoryDataString.Length % 2 == 0)
+                {
+                    byte[] byteArray = new byte[memoryDataString.Length / 2];
+                    for (int i = 0; i < byteArray.Length; i++)
+                        byteArray[i] = Convert.ToByte(memoryDataString.Substring(i * 2, 2), 16);
+
+                    if (typeof(T) != typeof(byte[]) && typeof(T) != typeof(string))
+                        Array.Reverse(byteArray);
+
+                    if (typeof(T) == typeof(ulong))
+                        return (T)(object)BitConverter.ToUInt64(byteArray, 0);
+                    else if (typeof(T) == typeof(uint))
+                        return (T)(object)BitConverter.ToUInt32(byteArray, 0);
+                    else if (typeof(T) == typeof(int))
+                        return (T)(object)BitConverter.ToInt32(byteArray, 0);
+                    else if (typeof(T) == typeof(short))
+                        return (T)(object)BitConverter.ToInt16(byteArray, 0);
+                    else if (typeof(T) == typeof(byte))
+                        return (T)(object)byteArray[0];
+                    else if (typeof(T) == typeof(byte[]))
+                        return (T)(object)byteArray;
+                    else if (typeof(T) == typeof(char))
+                        return (T)(object)(char)byteArray[0];
+                    else if (typeof(T) == typeof(char[]))
+                        return (T)(object)Encoding.UTF8.GetChars(byteArray);
+                    else if (typeof(T) == typeof(bool))
+                        return (T)(object)(byteArray[0] != 0);
+                    else if (typeof(T) == typeof(float))
+                        return (T)(object)BitConverter.ToSingle(byteArray, 0);
+                    else if (typeof(T) == typeof(double))
+                        return (T)(object)BitConverter.ToDouble(byteArray, 0);
+                    else
+                        throw new InvalidOperationException($"Unsupported return type: {typeof(T)}");
+                }
+                else
+                    return default;
+            }
+        }
+
+        public void WriteMemory(ulong address, byte[] data)
+        {
+            if (!Target.Connected && !Target.Attached)
+                throw new Exception("Please check the connection/attachment to the target before proceeding!");
+
+        }
+
         #endregion
 
         #region Module Management
         public int LoadModule(string path)
         {
-            if (!Target.Connected && !Target.Attached) return -1;
+            if (!Target.Connected && !Target.Attached)
+                throw new Exception("Please check the connection/attachment to the target before proceeding!");
 
             return -1;
         }
 
+        public void UnloadModule(int handle) { }
+
         public void LoadPlugin()
         {
-            if (!Target.Connected && !Target.Attached) return;
+            if (!Target.Connected && !Target.Attached)
+                throw new Exception("Please check the connection/attachment to the target before proceeding!");
         }
+
+        public void UnloadPlugin() { }
 
         #endregion
 
