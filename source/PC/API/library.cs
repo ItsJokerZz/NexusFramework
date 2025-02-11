@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,9 +14,31 @@ namespace OrbisControlAPI
 {
     public class OCAPI
     {
-        private static readonly float CurrentVersion = 0.35f;
+        #region Variables
+        private static readonly float CurrentVersion = 0.50f;
 
-        private readonly string ConsoleList = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "OrbisControlAPI", "Consoles.cfg");
+        private readonly string ConsoleList =
+            Path.Combine(Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData),
+                "OrbisControlAPI", "Consoles.cfg");
+
+        private readonly Dictionary<string, FoundConsole>
+            FoundConsoles = new Dictionary<string, FoundConsole>();
+
+        private int NumberOfConsole => Consoles.Count;
+
+        public enum ConsoleTypes { CEX, KIT, TEST }
+
+        public enum BuzzerModes
+        {
+            Continuous = -1, Stop,
+            Single, Double, Triple
+        }
+        
+        public enum PowerStates
+        {
+            Off = 31, Reboot = 30, RestMode = 1
+        }
 
         public class ConsoleEntry
         {
@@ -23,12 +46,6 @@ namespace OrbisControlAPI
             public string CustomName { get; set; }
             public string Name { get; set; }
         }
-
-        public List<ConsoleEntry> Consoles { get; private set; } = new List<ConsoleEntry>();
-        public ConsoleEntry this[int index] => index >= 0 && index < Consoles.Count ? Consoles[index] : null;
-
-        public enum ConsoleTypes { CEX, KIT, TEST }
-        public enum BuzzerModes { Continuous = -1, Stop, Single, Double, Triple }
 
         public class TargetInfo
         {
@@ -42,6 +59,21 @@ namespace OrbisControlAPI
             public string Username { get; private set; } = string.Empty;
             public bool Connected { get; private set; }
             public bool Attached { get; private set; }
+
+            public class DiskInfo
+            {
+                public string Total { get; private set; } = string.Empty;
+                public string Free { get; private set; } = string.Empty;
+                public string Used { get; private set; } = string.Empty;
+                public string PercentageUsed { get; private set; } = string.Empty;
+
+                internal void SetTotal(string amount) => Total = amount;
+                internal void SetFree(string amount) => Free = amount;
+                internal void SetUsed(string amount) => Used = amount;
+                internal void SetPercentageUsed(string amount) => PercentageUsed = amount;
+            }
+
+            public static DiskInfo Storage = new DiskInfo();
 
             internal void SetVersion(float version) => Version = version;
             internal void SetIP(string ip) => IP = ip;
@@ -76,8 +108,8 @@ namespace OrbisControlAPI
                 public string SDKMinimum { get; private set; }
                 public string AppType { get; private set; }
                 public string CoverImageURL { get; private set; }
-
                 // public Image CoverImage { get; private set; }
+
                 public void SetPID(int pid) => PID = pid;
                 public void SetTitleID(string id) => TitleID = id;
                 public void SetName(string name) => Name = name;
@@ -87,7 +119,6 @@ namespace OrbisControlAPI
                 public void SetSDKMinimum(string version) => SDKMinimum = version;
                 public void SetAppType(string appType) => AppType = appType;
                 public void SetCoverImageURL(string url) => CoverImageURL = url;
-
             }
 
             public static CurrentProcess Current = new CurrentProcess();
@@ -95,16 +126,7 @@ namespace OrbisControlAPI
             public static string[] List { get; private set; }
 
             public static void SetList(string[] list) => List = list;
-        }
-
-        public static TargetInfo Target = new TargetInfo();
-        public static ProcessInfo Process = new ProcessInfo();
-
-        public string Version => CurrentVersion.ToString("0.00");
-        public string Firmware => Target.Firmware.ToString("0.00");
-        public string Username => Target.Username;
-        public bool Connected => Target.Connected;
-        public bool Attached => Target.Attached;
+        } // add abilitity to store pid and name for each process available
 
         public class FoundConsole
         {
@@ -115,31 +137,88 @@ namespace OrbisControlAPI
             public string ConsoleType { get; set; }
         }
 
-        public OCAPI() => LoadConsoles();
-
-        private void LoadConsoles()
+        public class NotificationImages
         {
-            Consoles.Clear();
-            if (File.Exists(ConsoleList))
-                Consoles.AddRange(File.ReadAllLines(ConsoleList)
-                    .Select(line => line.Split('|'))
-                    .Where(parts => parts.Length >= 1)
-                    .Select(parts => new ConsoleEntry
-                    {
-                        IP = parts[0],
-                        CustomName = parts.ElementAtOrDefault(1) ?? "Unnamed",
-                        Name = parts.ElementAtOrDefault(2) ?? "Unknown"
-                    }));
+            public const string PlayStationButtons = "cxml://psnotification/tex_icon_system";
+            public const string IconBan = "cxml://psnotification/tex_icon_ban";
+            public const string DefaultIconNotification = "cxml://psnotification/tex_default_icon_notification";
+            public const string DefaultIconMessage = "cxml://psnotification/tex_default_icon_message";
+            public const string DefaultIconFriend = "cxml://psnotification/tex_default_icon_friend";
+            public const string DefaultIconTrophy = "cxml://psnotification/tex_default_icon_trophy";
+            public const string DefaultIconDownload = "cxml://psnotification/tex_default_icon_download";
+            public const string DefaultIconUpload16_9 = "cxml://psnotification/tex_default_icon_upload_16_9";
+            public const string DefaultIconCloudClient = "cxml://psnotification/tex_default_icon_cloud_client";
+            public const string DefaultIconActivity = "cxml://psnotification/tex_default_icon_activity";
+            public const string DefaultIconSmaps = "cxml://psnotification/tex_default_icon_smaps";
+            public const string DefaultIconSharePlay = "cxml://psnotification/tex_default_icon_shareplay";
+            public const string DefaultIconTips = "cxml://psnotification/tex_default_icon_tips";
+            public const string DefaultIconEvents = "cxml://psnotification/tex_default_icon_events";
+            public const string DefaultIconShareScreen = "cxml://psnotification/tex_default_icon_share_screen";
+            public const string DefaultIconCommunity = "cxml://psnotification/tex_default_icon_community";
+            public const string DefaultIconLfps = "cxml://psnotification/tex_default_icon_lfps";
+            public const string DefaultIconTournament = "cxml://psnotification/tex_default_icon_tournament";
+            public const string DefaultIconTeam = "cxml://psnotification/tex_default_icon_team";
+            public const string DefaultAvatar = "cxml://psnotification/tex_default_avatar";
+            public const string IconCapture = "cxml://psnotification/tex_icon_capture";
+            public const string IconStartRec = "cxml://psnotification/tex_icon_start_rec";
+            public const string IconStopRec = "cxml://psnotification/tex_icon_stop_rec";
+            public const string IconLiveProhibited = "cxml://psnotification/tex_icon_live_prohibited";
+            public const string IconLiveStart = "cxml://psnotification/tex_icon_live_start";
+            public const string IconLoading = "cxml://psnotification/tex_icon_loading";
+            public const string IconLoading16_9 = "cxml://psnotification/tex_icon_loading_16_9";
+            public const string IconCountdown = "cxml://psnotification/tex_icon_countdown";
+            public const string IconParty = "cxml://psnotification/tex_icon_party";
+            public const string IconSharePlay = "cxml://psnotification/tex_icon_shareplay";
+            public const string IconBroadcast = "cxml://psnotification/tex_icon_broadcast";
+            public const string IconPsnowToast = "cxml://psnotification/tex_icon_psnow_toast";
+            public const string AudioDeviceHeadphone = "cxml://psnotification/tex_audio_device_headphone";
+            public const string AudioDeviceHeadset = "cxml://psnotification/tex_audio_device_headset";
+            public const string AudioDeviceMic = "cxml://psnotification/tex_audio_device_mic";
+            public const string AudioDeviceMorpheus = "cxml://psnotification/tex_audio_device_morpheus";
+            public const string DeviceBattery0 = "cxml://psnotification/tex_device_battery_0";
+            public const string DeviceBattery1 = "cxml://psnotification/tex_device_battery_1";
+            public const string DeviceBattery2 = "cxml://psnotification/tex_device_battery_2";
+            public const string DeviceBattery3 = "cxml://psnotification/tex_device_battery_3";
+            public const string DeviceBatteryNoCharge = "cxml://psnotification/tex_device_battery_nocharge";
+            public const string DeviceCompApp = "cxml://psnotification/tex_device_comp_app";
+            public const string DeviceController = "cxml://psnotification/tex_device_controller";
+            public const string DeviceJediUsb = "cxml://psnotification/tex_device_jedi_usb";
+            public const string DeviceBlaster = "cxml://psnotification/tex_device_blaster";
+            public const string DeviceKeyboard = "cxml://psnotification/tex_device_keyboard";
+            public const string DeviceMouse = "cxml://psnotification/tex_device_mouse";
+            public const string DeviceMove = "cxml://psnotification/tex_device_move";
+            public const string DeviceRemote = "cxml://psnotification/tex_device_remote";
+            public const string DeviceOmit = "cxml://psnotification/tex_device_omit";
+            public const string IconConnect = "cxml://psnotification/tex_icon_connect";
+            public const string IconEventToast = "cxml://psnotification/tex_icon_event_toast";
+            public const string MorpheusTrophyBronze = "cxml://psnotification/tex_morpheus_trophy_bronze";
+            public const string MorpheusTrophySilver = "cxml://psnotification/tex_morpheus_trophy_silver";
+            public const string MorpheusTrophyGold = "cxml://psnotification/tex_morpheus_trophy_gold";
+            public const string MorpheusTrophyPlatinum = "cxml://psnotification/tex_morpheus_trophy_platinum";
+            public const string IconChampionsLeague = "cxml://psnotification/tex_icon_champions_league";
         }
 
-        private void SaveConsoles() =>
-            File.WriteAllLines(ConsoleList, Consoles.Select(c => $"{c.IP}|{c.CustomName}|{c.Name}"));
+        public static TargetInfo Target = new TargetInfo();
+        public static ProcessInfo Process = new ProcessInfo();
+        
+        #endregion
 
-        private int NumberOfConsole => Consoles.Count;
-       
-        private Dictionary<string, FoundConsole> 
-            FoundConsoles = new Dictionary<string, FoundConsole>();
-       
+        #region Properties
+        public List<ConsoleEntry> Consoles
+        { get; private set; } = new List<ConsoleEntry>();
+
+        public ConsoleEntry this[int index] => index >= 0
+            && index < Consoles.Count ? Consoles[index] : null;
+
+        public string Version => CurrentVersion.ToString("0.00");
+        public string Firmware => Target.Firmware.ToString("0.00");
+        public string Username => Target.Username;
+        public bool Connected => Target.Connected;
+        public bool Attached => Target.Attached;
+
+        #endregion
+
+        #region Console Management
         public async Task FindConsoles(Action<FoundConsole[]> onComplete)
         {
             const int listenPort = 13337;
@@ -157,7 +236,7 @@ namespace OrbisControlAPI
             }
 
             var json = PerformRequest("setup");
-            var jsonObject = JsonConvert.DeserializeObject<Dictionary<string, 
+            var jsonObject = JsonConvert.DeserializeObject<Dictionary<string,
                 Dictionary<string, Dictionary<string, string>>>>(json);
 
             var response = jsonObject["DATA"]["RESPONSE"];
@@ -177,6 +256,24 @@ namespace OrbisControlAPI
             onComplete?.Invoke(FoundConsoles.Values.ToArray());
         }
 
+        private void LoadConsoles()
+        {
+            Consoles.Clear();
+            if (File.Exists(ConsoleList))
+                Consoles.AddRange(File.ReadAllLines(ConsoleList)
+                    .Select(line => line.Split('|'))
+                    .Where(parts => parts.Length >= 1)
+                    .Select(parts => new ConsoleEntry
+                    {
+                        IP = parts[0],
+                        CustomName = parts.ElementAtOrDefault(1) ?? "Unnamed",
+                        Name = parts.ElementAtOrDefault(2) ?? "Unknown"
+                    }));
+        }
+
+        private void SaveConsoles() =>
+            File.WriteAllLines(ConsoleList, Consoles.Select(c => $"{c.IP}|{c.CustomName}|{c.Name}"));
+
         public void AddConsole(string ip, string customName, string name = "")
         {
             if (string.IsNullOrWhiteSpace(ip) || Consoles.Any(c => c.IP == ip)) return;
@@ -194,41 +291,36 @@ namespace OrbisControlAPI
             }
         }
 
+        public void RenameConsole(string ip, string name)
+        {
+            var console = Consoles.FirstOrDefault(c => c.IP == ip);
+            if (console != null)
+            {
+                console.CustomName = name;
+                Debug.WriteLine(console.CustomName);
+                SaveConsoles();
+            }
+        }
+        
+        #endregion
+
+        public OCAPI() => LoadConsoles();
+
+        #region Connection Management
+        public bool CheckConnectionStatus(string address)
+        {
+            Target.SetIP(address);
+
+            if (!IsPortOpen(Target.IP)) return false;
+
+            return !string.IsNullOrEmpty(PerformRequest("status"));
+        }
+
         public void InjectPayload(string address)
         {
             if (Target.Connected || IsPortOpen(Target.IP)) return;
-
             Target.SetIP(address);
-            Debug.WriteLine(address);
-
             Utilities.InjectPayload(Target.IP);
-        }
-
-        public void GetTargetInfo()
-        {
-            if (!Target.Connected) return;
-
-            Target.SetVersion(float.TryParse(PerformRequest("version"), out var version) ? version : 0f);
-            Target.SetName(PerformRequest("get_console_name"));
-
-            switch (PerformRequest("get_sys_type"))
-            {
-                case "CEX":
-                    Target.SetConsoleType(ConsoleTypes.CEX.ToString());
-                    break;
-                case "KIT":
-                    Target.SetConsoleType(ConsoleTypes.KIT.ToString());
-                    break;
-                case "TEST":
-                    Target.SetConsoleType(ConsoleTypes.TEST.ToString());
-                    break;
-            }
-
-            Target.SetFirmware(float.TryParse(PerformRequest("get_fw_version"), out var fw) ? fw : 0f);
-            Target.SetCPUTemp(int.TryParse(PerformRequest("get_temperature", "type=cpu"), out var cpuTemp) ? cpuTemp : 0);
-            Target.SetSoCTemp(int.TryParse(PerformRequest("get_temperature", "type=soc"), out var socTemp) ? socTemp : 0);
-            Target.SetConnected(PerformRequest("connect")?.Contains("true") == true);
-            Target.SetUsername(PerformRequest("get_username"));
         }
 
         public void Connect(string address = null)
@@ -269,11 +361,54 @@ namespace OrbisControlAPI
             PerformRequest("unload");
             Target.Clear();
         }
-
-        public void Notify(int type = 1, string msg = null)
+       
+        public void GetTargetInfo()
         {
-            if ((!Target.Connected && type != -1) || string.IsNullOrEmpty(msg)) return;
-            PerformRequest("send_notify", $"type={type}&msg={msg}");
+            if (!Target.Connected) return;
+
+            Target.SetVersion(float.TryParse(PerformRequest("version"), out var version) ? version : 0f);
+            Target.SetName(PerformRequest("get_console_name"));
+
+            switch (PerformRequest("get_sys_type"))
+            {
+                case "CEX":
+                    Target.SetConsoleType(ConsoleTypes.CEX.ToString());
+                    break;
+                case "KIT":
+                    Target.SetConsoleType(ConsoleTypes.KIT.ToString());
+                    break;
+                case "TEST":
+                    Target.SetConsoleType(ConsoleTypes.TEST.ToString());
+                    break;
+            }
+
+            Target.SetName(PerformRequest("get_console_name"));
+
+            string diskInfo = PerformRequest("get_disk_info", "return=all");
+            string totalSpace = JObject.Parse(diskInfo)["DATA"]?["RESPONSE"]?["totalSpace"]?.ToString();
+            string freeSpace = JObject.Parse(diskInfo)["DATA"]?["RESPONSE"]?["freeSpace"]?.ToString();
+            string usedSpace = JObject.Parse(diskInfo)["DATA"]?["RESPONSE"]?["usedSpace"]?.ToString();
+            string percentage = JObject.Parse(diskInfo)["DATA"]?["RESPONSE"]?["percentUsed"]?.ToString();
+
+            TargetInfo.Storage.SetTotal(totalSpace);
+            TargetInfo.Storage.SetFree(freeSpace);
+            TargetInfo.Storage.SetUsed(usedSpace);
+            TargetInfo.Storage.SetPercentageUsed(percentage);
+
+            Target.SetFirmware(float.TryParse(PerformRequest("get_fw_version"), out var fw) ? fw : 0f);
+            Target.SetCPUTemp(int.TryParse(PerformRequest("get_temperature", "type=cpu"), out var cpuTemp) ? cpuTemp : 0);
+            Target.SetSoCTemp(int.TryParse(PerformRequest("get_temperature", "type=soc"), out var socTemp) ? socTemp : 0);
+            Target.SetConnected(PerformRequest("connect")?.Contains("true") == true);
+            Target.SetUsername(PerformRequest("get_username"));
+        }
+       
+        #endregion
+
+        #region System Control
+        public void SendNotification(string message = null, string image = NotificationImages.DefaultIconNotification)
+        {
+            if (!Target.Connected) return;
+            PerformRequest("send_notify", $"image={image}&msg={message}");
         }
 
         public void AlarmBuzzer(BuzzerModes mode)
@@ -288,6 +423,16 @@ namespace OrbisControlAPI
             PerformRequest("set_temp_limit", $"limit={limit}");
         }
 
+        public void SetPowerState(PowerStates state)
+        {
+            if (!Target.Connected) return;
+
+            PerformRequest("set_power_state", $"state={(int)state}");
+        }
+
+        #endregion
+
+        #region Process Management
         public void GetProcessInfo()
         {
             if (!Target.Connected) return;
@@ -341,20 +486,17 @@ namespace OrbisControlAPI
             ProcessInfo.SetList(list.ToArray());
         }
 
+        public string GetPIDByName() { return ""; }
+        public string GetNameOfPID() { return ""; }
+        
+        #endregion
+
+        #region Module Management
         public int LoadModule(string path)
         {
             if (!Target.Connected && !Target.Attached) return -1;
-            string handle = PerformRequest("load_module", $"path={path}");
-            return int.TryParse(handle, out var value) ? value : -1;
-        }
 
-        public int LoadModule(string executable, string path, bool searchForExecutable = false)
-        {
-            if (!Target.Connected) return -1;
-            if (!searchForExecutable) return 0;
-
-            string handle = PerformRequest("load_module", $"path={path}&exec={executable}");
-            return int.TryParse(handle, out var value) ? value : -1;
+            return -1;
         }
 
         public void LoadPlugin()
@@ -362,6 +504,7 @@ namespace OrbisControlAPI
             if (!Target.Connected && !Target.Attached) return;
         }
 
+        #endregion
 
     }
 }

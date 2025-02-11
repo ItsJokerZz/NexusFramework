@@ -10,7 +10,6 @@ using static OrbisControlAPI.OCAPI;
 using System.Windows.Threading;
 using System.Windows.Shapes;
 using System.Diagnostics;
-using System.Linq;
 
 namespace ConsoleManager
 {
@@ -19,12 +18,18 @@ namespace ConsoleManager
         private readonly OCAPI api = new();
         public double MemoryUsageWidth { get; set; } = 300;
 
-        // Add properties for system info
-        public string FirmwareVersion { get; set; } = "?.??";
-        public string ConsoleType { get; set; } = "????";
-        public string CPUTemperature { get; set; } = "?? °C";
-        public string SoCTemperature { get; set; } = "?? °C";
-        public string PRXVersion { get; set; } = "?.??";
+        public string FirmwareVersion { get; set; } = "----";
+        public string ConsoleType { get; set; } = "----";
+        public string CPUTemperature { get; set; } = "---";
+        public string SoCTemperature { get; set; } = "---";
+        public string PRXVersion { get; set; } = "----";
+        public string DLLVersion { get; set; } = "----";
+
+        public double DiskUsagePercentage { get; set; } = 0;
+        public double DiskUsageWidth { get; set; } = 0;
+        public string TotalDiskSpace { get; set; } = "----";
+        public string FreeDiskSpace { get; set; } = "----";
+        public string UsedDiskSpace { get; set; } = "----";
 
         public partial class App : Application { }
 
@@ -39,10 +44,11 @@ namespace ConsoleManager
         {
             api.Connect(address);
             api.AlarmBuzzer(BuzzerModes.Single);
-            api.Notify(222, "[OCAPI] Console Manager: Connected Successfully!");
-            
+            api.SendNotification("[OCAPI] Console Manager: Connected Successfully!");
+
             UpdateSystemInfo();
             UpdateProcessList();
+            UpdateDiskInfo();
         }
 
         private DispatcherTimer autoRefreshTimer;
@@ -52,11 +58,11 @@ namespace ConsoleManager
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = this;
 
             colorSettings = ColorSettings.Load();
             darkMode = colorSettings.IsDarkMode;
 
-            // Set up the UI operation delegates
             RemoveFromConsoleList = element => ConsoleList.Children.Remove(element);
             AddToConsoleList = element => ConsoleList.Children.Add(element);
             SetEmptyStateVisibility = visibility => EmptyState.Visibility = visibility;
@@ -68,10 +74,8 @@ namespace ConsoleManager
             DarkNet.Instance.SetCurrentProcessTheme(darkMode ? Theme.Dark : Theme.Light);
             DarkNet.Instance.SetWindowThemeWpf(this, darkMode ? Theme.Dark : Theme.Light);
 
-            DataContext = this;
             ColorBoxMouseDownHandler = ColorBox_MouseDown;
 
-            // Add new delegate initializations
             Utilities.FindResource = key => FindResource(key);
             HandleConsoleItemClick = clickedItem =>
             {
@@ -83,25 +87,11 @@ namespace ConsoleManager
             Utilities.ConnectToConsole = (ip) =>
             {
                 ConnectToConsole(ip);
-                UpdateSystemInfo(); // Update the UI after connection
+                UpdateSystemInfo();
             };
             InjectPayload = ip => api.InjectPayload(ip);
             RemoveConsole = ip => api.RemoveConsole(ip);
-            DisconnectFromConsole = (ip) => 
-            {
-                api.Disconnect(ip);
-                
-                // Stop signal animation and reset bars
-                signalTimer.Stop();
-                currentSignalLevel = 0;
-                foreach (Path bar in SignalCanvas.Children)
-                {
-                    bar.Opacity = 0.2;
-                }
-                
-                // Reset system info
-                UpdateSystemInfo();
-            };
+            Utilities.DisconnectFromConsole = ip => DisconnectFromConsole(ip);
             AttachToConsole = (ip) => 
             {
                 if (!Target.Connected)
@@ -114,10 +104,7 @@ namespace ConsoleManager
                 UpdateProcessList();
             };
 
-            Utilities.UnloadPayload = (ip) => 
-            {
-                api.Unload(ip);
-            };
+            Utilities.UnloadPayload = ip => UnloadPayload(ip);
 
             Loaded += (s, e) =>
             {
@@ -128,21 +115,24 @@ namespace ConsoleManager
                     var consoleItem = CreateConsoleItem(console.CustomName ?? console.Name ?? "PS4", console.IP);
                     ConsoleList.Children.Add(consoleItem);
                 }
+
+                EmptyState.Visibility = ConsoleList.Children.Count <= 1 ? 
+                    Visibility.Visible : Visibility.Collapsed;
             };
 
-            // Initialize the timer but don't start it
             autoRefreshTimer = new DispatcherTimer
             {
                 Interval = TimeSpan.FromSeconds(2)
             };
             autoRefreshTimer.Tick += (s, args) => UpdateSystemInfo();
 
-            // Initialize signal animation timer (but don't start it)
             signalTimer = new DispatcherTimer
             {
                 Interval = TimeSpan.FromMilliseconds(200)
             };
             signalTimer.Tick += SignalTimer_Tick;
+
+            DLLVersion = api.Version;
         }
 
         private void ImageSource_SelectionChanged(object sender, SelectionChangedEventArgs e) { }
@@ -328,10 +318,8 @@ namespace ConsoleManager
             if (AddConsoleOverlay == null) return;
             AddConsoleOverlay.Visibility = Visibility.Visible;
 
-            // Clear previous results
             FoundConsolesPanel.Children.Clear();
 
-            // Start real console discovery and add them to UI
             api.FindConsoles(consoles =>
             {
                 Dispatcher.Invoke(() => 
@@ -394,13 +382,12 @@ namespace ConsoleManager
             content.Children.Add(infoPanel);
             consoleBox.Child = content;
 
-            // Update click handler to fill both name and IP
             consoleBox.MouseDown += (s, args) =>
             {
                 var nameBox = AddConsoleOverlay.FindVisualChildren<TextBox>()
-                    .FirstOrDefault();  // First TextBox is the name box
+                    .FirstOrDefault();
                 var ipBox = AddConsoleOverlay.FindVisualChildren<TextBox>()
-                    .Skip(1).FirstOrDefault();  // Second TextBox is the IP box
+                    .Skip(1).FirstOrDefault();
 
                 if (nameBox != null) nameBox.Text = console.SystemName ?? "PS4";
                 if (ipBox != null) ipBox.Text = console.IP;
@@ -415,12 +402,138 @@ namespace ConsoleManager
                 AddConsoleOverlay.Visibility = Visibility.Collapsed;
         }
 
+        private Border CreateConsoleItem(string name, string ip)
+        {
+            var consoleBox = new Border
+            {
+                Style = (Style)FindResource("CardBorder"),
+                Margin = new Thickness(8, 4, 8, 4),
+                Padding = new Thickness(16)
+            };
+
+            var grid = new Grid();
+            
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+            var textStack = new StackPanel();
+
+            var nameBlock = new TextBlock
+            {
+                Text = name,
+                FontWeight = FontWeights.SemiBold,
+                FontSize = 14,
+                Foreground = (Brush)FindResource("ColorText")
+            };
+
+            var ipBlock = new TextBlock
+            {
+                Text = $"IP: {ip}",
+                Foreground = (Brush)FindResource("ColorTextSecondary"),
+                FontSize = 12,
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+
+            textStack.Children.Add(nameBlock);
+            textStack.Children.Add(ipBlock);
+            Grid.SetColumn(textStack, 0);
+            grid.Children.Add(textStack);
+
+            var arrowPath = new Path
+            {
+                Data = (Geometry)FindResource("ChevronRightIcon"),
+                Fill = (Brush)FindResource("ColorTextSecondary"),
+                Width = 20,
+                Height = 20,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(8, 0, 0, 0)
+            };
+            Grid.SetColumn(arrowPath, 1);
+            grid.Children.Add(arrowPath);
+
+            consoleBox.Child = grid;
+
+            var contextMenu = new ContextMenu { Style = (Style)FindResource("DarkContextMenu") };
+            
+            var injectItem = new MenuItem 
+            { 
+                Header = "Inject",
+                Style = (Style)FindResource("DarkMenuItem")
+            };
+            injectItem.Click += (s, e) => Utilities.InjectPayload(ip);
+            
+            var unloadItem = new MenuItem 
+            { 
+                Header = "Unload",
+                Style = (Style)FindResource("DarkMenuItem")
+            };
+            unloadItem.Click += (s, e) => Utilities.UnloadPayload(ip);
+            
+            var connectItem = new MenuItem 
+            { 
+                Header = "Connect",
+                Style = (Style)FindResource("DarkMenuItem")
+            };
+            connectItem.Click += (s, e) => Utilities.ConnectToConsole(ip);
+            
+            var attachItem = new MenuItem 
+            { 
+                Header = "Attach",
+                Style = (Style)FindResource("DarkMenuItem")
+            };
+            attachItem.Click += (s, e) => Utilities.AttachToConsole(ip);
+            
+            var disconnectItem = new MenuItem 
+            { 
+                Header = "Disconnect",
+                Style = (Style)FindResource("DarkMenuItem")
+            };
+            disconnectItem.Click += (s, e) => Utilities.DisconnectFromConsole(ip);
+            
+            var renameItem = new MenuItem 
+            { 
+                Header = "Rename",
+                Style = (Style)FindResource("DarkMenuItem")
+            };
+            renameItem.Click += (s, e) =>
+            {
+                RenameOverlay.Visibility = Visibility.Visible;
+                RenameTextBox.Text = name;
+                RenameTextBox.Focus();
+                RenameTextBox.SelectAll();
+                currentConsoleToRename = consoleBox;
+            };
+            
+            var removeItem = new MenuItem 
+            { 
+                Header = "Remove",
+                Style = (Style)FindResource("DarkMenuItemRed")
+            };
+            removeItem.Click += (s, e) => Utilities.RemoveConsole(ip);
+
+            contextMenu.Items.Add(injectItem);
+            contextMenu.Items.Add(unloadItem);
+            contextMenu.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
+            
+            contextMenu.Items.Add(connectItem);
+            contextMenu.Items.Add(attachItem);
+            contextMenu.Items.Add(disconnectItem);
+            contextMenu.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
+            
+            contextMenu.Items.Add(renameItem);
+            contextMenu.Items.Add(removeItem);
+
+            consoleBox.ContextMenu = contextMenu;
+
+            return consoleBox;
+        }
+
         private void AddConsole_Click(object sender, RoutedEventArgs e)
         {
             var ipAddressBox = this.FindVisualChildren<TextBox>()
                 .FirstOrDefault(tb => tb.Margin.Bottom == 0);
-            var nameBox = this.FindVisualChildren<TextBox>()
-                .FirstOrDefault(tb => tb.Margin.Bottom == 16);
+            var nameBox = ConsoleNameTextBox;
 
             if (ipAddressBox == null || string.IsNullOrWhiteSpace(ipAddressBox.Text))
             {
@@ -428,16 +541,46 @@ namespace ConsoleManager
                 return;
             }
 
-            string ip = ipAddressBox.Text;
-            string name = string.IsNullOrWhiteSpace(nameBox?.Text) ? "PS4" : nameBox.Text;
+            string ip = ipAddressBox.Text.Trim();
+            string name = string.IsNullOrWhiteSpace(nameBox?.Text) ? "PS4" : nameBox.Text.Trim();
 
-            api.AddConsole(ip, name);
-            var consoleItem = CreateConsoleItem(name, ip);
+            bool isDuplicate = ConsoleList.Children.OfType<Border>().Any(border =>
+            {
+                var stack = border.Child as Grid;
+                var textStack = stack?.Children[0] as StackPanel;
+                var ipText = (textStack?.Children[1] as TextBlock)?.Text;
+                var existingIp = ipText?.Replace("IP: ", "").Trim();
+                return existingIp == ip;
+            });
 
-            if (EmptyState.Visibility == Visibility.Visible)
-                EmptyState.Visibility = Visibility.Collapsed;
+            if (isDuplicate)
+            {
+                var existingConsole = ConsoleList.Children.OfType<Border>().First(border =>
+                {
+                    var stack = border.Child as Grid;
+                    var textStack = stack?.Children[0] as StackPanel;
+                    var ipText = (textStack?.Children[1] as TextBlock)?.Text;
+                    return ipText?.Replace("IP: ", "").Trim() == ip;
+                });
 
-            ConsoleList.Children.Add(consoleItem);
+                var stack = existingConsole.Child as Grid;
+                var textStack = stack?.Children[0] as StackPanel;
+                var nameBlock = textStack?.Children[0] as TextBlock;
+                if (nameBlock != null)
+                {
+                    nameBlock.Text = name;
+                    api.RenameConsole(ip, name);
+                }
+            }
+            else
+            {
+                api.AddConsole(ip, name);
+                var consoleItem = CreateConsoleItem(name, ip);
+                ConsoleList.Children.Add(consoleItem);
+            }
+
+            EmptyState.Visibility = ConsoleList.Children.Count <= 1 ? 
+                Visibility.Visible : Visibility.Collapsed;
 
             if (ipAddressBox != null) ipAddressBox.Text = "";
             if (nameBox != null) nameBox.Text = "";
@@ -467,17 +610,27 @@ namespace ConsoleManager
             if (currentConsoleToRename != null && !string.IsNullOrWhiteSpace(RenameTextBox.Text))
             {
                 var grid = currentConsoleToRename.Child as Grid;
-                var textStack = grid?.Children.OfType<StackPanel>().FirstOrDefault();
-                var nameTextBlock = textStack?.Children.OfType<TextBlock>().FirstOrDefault();
+                var textStack = grid?.Children[0] as StackPanel;
+                var ipBlock = textStack?.Children[1] as TextBlock;
+                
+                // Extract IP from the text block (removes "IP: " prefix)
+                string ip = ipBlock?.Text.Replace("IP: ", "").Trim();
+                
+                if (!string.IsNullOrEmpty(ip))
+                {
+                    // Update the name in the UI
+                    var nameBlock = textStack?.Children[0] as TextBlock;
+                    if (nameBlock != null)
+                        nameBlock.Text = RenameTextBox.Text;
 
-                if (nameTextBlock != null)
-                    nameTextBlock.Text = RenameTextBox.Text;
+                    // Update the name in the API
+                    api.RenameConsole(ip, RenameTextBox.Text);
+                }
             }
 
             CloseRenameOverlay_Click(sender, e);
         }
 
-        // Method to update system info
         private void UpdateSystemInfo()
         {
             if (api.Connected)
@@ -488,7 +641,7 @@ namespace ConsoleManager
                 CPUTemperature = $"{Target.CPUTemp} °C";
                 SoCTemperature = $"{Target.SoCTemp} °C";
                 PRXVersion = Target.Version.ToString("0.00");
-
+                
                 // Start signal animation if not already running
                 if (!signalTimer.IsEnabled)
                 {
@@ -517,6 +670,7 @@ namespace ConsoleManager
             OnPropertyChanged(nameof(CPUTemperature));
             OnPropertyChanged(nameof(SoCTemperature));
             OnPropertyChanged(nameof(PRXVersion));
+            OnPropertyChanged(nameof(DLLVersion));
         }
 
         private void RefreshSystemInfo_Click(object sender, RoutedEventArgs e)
@@ -572,6 +726,90 @@ namespace ConsoleManager
             {
                 string selectedProcess = selectedItem.Content.ToString();
             }
+        }
+
+        private void UpdateDiskInfo()
+        {
+            if (api?.Connected == true)
+            {
+                var diskInfo = OCAPI.TargetInfo.Storage;
+
+                string percentageStr = diskInfo.PercentageUsed.Replace("%", "").Trim();
+                if (double.TryParse(percentageStr, out double percentage))
+                {
+                    DiskUsagePercentage = percentage;
+                }
+                else
+                {
+                    DiskUsagePercentage = 0;
+                }
+
+                TotalDiskSpace = diskInfo.Total;
+                FreeDiskSpace = diskInfo.Free;
+                UsedDiskSpace = diskInfo.Used;
+
+                OnPropertyChanged(nameof(DiskUsagePercentage));
+                OnPropertyChanged(nameof(TotalDiskSpace));
+                OnPropertyChanged(nameof(FreeDiskSpace));
+                OnPropertyChanged(nameof(UsedDiskSpace));
+            }
+            else
+            {
+                DiskUsagePercentage = 0;
+                TotalDiskSpace = "?.?? GB";
+                FreeDiskSpace = "?.?? GB";
+                UsedDiskSpace = "?.?? GB";
+            }
+        }
+
+        private void ResetHomePageData()
+        {
+            // Reset system info
+            FirmwareVersion = "?.??";
+            ConsoleType = "????";
+            CPUTemperature = "?? °C";
+            SoCTemperature = "?? °C";
+            PRXVersion = "?.??";
+
+            // Reset disk info
+            DiskUsagePercentage = 0;
+            TotalDiskSpace = "?.?? GB";
+            FreeDiskSpace = "?.?? GB";
+            UsedDiskSpace = "?.?? GB";
+
+            // Clear process list
+            ProcessListComboBox.Items.Clear();
+
+            // Stop signal animation and reset bars
+            signalTimer.Stop();
+            currentSignalLevel = 0;
+            foreach (Path bar in SignalCanvas.Children)
+            {
+                bar.Opacity = 0.2;
+            }
+
+            // Notify UI of property changes
+            OnPropertyChanged(nameof(FirmwareVersion));
+            OnPropertyChanged(nameof(ConsoleType));
+            OnPropertyChanged(nameof(CPUTemperature));
+            OnPropertyChanged(nameof(SoCTemperature));
+            OnPropertyChanged(nameof(PRXVersion));
+            OnPropertyChanged(nameof(DiskUsagePercentage));
+            OnPropertyChanged(nameof(TotalDiskSpace));
+            OnPropertyChanged(nameof(FreeDiskSpace));
+            OnPropertyChanged(nameof(UsedDiskSpace));
+        }
+
+        private void DisconnectFromConsole(string ip)
+        {
+            api.Disconnect(ip);
+            ResetHomePageData();
+        }
+
+        private void UnloadPayload(string ip)
+        {
+            api.Unload(ip);
+            ResetHomePageData();
         }
     }
 }

@@ -9,13 +9,12 @@ namespace cmds
       void setup()
       {
         nlohmann::json config = {
-          {"NAME", get_console_name()},
-          {"FW", get_fw_version()},
-          {"TYPE", get_console_type()},
-          {"OCAPI", std::to_string(VERSION).substr(0, 4)}
-      };
+            {"NAME", get_console_name()},
+            {"FW", get_fw_version()},
+            {"TYPE", get_console_type()},
+            {"OCAPI", std::to_string(VERSION).substr(0, 4)}};
 
-      send_response(config);
+        send_response(config);
       }
 
       void status()
@@ -92,9 +91,40 @@ namespace cmds
         send_response(get_fw_version());
       }
 
-      void sys_type()
+      void get_sys_type()
       {
         send_response(get_console_type());
+      }
+
+      void get_disk_info()
+      {
+        std::string value = extract_param("return", data.buffer);
+
+        if (value.empty())
+          value = "all";
+
+        nlohmann::json diskInfo;
+
+        if (value == "all")
+        {
+          diskInfo["percentUsed"] = ::get_disk_info("percentUsed");
+          diskInfo["totalSpace"] = ::get_disk_info("totalSpace");
+          diskInfo["usedSpace"] = ::get_disk_info("usedSpace");
+          diskInfo["freeSpace"] = ::get_disk_info("freeSpace");
+        }
+        else
+        {
+          if (value == "percent")
+            diskInfo["percentUsed"] = ::get_disk_info("percentUsed");
+          else if (value == "total")
+            diskInfo["totalSpace"] = ::get_disk_info("totalSpace");
+          else if (value == "used")
+            diskInfo["usedSpace"] = ::get_disk_info("usedSpace");
+          else if (value == "free")
+            diskInfo["freeSpace"] = ::get_disk_info("freeSpace");
+        }
+
+        send_response(diskInfo);
       }
 
       void get_temp()
@@ -120,10 +150,6 @@ namespace cmds
       void get_user()
       {
         send_response(get_username());
-      }
-
-      void get_disk_info()
-      {
       }
 
     }
@@ -218,13 +244,15 @@ namespace cmds
 
       void notify()
       {
-        std::string type_str = extract_param("type", data.buffer);
+        std::string image_uri = extract_param("image", data.buffer);
         std::string message = decode_url(extract_param("msg", data.buffer));
 
-        int type = std::stoi(type_str.c_str());
+        if (message.empty())
+          send_error_response(INVALID_ARGS);
 
-        if (!type_str.empty())
-          text_notify(type, message.c_str());
+        if (!image_uri.empty())
+          image_notify(image_uri.c_str(), message.c_str());
+
         send_response("done");
       }
 

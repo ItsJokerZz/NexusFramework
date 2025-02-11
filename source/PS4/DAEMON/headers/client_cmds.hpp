@@ -20,7 +20,8 @@ namespace cmds
         {
             void get_name();
             void get_fw();
-            void sys_type();
+            void get_sys_type();
+            void get_disk_info();
             void get_temp();
             void get_user();
 

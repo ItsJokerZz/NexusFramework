@@ -15,12 +15,6 @@ namespace OrbisControlAPI
 
         internal static readonly HttpClient Client = new HttpClient();
 
-        internal static void PrintTargetInfo(/* remove me later */)
-        {
-            foreach (var property in typeof(TargetInfo).GetProperties())
-                Console.WriteLine($"{property.Name}: {property.GetValue(Target)}");
-        }
-
         internal static Socket GetBinLoaderSocket(string ip, int port)
         {
             if (!IPAddress.TryParse(ip, out var address))

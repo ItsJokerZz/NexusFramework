@@ -65,3 +65,5 @@ C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\obj\Release\net8.
 C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\bin\Release\net8.0-windows\OrbisControlAPI.dll
 C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\bin\Release\net8.0-windows\OrbisControlAPI.pdb
 C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\bin\Release\net8.0-windows\OrbisControlAPI.dll.config
+C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\bin\Release\net8.0-windows\Newtonsoft.Json.dll
+C:\Users\Dakota\Documents\GitHub\OrbisControl\source\PC\CM-WPF\bin\Release\net8.0-windows\Newtonsoft.Json.xml

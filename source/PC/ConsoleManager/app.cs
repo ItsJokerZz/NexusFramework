@@ -112,7 +112,7 @@ namespace CM
 
             if (api.Connected)
             {
-                api.Notify(222, "[OCAPI] Console Manager: Connected Successfully!");
+                api.SendNotification("[OCAPI] Console Manager: Connected Successfully!");
                 active_l.Text = $"Active Console: {Target.Name}"; /*{GetConsolePrefix(selectedNode)}*/
                 label6.Text = $"Firmware: {Target.Firmware}";
                 label7.Text = $"CPU Temperature: {Target.CPUTemp} C";
@@ -196,7 +196,8 @@ namespace CM
             string message = textBox3.Text;
             message = message.Replace(@"\n", Environment.NewLine);
 
-            api.Notify(int.Parse(textBox4.Text), message);
+            api.SendNotification(message);
+
         }
 
         private void disconnectToolStripMenuItem_Click(object sender, EventArgs e) => DisconnectFromConsole();

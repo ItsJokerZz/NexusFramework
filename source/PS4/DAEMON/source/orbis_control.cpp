@@ -46,14 +46,11 @@ bool isOn()
 void handle_request(const std::string &request)
 {
   static const std::map<std::string, std::function<void()>> daemon_commands = {
-      /* MAKE SETUP FUNC THAT WILL RETURN ALL NEEDED INFO SO A LOT OF THIS CAN
-              BE MADE TO REQUIRE THE COMMAND HANDLER UNLESS ITS STATUS*/
-
       {"POST /test", cmds::client::process::write_proc_mem},
 
       {"GET /setup", cmds::client::connection::setup},
-      {"GET /status", cmds::client::connection::status},   // maybe later try to implement another like
-      {"GET /version", cmds::client::connection::version}, // console status to check if rest or awake
+      {"GET /status", cmds::client::connection::status},
+      {"GET /version", cmds::client::connection::version},
       {"GET /connect", cmds::client::connection::connect},
       {"GET /unload", cmds::client::connection::unload},
       {"GET /disconnect", []()
@@ -66,7 +63,9 @@ void handle_request(const std::string &request)
       {"GET /get_fw_version", []()
        { handle_command(cmds::client::sys_info::get_fw); }},
       {"GET /get_sys_type", []()
-       { handle_command(cmds::client::sys_info::sys_type); }},
+       { handle_command(cmds::client::sys_info::get_sys_type); }},
+      {"GET /get_disk_info", []()
+       { handle_command(cmds::client::sys_info::get_disk_info); }},
       {"GET /get_temperature", []()
        { handle_command(cmds::client::sys_info::get_temp); }},
       {"GET /get_username", []()
@@ -368,8 +367,6 @@ void *telnet_server(void *arg)
 
 void *send_udp_signal(void *arg)
 {
-  const char *target_ip = "255.255.255.255";
-  const int target_port = 13337;
   const char *message = "UDP_SEARCH_KEY*";
 
   while (true)
@@ -377,7 +374,6 @@ void *send_udp_signal(void *arg)
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0)
     {
-      log_message("Failed to create UDP socket");
       sceKernelSleep(10);
       continue;
     }
@@ -387,16 +383,11 @@ void *send_udp_signal(void *arg)
 
     sockaddr_in target_addr{};
     target_addr.sin_family = AF_INET;
-    target_addr.sin_port = htons(target_port);
-    inet_pton(AF_INET, target_ip, &target_addr.sin_addr);
+    target_addr.sin_port = htons(13337);
+    inet_pton(AF_INET, "255.255.255.255", &target_addr.sin_addr);
 
     ssize_t sent_bytes = sendto(sock, message, strlen(message), 0,
                                 (struct sockaddr *)&target_addr, sizeof(target_addr));
-
-    if (sent_bytes < 0)
-      log_message("Failed to send UDP signal");
-    else
-      log_message("UDP signal sent to %s:%d", target_ip, target_port);
 
     close(sock);
     sceKernelSleep(10);

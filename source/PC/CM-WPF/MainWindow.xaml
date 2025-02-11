@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ConsoleManager"
+        xmlns:converters="clr-namespace:ConsoleManager.Converters"
         mc:Ignorable="d"
         Title="GoldHEN Console Manager" 
         MinWidth="1024" 
@@ -12,6 +13,10 @@
         Height="425"
         Background="{DynamicResource ColorDarker}"
         WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <converters:PercentageToWidthConverter x:Key="PercentageToWidthConverter"/>
+        <Geometry x:Key="DiskIcon">M20 13V6C20 4.89543 19.1046 4 18 4H6C4.89543 4 4 4.89543 4 6V13M20 13V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V13M20 13H4M8 17H16</Geometry>
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250" MinWidth="250"/>
@@ -151,189 +156,298 @@
                     <TabItem Header="Home" Height="43" VerticalAlignment="Center" Margin="0,0,-1,0">
                         <Border Style="{StaticResource ContainerBorder}">
                             <Grid>
-                                <Border Style="{StaticResource CardBorder}">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="*"/>
-                                            <RowDefinition Height="*"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                                        <Border Style="{StaticResource CardBorder}" 
-                                                Grid.Row="0" Grid.Column="0" 
-                                                Margin="0,0,8,8">
-                                            <DockPanel MinWidth="400" MinHeight="180">
-                                                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                                                    <TextBlock Text="System Info" 
-                                                              Style="{StaticResource CardTitle}"
-                                                              FontSize="18"/>
-                                                    <Button Style="{StaticResource IconButton}" 
-                                                            HorizontalAlignment="Right"
-                                                            Click="RefreshSystemInfo_Click">
-                                                        <Path Data="{StaticResource RefreshIcon}" 
-                                                              Fill="{DynamicResource ColorText}"
-                                                              Width="14" Height="14"/>
-                                                    </Button>
+                                <!-- System Info Card -->
+                                <Border Style="{StaticResource CardBorder}" 
+                                        Grid.Row="0" Grid.Column="0" 
+                                        Margin="0,0,8,8">
+                                    <DockPanel MinWidth="400" MinHeight="180">
+                                        <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+                                            <TextBlock Text="System Info" 
+                                                      Style="{StaticResource CardTitle}"
+                                                      FontSize="18"/>
+                                            <Button Style="{StaticResource IconButton}" 
+                                                    HorizontalAlignment="Right"
+                                                    Click="RefreshSystemInfo_Click">
+                                                <Path Data="{StaticResource RefreshIcon}" 
+                                                      Fill="{DynamicResource ColorText}"
+                                                      Width="14" Height="14"/>
+                                            </Button>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                <TextBlock Text="Firmware" 
+                                                          Style="{StaticResource CardLabel}"
+                                                          FontSize="13"/>
+                                                <TextBlock Text="{Binding FirmwareVersion}" 
+                                                          Style="{StaticResource CardValue}"
+                                                          FontSize="16"
+                                                          Margin="0,4,0,16"/>
+
+                                                <TextBlock Text="CPU" 
+                                                          Style="{StaticResource CardLabel}"
+                                                          FontSize="13"/>
+                                                <TextBlock Text="{Binding CPUTemperature}" 
+                                                          Style="{StaticResource CardValue}"
+                                                          FontSize="16"
+                                                          Margin="0,4,0,16"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="Type" 
+                                                          Style="{StaticResource CardLabel}"
+                                                          FontSize="13"/>
+                                                <TextBlock Text="{Binding ConsoleType}" 
+                                                          Style="{StaticResource CardValue}"
+                                                          FontSize="16"
+                                                          Margin="0,4,0,16"/>
+
+                                                <TextBlock Text="SoC" 
+                                                          Style="{StaticResource CardLabel}"
+                                                          FontSize="13"/>
+                                                <TextBlock Text="{Binding SoCTemperature}" 
+                                                          Style="{StaticResource CardValue}"
+                                                          FontSize="16"
+                                                          Margin="0,4,0,16"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DockPanel>
+                                </Border>
+
+                                <!-- Quick Actions Card -->
+                                <Border Style="{StaticResource CardBorder}" 
+                                        Grid.Row="0" Grid.Column="1" 
+                                        Margin="8,0,0,8">
+                                    <DockPanel MinWidth="400" MinHeight="180">
+                                        <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+                                            <TextBlock Text="Quick Actions" 
+                                                      Style="{StaticResource CardTitle}"
+                                                      FontSize="18"/>
+                                            <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right">
+                                                <Path Data="{StaticResource PowerIcon}" 
+                                                      Fill="{DynamicResource ColorText}"
+                                                      Width="14" Height="14"/>
+                                            </Button>
+                                        </Grid>
+                                        <StackPanel VerticalAlignment="Stretch">
+                                            <Button Content="Restart System" 
+                                                    Style="{StaticResource ActionButtonStyle}"
+                                                    FontSize="13"
+                                                    Height="34"
+                                                    Margin="0,0,0,8"/>
+                                            <Button Content="Quick Boot" 
+                                                    Style="{StaticResource ActionButtonStyle}"
+                                                    FontSize="13"
+                                                    Height="34"
+                                                    Margin="0,0,0,8"/>
+                                            <Button Content="Shutdown" 
+                                                    Style="{StaticResource ActionButtonStyle}"
+                                                    FontSize="13"
+                                                    Height="34"
+                                                    Margin="0,0,0,8"/>
+                                            <Button Content="Hard Reset" 
+                                                    Style="{StaticResource ActionButtonStyle}"
+                                                    FontSize="13"
+                                                    Height="34"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+
+                                <!-- Disk Info Card -->
+                                <Border Style="{StaticResource CardBorder}" 
+                                        Grid.Row="1" Grid.Column="0" 
+                                        Margin="0,8,8,0">
+                                    <DockPanel>
+                                        <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
+                                            <TextBlock Text="Storage Info" 
+                                                      Style="{StaticResource CardTitle}"
+                                                      FontSize="18"/>
+                                            <Button Style="{StaticResource IconButton}" 
+                                                    HorizontalAlignment="Right"
+                                                   >
+                                                <Path Data="{StaticResource DiskIcon}" 
+                                                      Fill="{DynamicResource ColorText}"
+                                                      Width="14" Height="14"/>
+                                            </Button>
+                                        </Grid>
+
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Progress Bar -->
+                                            <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                                                <Grid Margin="0,0,0,8">
+                                                    <TextBlock Text="Storage Usage" 
+                                                             Style="{StaticResource CardLabel}"
+                                                             FontSize="12"/>
+                                                    <TextBlock Text="{Binding DiskUsagePercentage, StringFormat={}{0}%}" 
+                                                             Style="{StaticResource CardValue}"
+                                                             FontSize="12"
+                                                             HorizontalAlignment="Right"/>
                                                 </Grid>
-                                                <Grid>
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="*"/>
-                                                        <ColumnDefinition Width="*"/>
-                                                    </Grid.ColumnDefinitions>
+                                                <Grid x:Name="ProgressBarContainer">
+                                                    <Border Height="8" 
+                                                            Background="#1a1a1a" 
+                                                            CornerRadius="4"/>
+                                                    <Border Height="8" 
+                                                            Background="{DynamicResource PrimaryGradient}" 
+                                                            CornerRadius="4" 
+                                                            HorizontalAlignment="Left">
+                                                        <Border.Width>
+                                                            <MultiBinding Converter="{StaticResource PercentageToWidthConverter}">
+                                                                <Binding Path="DiskUsagePercentage"/>
+                                                                <Binding ElementName="ProgressBarContainer" Path="ActualWidth"/>
+                                                            </MultiBinding>
+                                                        </Border.Width>
+                                                    </Border>
+                                                </Grid>
+                                            </StackPanel>
 
-                                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                                        <TextBlock Text="Firmware" 
-                                                                  Style="{StaticResource CardLabel}"
-                                                                  FontSize="13"/>
-                                                        <TextBlock Text="{Binding FirmwareVersion}" 
-                                                                  Style="{StaticResource CardValue}"
-                                                                  FontSize="16"
-                                                                  Margin="0,4,0,16"/>
+                                            <!-- Disk Stats -->
+                                            <UniformGrid Grid.Row="1" Columns="3">
+                                                <StackPanel Margin="0,0,16,0">
+                                                    <TextBlock Text="Free Space" 
+                                                             Style="{StaticResource CardLabel}"
+                                                             FontSize="12"/>
+                                                    <TextBlock Text="{Binding FreeDiskSpace}" 
+                                                             Style="{StaticResource CardValue}"
+                                                             FontSize="14"
+                                                             Margin="0,4,0,0"/>
+                                                </StackPanel>
 
-                                                        <TextBlock Text="CPU" 
+                                                <StackPanel Margin="8,0,8,0">
+                                                    <TextBlock Text="Total Space" 
+                                                              Style="{StaticResource CardLabel}"
+                                                              FontSize="12"/>
+                                                    <TextBlock Text="{Binding TotalDiskSpace}" 
+                                                              Style="{StaticResource CardValue}"
+                                                              FontSize="14"
+                                                              Margin="0,4,0,0"/>
+                                                </StackPanel>
+
+                                                <StackPanel Margin="16,0,0,0">
+                                                    <TextBlock Text="Used Space" 
+                                                              Style="{StaticResource CardLabel}"
+                                                              FontSize="12"/>
+                                                    <TextBlock Text="{Binding UsedDiskSpace}" 
+                                                              Style="{StaticResource CardValue}"
+                                                              FontSize="14"
+                                                              Margin="0,4,0,0"/>
+                                                </StackPanel>
+                                            </UniformGrid>
+                                        </Grid>
+                                    </DockPanel>
+                                </Border>
+
+                                <!-- Versioning Card -->
+                                <Border Style="{StaticResource CardBorder}" 
+                                        Grid.Row="1" Grid.Column="1" 
+                                        Margin="8,8,0,0">
+                                    <DockPanel>
+                                        <TextBlock Text="Versioning" 
+                                                  Style="{StaticResource CardTitle}"
+                                                  FontSize="18"
+                                                  DockPanel.Dock="Top"
+                                                  Margin="0,0,0,16"/>
+
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- DLL Version -->
+                                            <Border Style="{StaticResource CardBorder}" 
+                                                    Grid.Column="0"
+                                                    Margin="0,0,8,0">
+                                                <DockPanel>
+                                                    <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                                                        <TextBlock Text="DLL Version" 
+                                                                  Style="{StaticResource CardTitle}"
+                                                                  FontSize="14"/>
+                                                        <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right">
+                                                            <Path Data="{StaticResource CubeIcon}" 
+                                                                  Fill="{DynamicResource ColorText}"
+                                                                  Width="12" Height="12"/>
+                                                        </Button>
+                                                    </Grid>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Current Version" 
                                                                   Style="{StaticResource CardLabel}"
-                                                                  FontSize="13"/>
-                                                        <TextBlock Text="{Binding CPUTemperature}" 
+                                                                  FontSize="12"/>
+                                                        <TextBlock Text="{Binding DLLVersion}"
                                                                   Style="{StaticResource CardValue}"
-                                                                  FontSize="16"
-                                                                  Margin="0,4,0,16"/>
+                                                                  FontSize="14"
+                                                                  Margin="0,2,0,8"/>
+                                                        <TextBlock Text="Build Date" 
+                                                                  Style="{StaticResource CardLabel}"
+                                                                  FontSize="12"/>
+                                                        <TextBlock Text="????.??.??" 
+                                                                  Style="{StaticResource CardValue}"
+                                                                  FontSize="14"
+                                                                  Margin="0,2,0,0"/>
                                                     </StackPanel>
+                                                </DockPanel>
+                                            </Border>
 
-                                                    <StackPanel Grid.Column="1">
-                                                        <TextBlock Text="Type" 
+                                            <!-- PRX Version -->
+                                            <Border Style="{StaticResource CardBorder}" 
+                                                    Grid.Column="1"
+                                                    Margin="8,0,0,0">
+                                                <DockPanel>
+                                                    <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                                                        <TextBlock Text="PRX Version" 
+                                                                  Style="{StaticResource CardTitle}"
+                                                                  FontSize="14"/>
+                                                        <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right">
+                                                            <Path Data="{StaticResource DocumentIcon}" 
+                                                                  Fill="{DynamicResource ColorText}"
+                                                                  Width="12" Height="12"/>
+                                                        </Button>
+                                                    </Grid>
+                                                    <StackPanel>
+                                                        <TextBlock 
                                                                   Style="{StaticResource CardLabel}"
-                                                                  FontSize="13"/>
-                                                        <TextBlock Text="{Binding ConsoleType}" 
+                                                                  FontSize="12" Text="Current Version"/>
+                                                        <TextBlock Text="{Binding PRXVersion}" 
                                                                   Style="{StaticResource CardValue}"
-                                                                  FontSize="16"
-                                                                  Margin="0,4,0,16"/>
-
-                                                        <TextBlock Text="SoC" 
+                                                                  FontSize="14"
+                                                                  Margin="0,2,0,8"/>
+                                                        <TextBlock Text="Build Date" 
                                                                   Style="{StaticResource CardLabel}"
-                                                                  FontSize="13"/>
-                                                        <TextBlock Text="{Binding SoCTemperature}" 
+                                                                  FontSize="12"/>
+                                                        <TextBlock Text="????.??.??" 
                                                                   Style="{StaticResource CardValue}"
-                                                                  FontSize="16"
-                                                                  Margin="0,4,0,16"/>
+                                                                  FontSize="14"
+                                                                  Margin="0,2,0,0"/>
                                                     </StackPanel>
-                                                </Grid>
-                                            </DockPanel>
-                                        </Border>
-
-                                        <Border Style="{StaticResource CardBorder}" 
-                                                Grid.Row="0" Grid.Column="1" 
-                                                Margin="8,0,0,8">
-                                            <DockPanel MinWidth="400" MinHeight="180">
-                                                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                                                    <TextBlock Text="Quick Actions" 
-                                                              Style="{StaticResource CardTitle}"
-                                                              FontSize="18"/>
-                                                    <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right">
-                                                        <Path Data="{StaticResource PowerIcon}" 
-                                                              Fill="{DynamicResource ColorText}"
-                                                              Width="14" Height="14"/>
-                                                    </Button>
-                                                </Grid>
-                                                <StackPanel VerticalAlignment="Stretch">
-                                                    <Button Content="Restart System" 
-                                                            Style="{StaticResource ActionButtonStyle}"
-                                                            FontSize="13"
-                                                            Height="34"
-                                                            Margin="0,0,0,8"/>
-                                                    <Button Content="Quick Boot" 
-                                                            Style="{StaticResource ActionButtonStyle}"
-                                                            FontSize="13"
-                                                            Height="34"
-                                                            Margin="0,0,0,8"/>
-                                                    <Button Content="Shutdown" 
-                                                            Style="{StaticResource ActionButtonStyle}"
-                                                            FontSize="13"
-                                                            Height="34"
-                                                            Margin="0,0,0,8"/>
-                                                    <Button Content="Hard Reset" 
-                                                            Style="{StaticResource ActionButtonStyle}"
-                                                            FontSize="13"
-                                                            Height="34"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Border>
-
-                                        <Border Style="{StaticResource CardBorder}" 
-                                                Grid.Row="1" Grid.Column="0" 
-                                                Margin="0,8,8,0">
-                                            <DockPanel MinWidth="400" MinHeight="180">
-                                                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                                                    <TextBlock Text="DLL Version" 
-                                                              Style="{StaticResource CardTitle}"
-                                                              FontSize="18"/>
-                                                    <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right">
-                                                        <Path Data="{StaticResource CubeIcon}" 
-                                                              Fill="{DynamicResource ColorText}"
-                                                              Width="14" Height="14"/>
-                                                    </Button>
-                                                </Grid>
-                                                <StackPanel>
-                                                    <TextBlock Text="Current Version" 
-                                                              Style="{StaticResource CardLabel}"
-                                                              FontSize="13"
-                                                              Margin="0,0,0,4"/>
-                                                    <TextBlock Text="0.35" 
-                                                              Style="{StaticResource CardValue}"
-                                                              FontSize="16"
-                                                              Margin="0,0,0,16"/>
-                                                    <TextBlock Text="Build Date" 
-                                                              Style="{StaticResource CardLabel}"
-                                                              FontSize="13"
-                                                              Margin="0,0,0,4"/>
-                                                    <TextBlock Text="??" 
-                                                              Style="{StaticResource CardValue}"
-                                                              FontSize="16"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Border>
-
-                                        <Border Style="{StaticResource CardBorder}" 
-                                                Grid.Row="1" Grid.Column="1" 
-                                                Margin="8,8,0,0">
-                                            <DockPanel MinWidth="400" MinHeight="180">
-                                                <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                                                    <TextBlock Text="PRX Version" 
-                                                              Style="{StaticResource CardTitle}"
-                                                              FontSize="18"/>
-                                                    <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right">
-                                                        <Path Data="{StaticResource DocumentIcon}" 
-                                                              Fill="{DynamicResource ColorText}"
-                                                              Width="14" Height="14"/>
-                                                    </Button>
-                                                </Grid>
-                                                <StackPanel>
-                                                    <TextBlock Text="PRX" 
-                                                              Style="{StaticResource CardLabel}"
-                                                              FontSize="13"/>
-                                                    <TextBlock Text="{Binding PRXVersion}" 
-                                                              Style="{StaticResource CardValue}"
-                                                              FontSize="16"
-                                                              Margin="0,4,0,16"/>
-                                                    <TextBlock Text="Build Date" 
-                                                              Style="{StaticResource CardLabel}"
-                                                              FontSize="13"
-                                                              Margin="0,0,0,4"/>
-                                                    <TextBlock Text="????.??.??" 
-                                                              Style="{StaticResource CardValue}"
-                                                              FontSize="16"/>
-                                                </StackPanel>
-                                            </DockPanel>
-                                        </Border>
-                                    </Grid>
+                                                </DockPanel>
+                                            </Border>
+                                        </Grid>
+                                    </DockPanel>
                                 </Border>
                             </Grid>
                         </Border>
                     </TabItem>
 
-                    <TabItem Header="System" Margin="10,0,-10,0">
+                    <TabItem Header="System" Margin="10,0,0,0" HorizontalAlignment="Left" Width="67">
                         <Border Style="{StaticResource ContainerBorder}">
                             <Grid>
                                 <Border Style="{StaticResource CardBorder}">
@@ -439,7 +553,7 @@
                                         <Border Style="{StaticResource CardBorder}" Grid.Row="1" Margin="0,20,0,0">
                                             <DockPanel>
                                                 <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                                                    <TextBlock Text="Notification" Style="{StaticResource CardTitle}"/>
+                                                    <TextBlock Style="{StaticResource CardTitle}"><Run Text="Send Notifications"/><LineBreak/><Run/></TextBlock>
                                                     <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right">
                                                         <Path Data="{StaticResource BellIcon}" 
                                                               Fill="{DynamicResource ColorText}"
@@ -454,10 +568,6 @@
                                                     </Grid.RowDefinitions>
 
                                                     <StackPanel Grid.Row="0" Margin="0,0,0,16">
-                                                        <TextBlock Text="Text Notification" 
-                                                                 Foreground="{DynamicResource ColorTextSecondary}"
-                                                                 FontSize="14"
-                                                                 Margin="0,0,0,8"/>
                                                         <ComboBox Style="{StaticResource DarkComboBox}">
                                                             <ComboBoxItem Content="Select Image Type" Style="{StaticResource DarkComboBoxItem}"/>
                                                             <ComboBoxItem Content="System Image" Style="{StaticResource DarkComboBoxItem}"/>
@@ -479,27 +589,11 @@
                                                     </StackPanel>
 
                                                     <StackPanel Grid.Row="1">
-                                                        <TextBlock Text="Image Notification" 
-                                                                 Foreground="{DynamicResource ColorTextSecondary}"
-                                                                 Margin="0,0,0,8"/>
-                                                        <ComboBox Style="{StaticResource DarkComboBox}"
-                                                                  Margin="0,0,0,8">
-                                                            <ComboBoxItem Content="Select Image Type" Style="{StaticResource DarkComboBoxItem}"/>
-                                                            <ComboBoxItem Content="System Image" Style="{StaticResource DarkComboBoxItem}"/>
-                                                            <ComboBoxItem Content="Custom Image" Style="{StaticResource DarkComboBoxItem}"/>
-                                                        </ComboBox>
                                                         <Grid>
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="*"/>
                                                                 <ColumnDefinition Width="120"/>
                                                             </Grid.ColumnDefinitions>
-                                                            <TextBox Grid.Column="0"
-                                                                     Tag="Enter text here..."
-                                                                     Style="{StaticResource DarkTextBox}"
-                                                                     Margin="0,0,8,0"/>
-                                                            <Button Content="Send"
-                                                                    Grid.Column="1"
-                                                                    Style="{StaticResource PrimaryButtonStyle}"/>
                                                         </Grid>
                                                     </StackPanel>
                                                 </Grid>
@@ -511,45 +605,32 @@
                         </Border>
                     </TabItem>
 
-                    <TabItem Header="Memory" Margin="18,0,-22,0">
-                        <ScrollViewer>
-                            <Border Style="{StaticResource ContainerBorder}">
+                    <TabItem Header="Memory" Margin="12,0,-29,0">
+                        <Border Style="{StaticResource ContainerBorder}">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                                         HorizontalScrollBarVisibility="Disabled"
+                                         >
                                 <StackPanel MinWidth="700">
-                                    <Border Style="{StaticResource CardBorder}">
-                                        <StackPanel>
-                                            <TextBlock Text="Memory Usage" Style="{StaticResource CardTitle}"/>
-
-                                            <Grid>
-                                                <Border Height="8" 
-                                                        Background="#1a1a1a" 
-                                                        CornerRadius="4" 
-                                                        Margin="0,0,0,8"/>
-                                                <Border Height="8" 
-                                                        Background="{DynamicResource PrimaryGradient}" 
-                                                        CornerRadius="4" 
-                                                        HorizontalAlignment="Left" 
-                                                        Width="{Binding MemoryUsageWidth, RelativeSource={RelativeSource AncestorType=Window}}"/>
-                                            </Grid>
-
-                                            <Grid>
-                                                <TextBlock Text="Used: ???" 
-                                                         Foreground="#888888" 
-                                                         FontSize="12" 
-                                                         HorizontalAlignment="Left"/>
-                                                <TextBlock Text="Total: ???" 
-                                                         Foreground="#888888" 
-                                                         FontSize="12" 
-                                                         HorizontalAlignment="Right"/>
-                                            </Grid>
-                                        </StackPanel>
-                                    </Border>
 
                                     <Border Style="{StaticResource CardBorder}">
                                         <StackPanel>
-                                            <TextBlock Text="PRX Loader" Style="{StaticResource CardTitle}"/>
+                                            <TextBlock Text="Module Loader" Style="{StaticResource CardTitle}"/>
 
                                             <StackPanel Margin="0,0,0,16">
-                                                <TextBlock Text="PRX Path:" 
+                                                <TextBlock Text="Process:"
+                                                          Foreground="{DynamicResource ColorTextSecondary}"
+                                                          Margin="0,0,0,4"/>
+                                                <ComboBox x:Name="ProcessListComboBox"
+                                                         Style="{StaticResource DarkComboBox}"
+                                                         Margin="0,0,8,0"
+                                                         SelectionChanged="ProcessList_SelectionChanged"
+                                                         IsEditable="True"
+                                                         IsTextSearchEnabled="True"
+                                                         TextSearch.TextPath="Content"/>
+                                            </StackPanel>
+
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Module Path:" 
                                                          Foreground="#888888" 
                                                          FontSize="12" 
                                                          Margin="0,0,0,8"/>
@@ -559,50 +640,66 @@
                                                          CaretBrush="{DynamicResource ColorText}"/>
                                             </StackPanel>
 
-                                            <StackPanel Margin="0,0,0,16">
-                                                <TextBlock Text="Process:"
-                                                           Foreground="{DynamicResource ColorTextSecondary}"
-                                                           Margin="0,0,0,4"/>
-                                                <ComboBox x:Name="ProcessListComboBox"
-                                                          Style="{StaticResource DarkComboBox}"
-                                                          Margin="0,0,8,0"
-                                                          SelectionChanged="ProcessList_SelectionChanged"
-                                                          IsEditable="True"
-                                                          IsTextSearchEnabled="True"
-                                                          TextSearch.TextPath="Content">
-                                                    <!-- Items will be populated from code-behind -->
-                                                </ComboBox>
-                                            </StackPanel>
-
-                                            <Button Content="Load PRX/SPRX" 
+                                            <Button Content="Load Module" 
                                                     Style="{StaticResource PrimaryButtonStyle}"/>
                                         </StackPanel>
                                     </Border>
 
                                     <Border Style="{StaticResource CardBorder}">
-                                        <Grid>
-                                            <StackPanel>
-                                                <TextBlock Text="Loaded PRX" Style="{StaticResource CardTitle}"/>
-                                                <TextBlock Text="No PRX modules loaded" 
-                                                         Foreground="#888888"
-                                                         FontSize="14"
-                                                         HorizontalAlignment="Center"
-                                                         Margin="0,20"/>
+                                        <StackPanel>
+                                            <TextBlock Text="Plugin Loader" Style="{StaticResource CardTitle}"/>
+
+                                            <StackPanel Margin="0,0,0,16">
+                                                <TextBlock Text="Plugin Path:" 
+                                                         Foreground="#888888" 
+                                                         FontSize="12" 
+                                                         Margin="0,0,0,8"/>
+                                                <TextBox Tag="/data/plugins/example.prx"
+                                                         Style="{StaticResource DarkTextBox}"
+                                                         Foreground="{DynamicResource ColorText}"
+                                                         CaretBrush="{DynamicResource ColorText}"/>
                                             </StackPanel>
-                                            <TextBlock Text="0 loaded" 
-                                                     Foreground="#888888"
-                                                     FontSize="12"
-                                                     HorizontalAlignment="Right"
-                                                     VerticalAlignment="Top"
-                                                     Margin="0,4,0,0"/>
-                                        </Grid>
+                                            
+                                            <Button Content="Load Plugin" 
+                                                    Style="{StaticResource PrimaryButtonStyle}"/>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource CardBorder}">
+                                        <StackPanel>
+                                            <TextBlock Text="Loaded PRX" Style="{StaticResource CardTitle}"/>
+                                            
+                                            <!-- Loaded Modules Card -->
+                                            <Border Style="{StaticResource CardBorder}" Margin="0,16,0,8">
+                                                <StackPanel>
+                                                    <TextBlock Text="Loaded Modules" Style="{StaticResource CardTitle}"/>
+                                                    <TextBlock Text="No modules loaded" 
+                                                             Foreground="#888888"
+                                                             FontSize="14"
+                                                             HorizontalAlignment="Center"
+                                                             Margin="0,20"/>
+                                                </StackPanel>
+                                            </Border>
+
+                                            <!-- Loaded Plugins Card -->
+                                            <Border Style="{StaticResource CardBorder}" Margin="0,8,0,0">
+                                                <StackPanel>
+                                                    <TextBlock Text="Loaded Plugins" Style="{StaticResource CardTitle}"/>
+                                                    <TextBlock Text="No plugins loaded" 
+                                                             Foreground="#888888"
+                                                             FontSize="14"
+                                                             HorizontalAlignment="Center"
+                                                             Margin="0,20"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
                                     </Border>
                                 </StackPanel>
-                            </Border>
-                        </ScrollViewer>
+                            </ScrollViewer>
+                        </Border>
                     </TabItem>
 
-                    <TabItem Header="Settings" Margin="29,0,-31,0">
+                    <TabItem Header="Settings" Margin="29,0,-59,0">
                         <Grid>
                             <Border Style="{StaticResource ContainerBorder}">
                                 <Grid>
@@ -918,7 +1015,8 @@
                             <TextBlock Text="Console Name"
                                      Margin="0,0,0,8"
                                      Foreground="{DynamicResource ColorTextSecondary}"/>
-                            <TextBox Style="{StaticResource DarkTextBox}"
+                            <TextBox x:Name="ConsoleNameTextBox"
+                                     Style="{StaticResource DarkTextBox}"
                                      Margin="0,0,0,24"/>
 
                             <TextBlock Text="IP Address"
