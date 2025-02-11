@@ -10,3 +10,6 @@
 *.prx
 *.bin
 *.map
+/source/PC/CM-WPF/obj
+/source/PC/CM-WPF/bin
+/source/PC/CM-WPF/obj

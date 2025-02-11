@@ -321,7 +321,7 @@ namespace OrbisControlAPI
 
         public void SetupConsole(string address, bool autoAtach = false)
         {
-            // add more expection handling here
+            // add more exception handling here
 
             Target.Clear();
             Target.SetIP(address);
@@ -472,8 +472,8 @@ namespace OrbisControlAPI
 
         public void AlarmBuzzer(BuzzerModes mode)
         {
-            //  if (!Target.Connected)
-            //     throw new Exception("Please check the connection to the target before proceeding!");
+              if (!Target.Connected)
+                 throw new Exception("Please check the connection to the target before proceeding!");
 
             PerformRequest("ring_buzzer", $"type={(int)mode}");
         }
