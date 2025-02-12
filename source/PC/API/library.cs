@@ -716,13 +716,6 @@ namespace OrbisControlAPI
 
         }
 
-        public void CloseApplication()
-        {
-            if (!Target.Connected && !Target.Attached)
-                throw new Exception("Please check the connection/attachment to the target before proceeding!");
-
-        }
-
         #endregion
 
         #region Module Management
@@ -731,7 +724,9 @@ namespace OrbisControlAPI
             if (!Target.Connected && !Target.Attached)
                 throw new Exception("Please check the connection/attachment to the target before proceeding!");
 
-            if (int.TryParse(PerformRequest("load_module", $"process={processName}&path={modulePath}"), out int result))
+            if (int.TryParse(PerformRequest("load_module", $"process={processName}&module={modulePath}"), out int result))
+                Debug.WriteLine(result);
+                
                 return result;
 
             return -1;

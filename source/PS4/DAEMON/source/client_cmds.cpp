@@ -35,29 +35,65 @@ namespace cmds
 
       void unload()
       {
+        // First close any active client connections
         if (data.sockets.client >= 0)
         {
-          sceNetSocketClose(data.sockets.client);
+          shutdown(data.sockets.client, SHUT_RDWR);
+          close(data.sockets.client);
           data.sockets.client = -1;
-
-          pthread_cancel(data.threads.client);
         }
 
+        // Close server socket
+        if (data.sockets.server >= 0)
+        {
+          shutdown(data.sockets.server, SHUT_RDWR);
+          close(data.sockets.server);
+          data.sockets.server = -1;
+        }
+
+        // Cancel and cleanup threads
+        if (data.threads.client != -1)
+        {
+          pthread_cancel(data.threads.client);
+          pthread_join(data.threads.client, NULL);
+          data.threads.client = -1;
+        }
+
+        if (data.threads.server != -1)
+        {
+          pthread_cancel(data.threads.server);
+          pthread_join(data.threads.server, NULL);
+          data.threads.server = -1;
+        }
+
+        // Clear any remaining data in buffer
+        std::fill(data.buffer.begin(), data.buffer.end(), 0);
+
+        // Reset socket addresses
+        memset(&data.sockets.server_addr, 0, sizeof(data.sockets.server_addr));
+        memset(&data.sockets.client_addr, 0, sizeof(data.sockets.client_addr));
+        data.sockets.client_addr_len = sizeof(struct sockaddr_in);
+
+        // Set unload flag
         unloaded = true;
 
+        // Send final response
         send_response("done");
       }
 
       void disconnect()
       {
-
+        // Properly shutdown and close client socket
         if (data.sockets.client >= 0)
         {
-          sceNetSocketClose(data.sockets.client);
+          shutdown(data.sockets.client, SHUT_RDWR);
+          close(data.sockets.client);
           data.sockets.client = -1;
         }
 
+        // Reset connection state
         connected = false;
+        attached = false;
 
         send_response("done");
       }
@@ -71,7 +107,7 @@ namespace cmds
           std::string response = perform_http_request("attach_relay");
 
           if (response != "" && response == "done") /*prolly not needed*/
-          attached = true;
+            attached = true;
         }
 
         send_response("done");
@@ -439,19 +475,19 @@ namespace cmds
       void load_module()
       {
         std::string processName = extract_param("process", data.buffer);
-        std::string prxPath = extract_param("path", data.buffer);
+        std::string modulePath = extract_param("module", data.buffer);
 
-        auto load_prx = [](const std::string &processName, const std::string &prxPath) -> bool
+        auto load_prx = [](const std::string &processName, const std::string &modulePath) -> bool
         {
           int prx_handle = sys_sdk_proc_prx_load(const_cast<char *>(processName.c_str()),
-                                                 const_cast<char *>(prxPath.c_str()));
+                                                 const_cast<char *>(modulePath.c_str()));
           if (prx_handle >= 0)
           {
             char notify_msg[256];
-            snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", prxPath.c_str());
+            snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", modulePath.c_str());
             text_notify(222, notify_msg);
 
-            send_response(generate_json({{prxPath, prx_handle}}).c_str());
+            send_response(generate_json({{modulePath, prx_handle}}).c_str());
 
             return true;
           }
@@ -460,7 +496,7 @@ namespace cmds
           return false;
         };
 
-        if (processName.empty() && prxPath.empty())
+        if (processName.empty() && modulePath.empty())
         {
           send_error_response(INVALID_ARGS);
 
@@ -469,14 +505,14 @@ namespace cmds
 
         if (is_port_open(RELAYS_PORT))
         {
-          if (!prxPath.empty() && processName.empty())
+          if (!modulePath.empty() && processName.empty())
           {
-            send_response(perform_http_request("load_module", RELAYS_PORT, true, "load_module?path=" + prxPath));
+            send_response(perform_http_request("load_module", RELAYS_PORT, true, "load_module?path=" + modulePath));
 
             return;
           }
         }
-        else if (processName.empty() && !prxPath.empty())
+        else if (processName.empty() && !modulePath.empty())
         {
           if (!attached)
           {
@@ -484,22 +520,62 @@ namespace cmds
 
             return;
           }
-          send_response(perform_http_request("load_module", RELAYS_PORT, true, "load_module?path=" + prxPath));
+
+          send_response(perform_http_request("load_module", RELAYS_PORT, true, "load_module?path=" + modulePath));
+
           return;
         }
 
-        if (!processName.empty() && !prxPath.empty())
-          load_prx(processName, prxPath);
+        if (!processName.empty() && !modulePath.empty())
+          load_prx(processName, modulePath);
         else
           send_error_response(INVALID_ARGS);
       }
 
-      void unload_module() {}
+      void unload_module()
+      {
+        std::string processName = extract_param("process", data.buffer);
+        std::string handle_string = extract_param("handle", data.buffer);
+
+        if (handle_string.empty())
+        {
+          send_error_response(INVALID_ARGS);
+          return;
+        }
+
+        int handle = std::stoi(handle_string);
+
+        auto unload_prx = [](const std::string &processName, int handle) -> bool
+        {
+          int result = sys_sdk_proc_prx_unload(const_cast<char *>(processName.c_str()), handle);
+          if (result >= 0)
+          {
+            char notify_msg[256];
+            snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Unloaded: Handle %d", handle);
+            text_notify(222, notify_msg);
+
+            send_response(generate_json({{"handle", result}}).c_str());
+            return true;
+          }
+
+          send_error_response(UNKNOWN_ERROR);
+          return false;
+        };
+
+        if (!processName.empty())
+        {
+          unload_prx(processName, handle);
+        }
+        else
+        {
+          perform_http_request("unload_module", RELAYS_PORT, true, "handle=" + handle_string);
+        }
+      }
 
       void stop_plugin() {}
 
       void start_plugin() {}
-      
+
     }
 
   }

@@ -57,16 +57,27 @@ void handle_request(const std::string &request)
       {"GET /start_plugin", []()
        { handle_command(cmds::client::process::start_plugin); }},
       {"GET /load_module", []()
-       { handle_command(cmds::client::process::load_module); }}};
+       {
+         handle_command(cmds::client::process::load_module);
+       }},
+      {"GET /unload_module", []()
+       {
+         handle_command(cmds::client::process::unload_module);
+       }}};
 
   static const std::map<std::string, std::function<void()>> relay_commands = {
       {"GET /attach_relay", cmds::daemon::attach_relay},
+      
       {"GET /read_memory", cmds::daemon::read_memory},
       {"POST /write_memory", cmds::daemon::write_memory},
+      
       {"GET /alloc_memory", cmds::daemon::alloc_memory},
       {"GET /free_memory", cmds::daemon::free_memory},
+      
       {"GET /start_plugin", cmds::daemon::start_plugin},
-      {"GET /load_module", cmds::daemon::load_module}};
+      
+      {"GET /load_module", cmds::daemon::load_module},
+      {"GET /unload_module", cmds::daemon::unload_module}};
 
   const auto &commands = isDaemon ? daemon_commands : relay_commands;
   auto it = std::find_if(commands.begin(), commands.end(),
@@ -99,166 +110,89 @@ void *unified_process(void *arg)
 
   shutdown(data.sockets.client, SHUT_RDWR);
   close(data.sockets.client);
-
   return nullptr;
 }
 
 void *unified_thread(void *arg)
 {
-  int retries = 0;
   std::string message,
       socket_name = "[OrbisControl] " + name + " Socket";
 
-  auto create_server_socket = [&]() -> int
-  {
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0)
-    {
-      message = name + " failed to create server socket, retrying in " +
-                std::to_string(RETRY_DELAY_SECONDS) + " seconds... Attempt " +
-                std::to_string(retries + 1) + "/" + std::to_string(MAX_RETRY_ATTEMPTS);
-      log_message("%s", message.c_str());
-      return -1;
-    }
-
-    // Add socket options to allow reuse of address and port
-    int opt = 1;
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0 ||
-        setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0)
-    {
-      close(sock);
-      return -1;
-    }
-
-    // Set socket to non-blocking mode
-    int flags = fcntl(sock, F_GETFL, 0);
-    if (flags < 0 || fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0)
-    {
-      close(sock);
-      return -1;
-    }
-
-    return sock;
-  };
-
-  auto bind_server_socket = [&]() -> bool
-  {
-    struct sockaddr_in server_addr;
-    memset(&server_addr, 0, sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-    server_addr.sin_addr.s_addr = isDaemon ? INADDR_ANY : inet_addr("127.0.0.1");
-    
-    // Try to bind using the global retry constants
-    int retry_count = 0;
-    while (retry_count < MAX_RETRY_ATTEMPTS)
-    {
-      if (bind(data.sockets.server, (struct sockaddr*)&server_addr, sizeof(server_addr)) >= 0)
-      {
-        return true;
-      }
-      
-      if (errno != EADDRINUSE)
-      {
-        break; // If error is not "address in use", stop retrying
-      }
-      
-      sceKernelSleep(RETRY_DELAY_SECONDS);
-      retry_count++;
-      
-      message = name + " failed to bind server socket, retrying in " +
-                std::to_string(RETRY_DELAY_SECONDS) + " seconds... Attempt " +
-                std::to_string(retry_count + 1) + "/" + std::to_string(MAX_RETRY_ATTEMPTS);
-      log_message("%s", message.c_str());
-    }
-    
-    return false;
-  };
-
-  auto listen_server_socket = [&]() -> bool
-  {
-    // Set socket back to blocking mode before listen
-    int flags = fcntl(data.sockets.server, F_GETFL, 0);
-    if (flags < 0 || fcntl(data.sockets.server, F_SETFL, flags & ~O_NONBLOCK) < 0)
-    {
-      return false;
-    }
-    
-    return listen(data.sockets.server, SOMAXCONN) >= 0;
-  };
-
   while (!unloaded)
   {
-    data.sockets.server = create_server_socket();
+    data.sockets.server = socket(AF_INET, SOCK_STREAM, 0);
     if (data.sockets.server < 0)
     {
-      if (++retries >= MAX_RETRY_ATTEMPTS)
-      {
-        message = name + " failed to create server socket after " +
-                  std::to_string(MAX_RETRY_ATTEMPTS) + " attempts, unloading...";
-        log_message("%s", message.c_str());
-        unloaded = true;
-        break;
-      }
-      sceKernelSleep(RETRY_DELAY_SECONDS);
+      log_message("%s failed to create socket", name.c_str());
+      sceKernelSleep(1);
       continue;
     }
 
-    if (!bind_server_socket() || !listen_server_socket())
+    // Set socket options to ensure rebinding works
+    int opt = 1;
+    setsockopt(data.sockets.server, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    setsockopt(data.sockets.server, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
+
+    // Force close any existing connection on this port
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    // Try to bind immediately
+    if (bind(data.sockets.server, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
-      message = name + " failed to bind or listen on server socket, retrying...";
-      log_message("%s", message.c_str());
-      shutdown(data.sockets.server, SHUT_RDWR);
+      log_message("%s failed to bind", name.c_str());
       close(data.sockets.server);
-      if (++retries >= MAX_RETRY_ATTEMPTS)
-      {
-        message = name + " failed to bind or listen after " +
-                  std::to_string(MAX_RETRY_ATTEMPTS) + " attempts, unloading...";
-        log_message("%s", message.c_str());
-        unloaded = true;
-        break;
-      }
-      sceKernelSleep(RETRY_DELAY_SECONDS);
+      sceKernelSleep(1);
       continue;
     }
 
-    // Reset retry counter on successful setup
-    retries = 0;
+    // Set the actual address after successful bind
+    memset(&data.sockets.server_addr, 0, sizeof(data.sockets.server_addr));
+    data.sockets.server_addr.sin_family = AF_INET;
+    data.sockets.server_addr.sin_port = htons(port);
+    if (DEBUG)
+      data.sockets.server_addr.sin_addr.s_addr = 0;
+    else
+      data.sockets.server_addr.sin_addr.s_addr = htonl(isDaemon ? INADDR_ANY : INADDR_LOOPBACK);
 
-    message = "[OrbisControl]\n" + name + " started";
-    text_notify(222, message.c_str());
+    if (listen(data.sockets.server, 5) < 0)
+    {
+      log_message("%s failed to listen", name.c_str());
+      close(data.sockets.server);
+      sceKernelSleep(1);
+      continue;
+    }
 
     message = name + " has started a server listening on port " + std::to_string(port) + ".";
     log_message("%s", message.c_str());
 
     while (!unloaded)
     {
-      data.sockets.client = accept(data.sockets.server, (struct sockaddr*)&data.sockets.client_addr,
-                                 &data.sockets.client_addr_len);
+      data.sockets.client = accept(data.sockets.server,
+                                   (struct sockaddr *)&data.sockets.client_addr,
+                                   &data.sockets.client_addr_len);
       if (data.sockets.client < 0)
       {
-        message = name + " failed to accept client connection. Restarting server socket...";
-        log_message("%s", message.c_str());
-        if (++retries >= MAX_RETRY_ATTEMPTS)
+        if (errno != EINTR && errno != EAGAIN)
         {
-          message = name + " failed to accept client connection after " +
-                    std::to_string(MAX_RETRY_ATTEMPTS) + " attempts, unloading...";
-          log_message("%s", message.c_str());
-          unloaded = true;
+          log_message("%s accept failed, restarting server", name.c_str());
           break;
         }
-        shutdown(data.sockets.server, SHUT_RDWR);
-        close(data.sockets.server);
-        sceKernelSleep(RETRY_DELAY_SECONDS);
-        break; // break inner loop to recreate server socket
+        sceKernelSleep(1);
+        continue;
       }
 
       pthread_t client_thread;
       pthread_create(&client_thread, nullptr, unified_process, &data.sockets.client);
       pthread_detach(client_thread);
     }
+
     shutdown(data.sockets.server, SHUT_RDWR);
     close(data.sockets.server);
+    sceKernelSleep(1);
   }
 
   return nullptr;
@@ -366,9 +300,9 @@ void *telnet_server(void *arg)
 
 void *send_udp_signal(void *arg)
 {
-  const char *message = "OrbisControl UDP Signal*";
+  const char *message = "UDP_SEARCH_KEY*";
 
-  while (!unloaded)
+  while (true)
   {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0)
@@ -402,7 +336,6 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
 
   isDaemon = (strcmp(info.titleid, DAEMON_APP) == 0);
   port = isDaemon ? DAEMON_PORT : RELAYS_PORT;
-  name = isDaemon ? "Daemon" : "Relay";
 
   std::string message = "OrbisControl Already loaded!";
 
@@ -410,9 +343,8 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
   {
     if (is_port_open(port))
     {
-      if (!DEBUG)
-        text_notify(222, message.c_str());
-     
+      text_notify(222, message.c_str());
+
       return 1;
     }
 
@@ -421,28 +353,31 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
 
     const char *file = "/user/data/GoldHEN/plugins.ini";
     int fd = open(file, O_RDONLY);
-    bool contentFound = false;
     std::string pluginEntry = "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n";
+    bool contentFound = false;
+
     if (fd != -1)
     {
       char readBuffer[1024];
-      ssize_t bytesRead;
-      while ((bytesRead = read(fd, readBuffer, sizeof(readBuffer))) > 0)
+
+      while (read(fd, readBuffer, sizeof(readBuffer) - 1) > 0)
       {
-        readBuffer[bytesRead] = '\0';
         if (strstr(readBuffer, pluginEntry.c_str()))
         {
           contentFound = true;
           break;
         }
       }
+
       close(fd);
     }
+
     if (!contentFound)
     {
       fd = open(file, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
       if (fd != -1)
       {
+        std::string pluginEntry = "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n";
         write(fd, pluginEntry.c_str(), pluginEntry.length());
         log_message("Added OrbisControl to %s", file);
         close(fd);
@@ -450,10 +385,14 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
     }
   }
 
+  name = isDaemon ? "Daemon" : "Relay";
+  message = "[OrbisControl]\n" + name + " started";
+
   if (pthread_create(&data.threads.server, nullptr, unified_thread, nullptr) != 0)
     return 1;
-
   pthread_detach(data.threads.server);
+
+  text_notify(222, message.c_str());
 
   if (isDaemon)
   {
@@ -461,31 +400,19 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
     sceUserServiceInitialize2();
 
     /* klog server
-     //  jailbreak_backup jb;
-     //  sys_sdk_jailbreak(&jb);
-
        pthread_t log_thread;
-       pthread_create(&log_thread, NULL,
-                      telnet_server, NULL);
-
+       pthread_create(&log_thread, NULL, telnet_server, NULL);
        pthread_detach(log_thread);
-       */
+    */
 
     pthread_t udpSearch_t;
     pthread_create(&udpSearch_t, NULL, send_udp_signal, NULL);
-
     pthread_detach(udpSearch_t);
 
-    jailbreak_backup jb;
-    bool wasRestMode = false;
-
     while (!unloaded)
-    {
       sceKernelSleep(1);
-    }
 
     unloaded = true;
-
     log_message("Unload signal has been received, unloading!");
     text_notify(222, "[OrbisControl] Unloaded!");
     sceSystemServiceLoadExec("exit", 0);

@@ -69,7 +69,11 @@ namespace cmds
       text_notify(222, ("[OCAPI] SPRX Loaded:\n" + path).c_str());
     }
 
-    void unload_module() {}
+    void unload_module()
+    {
+      std::string handle_string = extract_param("handle", data.buffer);
+
+    }
 
     void stop_plugin() {}
 
@@ -348,6 +352,6 @@ namespace cmds
 
       send_response("Freed memory successfully");
     }
-  
+
   }
 }

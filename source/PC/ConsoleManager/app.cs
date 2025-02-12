@@ -282,7 +282,7 @@ namespace CM
         {
             //  api.SetupConsole("192.168.137.206");
 
-
+            api.LoadModule("default_mp.elf", "/data/GSCLoader.sprx");
            
 
 
