@@ -67,15 +67,15 @@ void handle_request(const std::string &request)
 
   static const std::map<std::string, std::function<void()>> relay_commands = {
       {"GET /attach_relay", cmds::daemon::attach_relay},
-      
+
       {"GET /read_memory", cmds::daemon::read_memory},
       {"POST /write_memory", cmds::daemon::write_memory},
-      
+
       {"GET /alloc_memory", cmds::daemon::alloc_memory},
       {"GET /free_memory", cmds::daemon::free_memory},
-      
+
       {"GET /start_plugin", cmds::daemon::start_plugin},
-      
+
       {"GET /load_module", cmds::daemon::load_module},
       {"GET /unload_module", cmds::daemon::unload_module}};
 
@@ -113,7 +113,7 @@ void *unified_process(void *arg)
   return nullptr;
 }
 
-void *unified_thread(void *arg)
+void *unified_thread(void *)
 {
   std::string message,
       socket_name = "[OrbisControl] " + name + " Socket";
@@ -128,19 +128,16 @@ void *unified_thread(void *arg)
       continue;
     }
 
-    // Set socket options to ensure rebinding works
     int opt = 1;
     setsockopt(data.sockets.server, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     setsockopt(data.sockets.server, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
 
-    // Force close any existing connection on this port
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    // Try to bind immediately
     if (bind(data.sockets.server, (struct sockaddr *)&addr, sizeof(addr)) < 0)
     {
       log_message("%s failed to bind", name.c_str());
@@ -149,14 +146,12 @@ void *unified_thread(void *arg)
       continue;
     }
 
-    // Set the actual address after successful bind
     memset(&data.sockets.server_addr, 0, sizeof(data.sockets.server_addr));
     data.sockets.server_addr.sin_family = AF_INET;
     data.sockets.server_addr.sin_port = htons(port);
-    if (DEBUG)
-      data.sockets.server_addr.sin_addr.s_addr = 0;
-    else
-      data.sockets.server_addr.sin_addr.s_addr = htonl(isDaemon ? INADDR_ANY : INADDR_LOOPBACK);
+    // if (DEBUG)
+    data.sockets.server_addr.sin_addr.s_addr = 0;
+    // else data.sockets.server_addr.sin_addr.s_addr = htonl(isDaemon ? INADDR_ANY : INADDR_LOOPBACK);
 
     if (listen(data.sockets.server, 5) < 0)
     {
@@ -198,7 +193,7 @@ void *unified_thread(void *arg)
   return nullptr;
 }
 
-void *telnet_server(void *arg)
+void *telnet_server(void *)
 {
   int server_socket = -1, client_socket = -1;
   struct sockaddr_in server_addr, client_addr;
@@ -206,7 +201,6 @@ void *telnet_server(void *arg)
   char buffer[1024];
   int port = 3333;
 
-  // Create server socket
   server_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (server_socket < 0)
   {
@@ -214,25 +208,20 @@ void *telnet_server(void *arg)
     return NULL;
   }
 
-  // Setup server address
   memset(&server_addr, 0, sizeof(server_addr));
   server_addr.sin_family = AF_INET;
-  server_addr.sin_addr.s_addr = INADDR_ANY; // Listen on all interfaces
+  server_addr.sin_addr.s_addr = INADDR_ANY;
   server_addr.sin_port = htons(port);
 
-  // Bind the socket
   if (bind(server_socket, (struct sockaddr *)&server_addr,
            sizeof(server_addr)) < 0)
   {
-    perror("Failed to bind socket");
     close(server_socket);
     return NULL;
   }
 
-  // Start listening for client connections
   if (listen(server_socket, 1) < 0)
   {
-    perror("Failed to listen on socket");
     close(server_socket);
     return NULL;
   }
@@ -241,23 +230,16 @@ void *telnet_server(void *arg)
 
   while (!unloaded)
   {
-    // Accept a client connection
     client_socket = accept(server_socket, (struct sockaddr *)&client_addr,
                            &client_addr_len);
     if (client_socket < 0)
-    {
-      perror("Failed to accept client connection");
       continue;
-    }
 
     log_message("Client connected: %s\n", inet_ntoa(client_addr.sin_addr));
 
-    // Send kernel log data or any other output to the client
-    int logDevice =
-        sceKernelOpen("/dev/klog", O_RDONLY, 0); // Open the kernel log device
+    int logDevice = sceKernelOpen("/dev/klog", O_RDONLY, 0);
     if (logDevice < 0)
     {
-      perror("Failed to open kernel log device");
       close(client_socket);
       continue;
     }
@@ -268,37 +250,30 @@ void *telnet_server(void *arg)
 
       if (bytesRead > 0)
       {
-        buffer[bytesRead] = '\0'; // Null-terminate the string
+        buffer[bytesRead] = '\0';
 
-        // Split the buffer into lines and send them to the client one by one
-        char *line = strtok(buffer, "\n"); // Tokenize by newline
+        char *line = strtok(buffer, "\n");
         while (line != NULL)
         {
-          send(client_socket, line, strlen(line), 0); // Send the line
-          send(client_socket, "\r\n", 2, 0);          // Send newline after each line
-          line = strtok(NULL, "\n");                  // Get next line
+          send(client_socket, line, strlen(line), 0);
+          send(client_socket, "\r\n", 2, 0);
+          line = strtok(NULL, "\n");
         }
       }
 
-      // If the client disconnects or other condition, break the loop
       if (unloaded || bytesRead <= 0)
-      {
         break;
-      }
-      usleep(100000); // Sleep a bit before reading more data
+      usleep(100000);
     }
 
-    // Close the client socket after the communication ends
     close(client_socket);
-    log_message("Client disconnected.\n");
   }
 
-  // Close the server socket when done
   close(server_socket);
   return NULL;
 }
 
-void *send_udp_signal(void *arg)
+void *send_udp_signal(void *)
 {
   const char *message = "UDP_SEARCH_KEY*";
 
@@ -329,7 +304,7 @@ void *send_udp_signal(void *arg)
   return nullptr;
 }
 
-extern "C" int32_t __wrap__init(size_t args, const void *argp)
+extern "C" int32_t __wrap__init(size_t, const void *)
 {
   struct proc_info info = {};
   sys_sdk_proc_info(&info);

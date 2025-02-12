@@ -477,29 +477,9 @@ namespace cmds
         std::string processName = extract_param("process", data.buffer);
         std::string modulePath = extract_param("module", data.buffer);
 
-        auto load_prx = [](const std::string &processName, const std::string &modulePath) -> bool
-        {
-          int prx_handle = sys_sdk_proc_prx_load(const_cast<char *>(processName.c_str()),
-                                                 const_cast<char *>(modulePath.c_str()));
-          if (prx_handle >= 0)
-          {
-            char notify_msg[256];
-            snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", modulePath.c_str());
-            text_notify(222, notify_msg);
-
-            send_response(generate_json({{modulePath, prx_handle}}).c_str());
-
-            return true;
-          }
-          send_error_response(UNKNOWN_ERROR);
-
-          return false;
-        };
-
         if (processName.empty() && modulePath.empty())
         {
           send_error_response(INVALID_ARGS);
-
           return;
         }
 
@@ -508,7 +488,6 @@ namespace cmds
           if (!modulePath.empty() && processName.empty())
           {
             send_response(perform_http_request("load_module", RELAYS_PORT, true, "load_module?path=" + modulePath));
-
             return;
           }
         }
@@ -517,19 +496,33 @@ namespace cmds
           if (!attached)
           {
             send_error_response(NOT_ATTACHED);
-
             return;
           }
 
           send_response(perform_http_request("load_module", RELAYS_PORT, true, "load_module?path=" + modulePath));
-
           return;
         }
 
         if (!processName.empty() && !modulePath.empty())
-          load_prx(processName, modulePath);
+        {
+          int prx_handle = sys_sdk_proc_prx_load(const_cast<char *>(processName.c_str()),
+                                               const_cast<char *>(modulePath.c_str()));
+          if (prx_handle >= 0)
+          {
+            char notify_msg[256];
+            snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", modulePath.c_str());
+            text_notify(222, notify_msg);
+            send_response(generate_json({{modulePath, prx_handle}}).c_str());
+          }
+          else
+          {
+            send_error_response(UNKNOWN_ERROR);
+          }
+        }
         else
+        {
           send_error_response(INVALID_ARGS);
+        }
       }
 
       void unload_module()
@@ -545,7 +538,7 @@ namespace cmds
 
         int handle = std::stoi(handle_string);
 
-        auto unload_prx = [](const std::string &processName, int handle) -> bool
+        if (!processName.empty())
         {
           int result = sys_sdk_proc_prx_unload(const_cast<char *>(processName.c_str()), handle);
           if (result >= 0)
@@ -553,18 +546,12 @@ namespace cmds
             char notify_msg[256];
             snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Unloaded: Handle %d", handle);
             text_notify(222, notify_msg);
-
             send_response(generate_json({{"handle", result}}).c_str());
-            return true;
           }
-
-          send_error_response(UNKNOWN_ERROR);
-          return false;
-        };
-
-        if (!processName.empty())
-        {
-          unload_prx(processName, handle);
+          else
+          {
+            send_error_response(UNKNOWN_ERROR);
+          }
         }
         else
         {

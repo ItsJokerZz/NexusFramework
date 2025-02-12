@@ -308,17 +308,33 @@ namespace ConsoleManager
             return menu;
         }
 
-        public static Border CreateConsoleItem(string name, string ip)
+        public static Border CreateConsoleItem(string customName, string ip, string systemName = null)
         {
             SetEmptyStateVisibility?.Invoke(Visibility.Collapsed);
 
-            var consoleItem = new Border { Style = (Style)FindResource?.Invoke("ConsoleItem") };
-            consoleItem.ContextMenu = CreateConsoleContextMenu(consoleItem);
+            // Determine display name with fallback logic
+            string displayName = string.IsNullOrEmpty(customName) ? 
+                (string.IsNullOrEmpty(systemName) ? "PS4" : systemName) : 
+                customName;
 
-            var itemGrid = new Grid();
-            itemGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            itemGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            itemGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var consoleItem = new Border 
+            { 
+                Style = (Style)FindResource?.Invoke("CardBorder"),
+                Background = (Brush)FindResource?.Invoke("ColorDarker")
+            };
+
+            // Set up dynamic resource binding for the border brush
+            consoleItem.SetResourceReference(Border.BorderBrushProperty, "PrimaryGradient");
+            
+            consoleItem.BorderThickness = new Thickness(1);
+            consoleItem.CornerRadius = new CornerRadius(8);
+            consoleItem.Margin = new Thickness(8, 4, 8, 4);
+            consoleItem.Padding = new Thickness(16);
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
             var controllerIcon = new Path
             {
@@ -327,7 +343,7 @@ namespace ConsoleManager
                 StrokeThickness = 1.5,
                 Width = 14,
                 Height = 14,
-                Margin = new Thickness(16, 0, 8, 0),
+                Margin = new Thickness(0, 0, 8, 0),
                 VerticalAlignment = VerticalAlignment.Center,
                 StrokeStartLineCap = PenLineCap.Round,
                 StrokeEndLineCap = PenLineCap.Round,
@@ -338,7 +354,7 @@ namespace ConsoleManager
             var textStack = new StackPanel();
             textStack.Children.Add(new TextBlock
             {
-                Text = name,
+                Text = displayName,
                 Foreground = (Brush)FindResource?.Invoke("ColorText"),
                 FontSize = 14,
                 FontWeight = FontWeights.SemiBold,
@@ -360,19 +376,21 @@ namespace ConsoleManager
                 Height = 16,
                 HorizontalAlignment = HorizontalAlignment.Right,
                 VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 16, 0)
+                Margin = new Thickness(8, 0, 0, 0)
             };
             Grid.SetColumn(arrowIcon, 2);
 
-            itemGrid.Children.Add(controllerIcon);
-            itemGrid.Children.Add(textStack);
-            itemGrid.Children.Add(arrowIcon);
-            consoleItem.Child = itemGrid;
+            grid.Children.Add(controllerIcon);
+            grid.Children.Add(textStack);
+            grid.Children.Add(arrowIcon);
+            consoleItem.Child = grid;
 
             consoleItem.MouseDown += (s, args) =>
             {
                 HandleConsoleItemClick?.Invoke(consoleItem);
             };
+
+            consoleItem.ContextMenu = CreateConsoleContextMenu(consoleItem);
 
             return consoleItem;
         }

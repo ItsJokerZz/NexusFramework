@@ -1,15 +1,18 @@
 /source/PC/.vs
+
 /source/PC/API/bin
 /source/PC/API/obj
+
+/source/PC/CM-WPF/bin
+/source/PC/CM-WPF/obj
 
 /source/PC/ConsoleManager/bin
 /source/PC/ConsoleManager/obj
 
 /source/PS4/DAEMON/build
+/source/PS4/PAYLOAD/build
 
 *.prx
 *.bin
 *.map
-/source/PC/CM-WPF/obj
-/source/PC/CM-WPF/bin
-/source/PC/CM-WPF/obj
+

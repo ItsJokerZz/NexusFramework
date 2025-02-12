@@ -3,10 +3,15 @@
 
     <Style x:Key="CardBorder" TargetType="Border">
         <Setter Property="Background" Value="{DynamicResource ColorDarker}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource CardBorderGradient}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryGradient}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="24"/>
+        <Setter Property="Padding" Value="16"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="BorderThickness" Value="1.5"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="ContainerBorder" TargetType="Border">

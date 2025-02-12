@@ -25,6 +25,7 @@ namespace ConsoleManager
         private Border currentConsoleToRename;
         private bool darkMode;
         private ColorSettings colorSettings;
+        private FoundConsole selectedFoundConsole = null;
 
         public event PropertyChangedEventHandler PropertyChanged;
         protected void OnPropertyChanged(string name)
@@ -50,10 +51,6 @@ namespace ConsoleManager
         public string TotalDiskSpace { get; set; } = "----";
         public string FreeDiskSpace { get; set; } = "----";
         public string UsedDiskSpace { get; set; } = "----";
-        #endregion
-
-        #region Memory Page Properties
-        public double MemoryUsageWidth { get; set; } = 300;
         #endregion
 
         public MainWindow()
@@ -135,7 +132,11 @@ namespace ConsoleManager
 
                 foreach (ConsoleEntry console in api.Consoles)
                 {
-                    var consoleItem = CreateConsoleItem(console.CustomName ?? console.Name ?? "PS4", console.IP);
+                    string displayName = !string.IsNullOrEmpty(console.CustomName) ? 
+                        console.CustomName : 
+                        (!string.IsNullOrEmpty(console.Name) ? console.Name : "PS4");
+
+                    var consoleItem = Utilities.CreateConsoleItem(displayName, console.IP, console.Name);
                     ConsoleList.Children.Add(consoleItem);
                 }
 
@@ -176,6 +177,34 @@ namespace ConsoleManager
             SystemImagesComboBox.SelectedIndex = 0;  // Select first system image
             SystemImagesComboBox.Visibility = Visibility.Visible;
             CustomImageUrlTextBox.Visibility = Visibility.Collapsed;
+
+            RemoveFromConsoleList = element => 
+            {
+                if (element is Border border)
+                {
+                    // Get the IP before removing the border
+                    var grid = border.Child as Grid;
+                    var stackPanel = grid?.Children.OfType<StackPanel>().FirstOrDefault();
+                    var ipTextBlock = stackPanel?.Children.OfType<TextBlock>().LastOrDefault();
+                    var ip = ipTextBlock?.Text;
+
+                    if (!string.IsNullOrEmpty(ip))
+                    {
+                        api.Disconnect(ip);
+                        api.RemoveConsole(ip);
+                        ResetHomePageData();
+                    }
+
+                    // Remove from UI
+                    ConsoleList.Children.Remove(border);
+                    
+                    // Update empty state visibility
+                    EmptyState.Visibility = ConsoleList.Children.Count <= 1 ? 
+                        Visibility.Visible : Visibility.Collapsed;
+                }
+            };
+
+            Utilities.currentConsoleToRename = null;
         }
 
         #region Console Management Methods
@@ -206,147 +235,6 @@ namespace ConsoleManager
             ResetHomePageData();
         }
 
-        private Border CreateConsoleItem(string name, string ip)
-        {
-            var console = api.Consoles.FirstOrDefault(c => c.IP == ip);
-            string displayName = console?.CustomName;
-
-            if (string.IsNullOrEmpty(displayName))
-                displayName = console?.Name ?? name ?? "PS4";
-
-            var consoleBox = new Border
-            {
-                Style = (Style)FindResource("CardBorder"),
-                Margin = new Thickness(8, 4, 8, 4),
-                Padding = new Thickness(16)
-            };
-
-            var grid = new Grid();
-
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var textStack = new StackPanel();
-
-            var nameBlock = new TextBlock
-            {
-                Text = displayName,
-                FontWeight = FontWeights.SemiBold,
-                FontSize = 14,
-                Foreground = (Brush)FindResource("ColorText")
-            };
-
-            var ipBlock = new TextBlock
-            {
-                Text = $"IP: {ip}",
-                Foreground = (Brush)FindResource("ColorTextSecondary"),
-                FontSize = 12,
-                Margin = new Thickness(0, 4, 0, 0)
-            };
-
-            textStack.Children.Add(nameBlock);
-            textStack.Children.Add(ipBlock);
-            Grid.SetColumn(textStack, 0);
-            grid.Children.Add(textStack);
-
-            var arrowPath = new Path
-            {
-                Data = (Geometry)FindResource("ChevronRightIcon"),
-                Fill = (Brush)FindResource("ColorTextSecondary"),
-                Width = 20,
-                Height = 20,
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(8, 0, 0, 0)
-            };
-
-            Grid.SetColumn(arrowPath, 1);
-            grid.Children.Add(arrowPath);
-
-            consoleBox.Child = grid;
-
-            var contextMenu = new ContextMenu { Style = (Style)FindResource("DarkContextMenu") };
-
-            var injectItem = new MenuItem
-            {
-                Header = "Inject",
-                Style = (Style)FindResource("DarkMenuItem")
-            };
-
-            injectItem.Click += (s, e) => Utilities.InjectPayload(ip);
-
-            var unloadItem = new MenuItem
-            {
-                Header = "Unload",
-                Style = (Style)FindResource("DarkMenuItem")
-            };
-
-            unloadItem.Click += (s, e) => Utilities.UnloadPayload(ip);
-
-            var connectItem = new MenuItem
-            {
-                Header = "Connect",
-                Style = (Style)FindResource("DarkMenuItem")
-            };
-
-            connectItem.Click += (s, e) => Utilities.ConnectToConsole(ip);
-
-            var attachItem = new MenuItem
-            {
-                Header = "Attach",
-                Style = (Style)FindResource("DarkMenuItem")
-            };
-
-            attachItem.Click += (s, e) => Utilities.AttachToConsole(ip);
-
-            var disconnectItem = new MenuItem
-            {
-                Header = "Disconnect",
-                Style = (Style)FindResource("DarkMenuItem")
-            };
-
-            disconnectItem.Click += (s, e) => Utilities.DisconnectFromConsole(ip);
-
-            var renameItem = new MenuItem
-            {
-                Header = "Rename",
-                Style = (Style)FindResource("DarkMenuItem")
-            };
-
-            renameItem.Click += (s, e) =>
-            {
-                RenameOverlay.Visibility = Visibility.Visible;
-                RenameTextBox.Text = name;
-                RenameTextBox.Focus();
-                RenameTextBox.SelectAll();
-                currentConsoleToRename = consoleBox;
-            };
-
-            var removeItem = new MenuItem
-            {
-                Header = "Remove",
-                Style = (Style)FindResource("DarkMenuItemRed")
-            };
-
-            removeItem.Click += (s, e) => RemoveConsole(ip);
-
-            contextMenu.Items.Add(injectItem);
-            contextMenu.Items.Add(unloadItem);
-            contextMenu.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
-
-            contextMenu.Items.Add(connectItem);
-            contextMenu.Items.Add(attachItem);
-            contextMenu.Items.Add(disconnectItem);
-            contextMenu.Items.Add(new Separator { Style = (Style)FindResource("MenuSeparator") });
-
-            contextMenu.Items.Add(renameItem);
-            contextMenu.Items.Add(removeItem);
-
-            consoleBox.ContextMenu = contextMenu;
-
-            return consoleBox;
-        }
-
         private void AddConsoleToPanel(FoundConsole console)
         {
             var existingConsole = api.Consoles.FirstOrDefault(c => c.IP == console.IP);
@@ -357,8 +245,7 @@ namespace ConsoleManager
             var consoleBox = new Border
             {
                 Style = (Style)FindResource("CardBorder"),
-                Margin = new Thickness(0, 0, 0, 8),
-                Padding = new Thickness(16)
+                Margin = new Thickness(0, 0, 0, 8)
             };
 
             var content = new StackPanel();
@@ -401,10 +288,10 @@ namespace ConsoleManager
 
             consoleBox.MouseDown += (s, args) =>
             {
-                var nameBox = AddConsoleOverlay.FindVisualChildren<TextBox>()
-                    .FirstOrDefault();
-                var ipBox = AddConsoleOverlay.FindVisualChildren<TextBox>()
-                    .Skip(1).FirstOrDefault();
+                selectedFoundConsole = console;  // Store the selected console
+                var nameBox = ConsoleNameTextBox;
+                var ipBox = this.FindVisualChildren<TextBox>()
+                    .FirstOrDefault(tb => tb.Margin.Bottom == 0);
 
                 if (nameBox != null) nameBox.Text = console.SystemName ?? "PS4";
                 if (ipBox != null) ipBox.Text = console.IP;
@@ -446,7 +333,6 @@ namespace ConsoleManager
             if (ipAddressBox == null || string.IsNullOrWhiteSpace(ipAddressBox.Text))
             {
                 MessageBox.Show("Please enter an IP address.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-
                 return;
             }
 
@@ -463,32 +349,20 @@ namespace ConsoleManager
                 return existingIp == ip;
             });
 
-            if (isDuplicate)
+            if (!isDuplicate)
             {
-                var existingConsole = ConsoleList.Children.OfType<Border>().First(border =>
-                {
-                    var stack = border.Child as Grid;
-                    var textStack = stack?.Children[0] as StackPanel;
-                    var ipText = (textStack?.Children[1] as TextBlock)?.Text;
+                // Connect to console first to get info
+                api.Connect(ip);
+                api.GetTargetInfo();
 
-                    return ipText?.Replace("IP: ", "").Trim() == ip;
-                });
-
-                var stack = existingConsole.Child as Grid;
-                var textStack = stack?.Children[0] as StackPanel;
-                var nameBlock = textStack?.Children[0] as TextBlock;
-
-                if (nameBlock != null)
-                {
-                    nameBlock.Text = name;
-                    api.RenameConsole(ip, name);
-                }
-            }
-            else
-            {
-                api.AddConsole(ip, name);
-                var consoleItem = CreateConsoleItem(name, ip);
+                // Use the found console's name if available
+                string systemName = selectedFoundConsole?.SystemName ?? Target.Name;
+                api.AddConsole(ip, name, systemName);
+                var consoleItem = Utilities.CreateConsoleItem(name, ip, systemName);
                 ConsoleList.Children.Add(consoleItem);
+
+                // Disconnect after adding
+                api.Disconnect(ip);
             }
 
             EmptyState.Visibility = ConsoleList.Children.Count <= 1 ?
@@ -496,6 +370,7 @@ namespace ConsoleManager
 
             if (ipAddressBox != null) ipAddressBox.Text = "";
             if (nameBox != null) nameBox.Text = "";
+            selectedFoundConsole = null;  // Reset selected console
 
             CloseAddConsoleOverlay_Click(sender, e);
         }
@@ -508,25 +383,30 @@ namespace ConsoleManager
 
         private void ConfirmRename_Click(object sender, RoutedEventArgs e)
         {
-            if (currentConsoleToRename != null && !string.IsNullOrWhiteSpace(RenameTextBox.Text))
+            if (Utilities.currentConsoleToRename != null && !string.IsNullOrWhiteSpace(RenameTextBox.Text))
             {
-                var grid = currentConsoleToRename.Child as Grid;
-                var textStack = grid?.Children[0] as StackPanel;
-                var ipBlock = textStack?.Children[1] as TextBlock;
+                var grid = Utilities.currentConsoleToRename.Child as Grid;
+                var stackPanel = grid?.Children.OfType<StackPanel>().FirstOrDefault();
+                var nameBlock = stackPanel?.Children.OfType<TextBlock>().FirstOrDefault();
+                var ipBlock = stackPanel?.Children.OfType<TextBlock>().LastOrDefault();
 
-                string ip = ipBlock?.Text.Replace("IP: ", "").Trim();
-
+                string ip = ipBlock?.Text;
+                Debug.WriteLine($"Renaming console with IP: {ip} to {RenameTextBox.Text}");
+                
                 if (!string.IsNullOrEmpty(ip))
                 {
-                    var nameBlock = textStack?.Children[0] as TextBlock;
+                    // Update the name in the UI
                     if (nameBlock != null)
                         nameBlock.Text = RenameTextBox.Text;
 
+                    // Update in the API
                     api.RenameConsole(ip, RenameTextBox.Text);
                 }
             }
 
-            CloseRenameOverlay_Click(sender, e);
+            // Reset the current console and close overlay
+            Utilities.currentConsoleToRename = null;
+            RenameOverlay.Visibility = Visibility.Collapsed;
         }
 
         private void OverlayBackground_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)

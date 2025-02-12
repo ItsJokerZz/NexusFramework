@@ -12,156 +12,6 @@ namespace cmds
       send_response("done");
     }
 
-    void load_module()
-    {
-      std::string path = extract_param("path", data.buffer);
-      if (path.empty())
-      {
-        log_message("No path provided for SPRX");
-        return;
-      }
-
-      struct proc_info info;
-      sys_sdk_proc_info(&info);
-      int pid = info.pid;
-
-      int32_t result = sceKernelLoadStartModule(path.c_str(), 0, 0, 0, NULL, NULL);
-      if (result == 0x80020002)
-      {
-        log_message("SPRX %s not found", path.c_str());
-        return;
-      }
-      if (result < 0)
-      {
-        log_message("Error loading SPRX %s! Error code 0x%08x (%i)", path.c_str(), result, result);
-        return;
-      }
-
-      send_response(std::to_string(pid) + "," + std::to_string(result) + "," + path);
-
-      int32_t (*module_start_ret)(size_t, const void *);
-      int32_t (*module_stop_ret)(size_t, const void *);
-
-      int32_t ret = sceKernelDlsym(result, "module_start", (void **)&module_start_ret);
-      log_message("module_start Dlsym 0x%08x @ %p", ret, module_start_ret);
-
-      ret = sceKernelDlsym(result, "module_stop", (void **)&module_stop_ret);
-      log_message("module_stop Dlsym 0x%08x @ %p", ret, module_stop_ret);
-
-      if (module_start_ret && module_stop_ret)
-      {
-        log_message("Starting SPRX...");
-        int32_t prx_ret = module_start_ret(0, nullptr);
-        log_message("module_start returned with 0x%08x", prx_ret);
-
-        if (prx_ret != 0)
-        {
-          log_message("SPRX returned non-zero, stopping module...");
-          prx_ret = module_stop_ret(0, nullptr);
-          log_message("module_stop returned with 0x%08x", prx_ret);
-        }
-        else
-          log_message("module_start exit successful 0x%08x", prx_ret);
-      }
-      else
-        log_message("Unable to find module_start or module_stop!");
-
-      text_notify(222, ("[OCAPI] SPRX Loaded:\n" + path).c_str());
-    }
-
-    void unload_module()
-    {
-      std::string handle_string = extract_param("handle", data.buffer);
-
-    }
-
-    void stop_plugin() {}
-
-    void start_plugin()
-    {
-      std::string plugin = extract_param("plugin", data.buffer);
-
-      if (plugin.empty())
-      {
-        log_message("No plugin provided to load");
-        return;
-      }
-
-      // Construct the full path for the plugin
-      std::string path = "/data/GoldHEN/plugins/" + plugin;
-      log_message("Attempting to load plugin from path: %s", path.c_str());
-
-      // Get process information
-      struct proc_info info;
-      sys_sdk_proc_info(&info);
-      int pid = info.pid;
-
-      // Attempt to load the plugin
-      int32_t result = sceKernelLoadStartModule(path.c_str(), 0, 0, 0, NULL, NULL);
-      if (result == 0x80020002)
-      {
-        log_message("Plugin %s not found at path: %s", plugin.c_str(), path.c_str());
-        send_response("Plugin not found");
-        return;
-      }
-      else if (result < 0)
-      {
-        log_message("Error loading plugin %s! Error code 0x%08x (%d)", plugin.c_str(), result, result);
-        send_response("Failed to load plugin");
-        return;
-      }
-
-      // Log successful load
-      log_message("Plugin %s loaded successfully with module ID: %d", plugin.c_str(), result);
-
-      // Prepare response
-      char response[1024];
-      snprintf(response, sizeof(response), "%i,%d,%s", pid, result, plugin.c_str());
-      send_response(response);
-
-      // Resolve the plugin_load and plugin_unload symbols
-      int32_t ret;
-      int32_t (*plugin_load_ret)(void) = nullptr;
-      int32_t (*plugin_unload_ret)(void) = nullptr;
-
-      ret = sceKernelDlsym(result, "plugin_load", (void **)&plugin_load_ret);
-      if (ret < 0 || !plugin_load_ret)
-      {
-        log_message("Failed to resolve plugin_load symbol. Error: 0x%08x", ret);
-        send_response("Failed to find plugin_load");
-        return;
-      }
-
-      ret = sceKernelDlsym(result, "plugin_unload", (void **)&plugin_unload_ret);
-      if (ret < 0 || !plugin_unload_ret)
-      {
-        log_message("Failed to resolve plugin_unload symbol. Error: 0x%08x", ret);
-        send_response("Failed to find plugin_unload");
-        return;
-      }
-
-      // Call plugin_load
-      log_message("Starting plugin...");
-      int32_t prx_ret = plugin_load_ret();
-      log_message("plugin_load returned with 0x%08x", prx_ret);
-
-      // Handle errors from plugin_load
-      if (prx_ret != 0)
-      {
-        log_message("Plugin returned non-zero, stopping module...");
-        prx_ret = plugin_unload_ret();
-        log_message("plugin_unload returned with 0x%08x", prx_ret);
-        send_response("Plugin failed to start");
-        return;
-      }
-
-      // Log success and notify
-      log_message("plugin_load exited successfully with 0x%08x", prx_ret);
-      char notify_msg[1024];
-      snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] Plugin Loaded: %s", plugin.c_str());
-      text_notify(222, notify_msg);
-    }
-
     void read_memory()
     {
       std::string address = extract_param("address", data.buffer);
@@ -352,6 +202,155 @@ namespace cmds
 
       send_response("Freed memory successfully");
     }
+
+    void load_module()
+    {
+      std::string path = extract_param("path", data.buffer);
+      if (path.empty())
+      {
+        log_message("No path provided for SPRX");
+        return;
+      }
+
+      struct proc_info info;
+      sys_sdk_proc_info(&info);
+      int pid = info.pid;
+
+      int32_t result = sceKernelLoadStartModule(path.c_str(), 0, 0, 0, NULL, NULL);
+      if (result == 0x80020002)
+      {
+        log_message("SPRX %s not found", path.c_str());
+        return;
+      }
+      if (result < 0)
+      {
+        log_message("Error loading SPRX %s! Error code 0x%08x (%i)", path.c_str(), result, result);
+        return;
+      }
+
+      send_response(std::to_string(pid) + "," + std::to_string(result) + "," + path);
+
+      int32_t (*module_start_ret)(size_t, const void *);
+      int32_t (*module_stop_ret)(size_t, const void *);
+
+      int32_t ret = sceKernelDlsym(result, "module_start", (void **)&module_start_ret);
+      log_message("module_start Dlsym 0x%08x @ %p", ret, module_start_ret);
+
+      ret = sceKernelDlsym(result, "module_stop", (void **)&module_stop_ret);
+      log_message("module_stop Dlsym 0x%08x @ %p", ret, module_stop_ret);
+
+      if (module_start_ret && module_stop_ret)
+      {
+        log_message("Starting SPRX...");
+        int32_t prx_ret = module_start_ret(0, nullptr);
+        log_message("module_start returned with 0x%08x", prx_ret);
+
+        if (prx_ret != 0)
+        {
+          log_message("SPRX returned non-zero, stopping module...");
+          prx_ret = module_stop_ret(0, nullptr);
+          log_message("module_stop returned with 0x%08x", prx_ret);
+        }
+        else
+          log_message("module_start exit successful 0x%08x", prx_ret);
+      }
+      else
+        log_message("Unable to find module_start or module_stop!");
+
+      text_notify(222, ("[OCAPI] SPRX Loaded:\n" + path).c_str());
+    }
+
+    void unload_module()
+    {
+      std::string handle_string = extract_param("handle", data.buffer);
+    }
+
+    void start_plugin()
+    {
+      std::string plugin = extract_param("plugin", data.buffer);
+
+      if (plugin.empty())
+      {
+        log_message("No plugin provided to load");
+        return;
+      }
+
+      // Construct the full path for the plugin
+      std::string path = "/data/GoldHEN/plugins/" + plugin;
+      log_message("Attempting to load plugin from path: %s", path.c_str());
+
+      // Get process information
+      struct proc_info info;
+      sys_sdk_proc_info(&info);
+      int pid = info.pid;
+
+      // Attempt to load the plugin
+      int32_t result = sceKernelLoadStartModule(path.c_str(), 0, 0, 0, NULL, NULL);
+      if (result == 0x80020002)
+      {
+        log_message("Plugin %s not found at path: %s", plugin.c_str(), path.c_str());
+        send_response("Plugin not found");
+        return;
+      }
+      else if (result < 0)
+      {
+        log_message("Error loading plugin %s! Error code 0x%08x (%d)", plugin.c_str(), result, result);
+        send_response("Failed to load plugin");
+        return;
+      }
+
+      // Log successful load
+      log_message("Plugin %s loaded successfully with module ID: %d", plugin.c_str(), result);
+
+      // Prepare response
+      char response[1024];
+      snprintf(response, sizeof(response), "%i,%d,%s", pid, result, plugin.c_str());
+      send_response(response);
+
+      // Resolve the plugin_load and plugin_unload symbols
+      int32_t ret;
+      int32_t (*plugin_load_ret)(void) = nullptr;
+      int32_t (*plugin_unload_ret)(void) = nullptr;
+
+      ret = sceKernelDlsym(result, "plugin_load", (void **)&plugin_load_ret);
+      if (ret < 0 || !plugin_load_ret)
+      {
+        log_message("Failed to resolve plugin_load symbol. Error: 0x%08x", ret);
+        send_response("Failed to find plugin_load");
+        return;
+      }
+
+      ret = sceKernelDlsym(result, "plugin_unload", (void **)&plugin_unload_ret);
+      if (ret < 0 || !plugin_unload_ret)
+      {
+        log_message("Failed to resolve plugin_unload symbol. Error: 0x%08x", ret);
+        send_response("Failed to find plugin_unload");
+        return;
+      }
+
+      // Call plugin_load
+      log_message("Starting plugin...");
+      int32_t prx_ret = plugin_load_ret();
+      log_message("plugin_load returned with 0x%08x", prx_ret);
+
+      // Handle errors from plugin_load
+      if (prx_ret != 0)
+      {
+        log_message("Plugin returned non-zero, stopping module...");
+        prx_ret = plugin_unload_ret();
+        log_message("plugin_unload returned with 0x%08x", prx_ret);
+        send_response("Plugin failed to start");
+        return;
+      }
+
+      // Log success and notify
+      log_message("plugin_load exited successfully with 0x%08x", prx_ret);
+      char notify_msg[1024];
+      snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] Plugin Loaded: %s", plugin.c_str());
+      text_notify(222, notify_msg);
+    }
+
+    void stop_plugin() {}
 
   }
 }

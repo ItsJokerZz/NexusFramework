@@ -305,8 +305,6 @@ namespace OrbisControlAPI
 
         #endregion
 
-        public OCAPI() => LoadConsoles();
-
         #region Connection Management
         public bool GetConnectionStatus(string address)
         {
@@ -744,5 +742,6 @@ namespace OrbisControlAPI
 
         #endregion
 
+        public OCAPI() => LoadConsoles();
     }
 }

@@ -39,8 +39,7 @@ struct ErrorMessage
 extern std::array<ErrorMessage, ERROR_COUNT>
     error_messages;
 
-extern bool DEBUG, isDaemon, unloaded,
-    connected, attached, unload_on_rest;
+extern bool isDaemon, unloaded, connected, attached;
 
 struct serverData
 {
@@ -48,7 +47,7 @@ struct serverData
   {
     int server = -1, client = -1;
     struct sockaddr_in server_addr = {},
-                      client_addr = {};
+                       client_addr = {};
     socklen_t client_addr_len = sizeof(struct sockaddr_in);
   } sockets;
 
