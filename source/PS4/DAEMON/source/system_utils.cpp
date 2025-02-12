@@ -477,7 +477,6 @@ void set_temperature_limit(uint8_t limit)
     }
 }
 
-
 void set_power_state(power_state state)
 {
     if (state != DO_NOTHING)

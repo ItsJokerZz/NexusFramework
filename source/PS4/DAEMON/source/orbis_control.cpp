@@ -1,55 +1,12 @@
 #include "../headers/includes.hpp"
 
-enum
-{
-  MAIN_ON_STANDBY = 500,
-  WORKING = 1000
-};
-
-static OrbisKernelEventFlag statemgr = NULL;
-
-int sceSystemOpenStartMgr()
-{
-  if (sceKernelOpenEventFlag(&statemgr, "SceSystemStateMgrInfo") != 0)
-    return -1;
-  return 0;
-}
-
-int sceSystemStateMgrGetCurrentState()
-{
-  uint64_t ret = 0;
-  if (!statemgr)
-  {
-    if (sceSystemOpenStartMgr() == -1)
-      return -1;
-  }
-  sceKernelPollEventFlag(statemgr, 0xFFFF, SCE_KERNEL_EVF_WAITMODE_OR, &ret);
-  if ((int)ret == WORKING &&
-      sceKernelPollEventFlag(statemgr, 0x200000, SCE_KERNEL_EVF_WAITMODE_OR, 0) == 0)
-    ret = MAIN_ON_STANDBY;
-  if ((int)ret == MAIN_ON_STANDBY)
-    log_message("SceSystemStateMgrGetCurrentState MAIN_ON_STANDBY");
-  return (int)ret;
-}
-
-bool isRestMode()
-{
-  return sceSystemStateMgrGetCurrentState() == MAIN_ON_STANDBY;
-}
-
-bool isOn()
-{
-  return true;
-  // return sceSystemStateMgrGetCurrentState() == WORKING;
-}
-
 void handle_request(const std::string &request)
 {
   static const std::map<std::string, std::function<void()>> daemon_commands = {
       {"POST /test", cmds::client::process::write_proc_mem},
 
-      {"GET /setup", cmds::client::connection::setup},
       {"GET /status", cmds::client::connection::status},
+      {"GET /setup", cmds::client::connection::setup},
       {"GET /version", cmds::client::connection::version},
       {"GET /connect", cmds::client::connection::connect},
       {"GET /unload", cmds::client::connection::unload},
@@ -109,13 +66,7 @@ void handle_request(const std::string &request)
       {"GET /alloc_memory", cmds::daemon::alloc_memory},
       {"GET /free_memory", cmds::daemon::free_memory},
       {"GET /start_plugin", cmds::daemon::start_plugin},
-      {"GET /load_module", cmds::daemon::load_module},
-      {"GET /test", []()
-       {
-         send_response("done");
-         if (!attached && perform_http_request("attach") == "done")
-           attached = true;
-       }}};
+      {"GET /load_module", cmds::daemon::load_module}};
 
   const auto &commands = isDaemon ? daemon_commands : relay_commands;
   auto it = std::find_if(commands.begin(), commands.end(),
@@ -134,7 +85,7 @@ void *unified_process(void *arg)
 {
   std::fill(data.buffer.begin(), data.buffer.end(), 0);
 
-  int bytes_received = sceNetRecv(data.sockets.client, data.buffer.data(), data.buffer.size() - 1, 0);
+  int bytes_received = recv(data.sockets.client, data.buffer.data(), data.buffer.size() - 1, 0);
   if (bytes_received > 0)
   {
     data.buffer[bytes_received] = '\0';
@@ -146,8 +97,8 @@ void *unified_process(void *arg)
       handle_request(request);
   }
 
-  sceNetSocketAbort(data.sockets.client, 0);
-  sceNetSocketClose(data.sockets.client);
+  shutdown(data.sockets.client, SHUT_RDWR);
+  close(data.sockets.client);
 
   return nullptr;
 }
@@ -155,41 +106,85 @@ void *unified_process(void *arg)
 void *unified_thread(void *arg)
 {
   int retries = 0;
-
   std::string message,
       socket_name = "[OrbisControl] " + name + " Socket";
 
   auto create_server_socket = [&]() -> int
   {
-    int sock = sceNetSocket(socket_name.c_str(), ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0)
     {
       message = name + " failed to create server socket, retrying in " +
                 std::to_string(RETRY_DELAY_SECONDS) + " seconds... Attempt " +
                 std::to_string(retries + 1) + "/" + std::to_string(MAX_RETRY_ATTEMPTS);
       log_message("%s", message.c_str());
+      return -1;
     }
+
+    // Add socket options to allow reuse of address and port
+    int opt = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0 ||
+        setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) < 0)
+    {
+      close(sock);
+      return -1;
+    }
+
+    // Set socket to non-blocking mode
+    int flags = fcntl(sock, F_GETFL, 0);
+    if (flags < 0 || fcntl(sock, F_SETFL, flags | O_NONBLOCK) < 0)
+    {
+      close(sock);
+      return -1;
+    }
+
     return sock;
   };
 
   auto bind_server_socket = [&]() -> bool
   {
-    memset(&data.sockets.server_addr, 0, sizeof(data.sockets.server_addr));
-    data.sockets.server_addr.len = sizeof(data.sockets.server_addr);
-    data.sockets.server_addr.sa_family = ORBIS_NET_AF_INET;
-    *(uint16_t *)data.sockets.server_addr.sa_data = sceNetHtons(port);
-    if (DEBUG)
-      memset(data.sockets.server_addr.sa_data + 2, 0, 4);
-    else
-      *(uint32_t *)(data.sockets.server_addr.sa_data + 2) =
-          sceNetHtonl(isDaemon ? 0x00000000 : 0x7F000001);
-    return sceNetBind(data.sockets.server, &data.sockets.server_addr,
-                      sizeof(data.sockets.server_addr)) >= 0;
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr.s_addr = isDaemon ? INADDR_ANY : inet_addr("127.0.0.1");
+    
+    // Try to bind using the global retry constants
+    int retry_count = 0;
+    while (retry_count < MAX_RETRY_ATTEMPTS)
+    {
+      if (bind(data.sockets.server, (struct sockaddr*)&server_addr, sizeof(server_addr)) >= 0)
+      {
+        return true;
+      }
+      
+      if (errno != EADDRINUSE)
+      {
+        break; // If error is not "address in use", stop retrying
+      }
+      
+      sceKernelSleep(RETRY_DELAY_SECONDS);
+      retry_count++;
+      
+      message = name + " failed to bind server socket, retrying in " +
+                std::to_string(RETRY_DELAY_SECONDS) + " seconds... Attempt " +
+                std::to_string(retry_count + 1) + "/" + std::to_string(MAX_RETRY_ATTEMPTS);
+      log_message("%s", message.c_str());
+    }
+    
+    return false;
   };
 
   auto listen_server_socket = [&]() -> bool
   {
-    return sceNetListen(data.sockets.server, 1) >= 0;
+    // Set socket back to blocking mode before listen
+    int flags = fcntl(data.sockets.server, F_GETFL, 0);
+    if (flags < 0 || fcntl(data.sockets.server, F_SETFL, flags & ~O_NONBLOCK) < 0)
+    {
+      return false;
+    }
+    
+    return listen(data.sockets.server, SOMAXCONN) >= 0;
   };
 
   while (!unloaded)
@@ -211,10 +206,10 @@ void *unified_thread(void *arg)
 
     if (!bind_server_socket() || !listen_server_socket())
     {
-      message = name + " failed to bind or listen on server socket, retrying in " +
-                std::to_string(RETRY_DELAY_SECONDS) + " seconds... Attempt " +
-                std::to_string(retries + 1) + "/" + std::to_string(MAX_RETRY_ATTEMPTS);
+      message = name + " failed to bind or listen on server socket, retrying...";
       log_message("%s", message.c_str());
+      shutdown(data.sockets.server, SHUT_RDWR);
+      close(data.sockets.server);
       if (++retries >= MAX_RETRY_ATTEMPTS)
       {
         message = name + " failed to bind or listen after " +
@@ -223,19 +218,23 @@ void *unified_thread(void *arg)
         unloaded = true;
         break;
       }
-      sceNetSocketAbort(data.sockets.server, 0);
-      sceNetSocketClose(data.sockets.server);
       sceKernelSleep(RETRY_DELAY_SECONDS);
       continue;
     }
+
+    // Reset retry counter on successful setup
+    retries = 0;
+
+    message = "[OrbisControl]\n" + name + " started";
+    text_notify(222, message.c_str());
 
     message = name + " has started a server listening on port " + std::to_string(port) + ".";
     log_message("%s", message.c_str());
 
     while (!unloaded)
     {
-      data.sockets.client = sceNetAccept(data.sockets.server, &data.sockets.client_addr,
-                                         &data.sockets.client_addr_len);
+      data.sockets.client = accept(data.sockets.server, (struct sockaddr*)&data.sockets.client_addr,
+                                 &data.sockets.client_addr_len);
       if (data.sockets.client < 0)
       {
         message = name + " failed to accept client connection. Restarting server socket...";
@@ -248,8 +247,8 @@ void *unified_thread(void *arg)
           unloaded = true;
           break;
         }
-        sceNetSocketAbort(data.sockets.server, 0);
-        sceNetSocketClose(data.sockets.server);
+        shutdown(data.sockets.server, SHUT_RDWR);
+        close(data.sockets.server);
         sceKernelSleep(RETRY_DELAY_SECONDS);
         break; // break inner loop to recreate server socket
       }
@@ -258,8 +257,8 @@ void *unified_thread(void *arg)
       pthread_create(&client_thread, nullptr, unified_process, &data.sockets.client);
       pthread_detach(client_thread);
     }
-    sceNetSocketAbort(data.sockets.server, 0);
-    sceNetSocketClose(data.sockets.server);
+    shutdown(data.sockets.server, SHUT_RDWR);
+    close(data.sockets.server);
   }
 
   return nullptr;
@@ -367,9 +366,9 @@ void *telnet_server(void *arg)
 
 void *send_udp_signal(void *arg)
 {
-  const char *message = "UDP_SEARCH_KEY*";
+  const char *message = "OrbisControl UDP Signal*";
 
-  while (true)
+  while (!unloaded)
   {
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0)
@@ -403,6 +402,7 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
 
   isDaemon = (strcmp(info.titleid, DAEMON_APP) == 0);
   port = isDaemon ? DAEMON_PORT : RELAYS_PORT;
+  name = isDaemon ? "Daemon" : "Relay";
 
   std::string message = "OrbisControl Already loaded!";
 
@@ -412,9 +412,7 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
     {
       if (!DEBUG)
         text_notify(222, message.c_str());
-      else
-        unloaded = true; // for testing purposes until i can get the socket to rebind efficiently on wakeup.
-
+     
       return 1;
     }
 
@@ -424,6 +422,7 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
     const char *file = "/user/data/GoldHEN/plugins.ini";
     int fd = open(file, O_RDONLY);
     bool contentFound = false;
+    std::string pluginEntry = "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n";
     if (fd != -1)
     {
       char readBuffer[1024];
@@ -431,7 +430,7 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
       while ((bytesRead = read(fd, readBuffer, sizeof(readBuffer))) > 0)
       {
         readBuffer[bytesRead] = '\0';
-        if (strstr(readBuffer, "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n"))
+        if (strstr(readBuffer, pluginEntry.c_str()))
         {
           contentFound = true;
           break;
@@ -444,7 +443,6 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
       fd = open(file, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
       if (fd != -1)
       {
-        std::string pluginEntry = "[default]\n/data/GoldHEN/plugins/ItsJokerZz/OrbisControl.prx\n\n";
         write(fd, pluginEntry.c_str(), pluginEntry.length());
         log_message("Added OrbisControl to %s", file);
         close(fd);
@@ -452,14 +450,10 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
     }
   }
 
-  name = isDaemon ? "Daemon" : "Relay";
-  message = "[OrbisControl]\n" + name + " started";
-
   if (pthread_create(&data.threads.server, nullptr, unified_thread, nullptr) != 0)
     return 1;
-  pthread_detach(data.threads.server);
 
-  text_notify(222, message.c_str());
+  pthread_detach(data.threads.server);
 
   if (isDaemon)
   {
@@ -487,18 +481,6 @@ extern "C" int32_t __wrap__init(size_t args, const void *argp)
 
     while (!unloaded)
     {
-      if (isRestMode())
-        wasRestMode = true;
-      else if (wasRestMode)
-      {
-        if (!DEBUG)
-          unloaded = true;
-
-        sys_sdk_jailbreak(&jb);
-        text_notify(222, "jailbroke again for safety");
-        wasRestMode = false;
-        unloaded = !DEBUG;
-      }
       sceKernelSleep(1);
     }
 

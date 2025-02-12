@@ -2,13 +2,10 @@
 using System;
 using System.Drawing;
 using System.Linq;
-using System.Net.Sockets;
-using System.Net;
-using System.Text;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static OrbisControlAPI.OCAPI;
-using System.Diagnostics;
 
 namespace CM
 {
@@ -247,33 +244,33 @@ namespace CM
 
         private void button9_Click(object sender, EventArgs e)
         {
-          //  int procHandle = api.LoadModule(textBox8.Text, textBox7.Text);
+            //  int procHandle = api.LoadModule(textBox8.Text, textBox7.Text);
         }
 
         private void button8_Click(object sender, EventArgs e)
         {
-           // if (int.TryParse(textBox10.Text, out int moduleId))
-           //     api.UnloadModule(textBox9.Text, moduleId);
+            // if (int.TryParse(textBox10.Text, out int moduleId))
+            //     api.UnloadModule(textBox9.Text, moduleId);
         }
 
         private void button10_Click(object sender, EventArgs e)
         {
-          //  var subnets = new[] { "192.168.137" };
-          //  var consoles = api.FindConsoles(subnets, 243, 243);
+            //  var subnets = new[] { "192.168.137" };
+            //  var consoles = api.FindConsoles(subnets, 243, 243);
 
-          //  if (consoles.Count() != 0)
-          //  {
-          //      Console.WriteLine("Found console(s):");
-          //      foreach (var console in consoles)
-          //          Console.WriteLine(console);
-          //  }
+            //  if (consoles.Count() != 0)
+            //  {
+            //      Console.WriteLine("Found console(s):");
+            //      foreach (var console in consoles)
+            //          Console.WriteLine(console);
+            //  }
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
-          //  textBox12.Text += $"{textBox11.Text}:" + Environment.NewLine;
-          //  textBox12.Text += api.TEST(textBox11.Text) + Environment.NewLine;
-          //  textBox12.Text += Environment.NewLine;
+            //  textBox12.Text += $"{textBox11.Text}:" + Environment.NewLine;
+            //  textBox12.Text += api.TEST(textBox11.Text) + Environment.NewLine;
+            //  textBox12.Text += Environment.NewLine;
         }
 
         private void details_b_Click(object sender, EventArgs e)
@@ -283,7 +280,11 @@ namespace CM
 
         private void button2_Click(object sender, EventArgs e)
         {
-            api.SetupConsole("192.168.137.206");
+            //  api.SetupConsole("192.168.137.206");
+
+
+           
+
 
         }
 

@@ -12,12 +12,9 @@ namespace cmds
       send_response("done");
     }
 
-    void unload_module() {}
-
     void load_module()
     {
       std::string path = extract_param("path", data.buffer);
-
       if (path.empty())
       {
         log_message("No path provided for SPRX");
@@ -34,21 +31,18 @@ namespace cmds
         log_message("SPRX %s not found", path.c_str());
         return;
       }
-      else if (result < 0)
+      if (result < 0)
       {
         log_message("Error loading SPRX %s! Error code 0x%08x (%i)", path.c_str(), result, result);
         return;
       }
 
-      char response[1024];
-      snprintf(response, sizeof(response), "%i,%d,%s", pid, result, path.c_str());
-      send_response(response);
+      send_response(std::to_string(pid) + "," + std::to_string(result) + "," + path);
 
-      int32_t ret;
       int32_t (*module_start_ret)(size_t, const void *);
       int32_t (*module_stop_ret)(size_t, const void *);
 
-      ret = sceKernelDlsym(result, "module_start", (void **)&module_start_ret);
+      int32_t ret = sceKernelDlsym(result, "module_start", (void **)&module_start_ret);
       log_message("module_start Dlsym 0x%08x @ %p", ret, module_start_ret);
 
       ret = sceKernelDlsym(result, "module_stop", (void **)&module_stop_ret);
@@ -60,26 +54,22 @@ namespace cmds
         int32_t prx_ret = module_start_ret(0, nullptr);
         log_message("module_start returned with 0x%08x", prx_ret);
 
-        if (prx_ret || prx_ret < 0)
+        if (prx_ret != 0)
         {
           log_message("SPRX returned non-zero, stopping module...");
           prx_ret = module_stop_ret(0, nullptr);
           log_message("module_stop returned with 0x%08x", prx_ret);
         }
-        else if (prx_ret == 0)
-        {
+        else
           log_message("module_start exit successful 0x%08x", prx_ret);
-        }
       }
       else
-      {
         log_message("Unable to find module_start or module_stop!");
-      }
 
-      char notify_msg[1024];
-      snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] SPRX Loaded:\n%s", path.c_str());
-      text_notify(222, notify_msg);
+      text_notify(222, ("[OCAPI] SPRX Loaded:\n" + path).c_str());
     }
+
+    void unload_module() {}
 
     void stop_plugin() {}
 
@@ -177,7 +167,7 @@ namespace cmds
       {
         log_message("No address provided");
         send_error_response(_DEBUGGING);
-        
+
         return;
       }
 
@@ -190,7 +180,7 @@ namespace cmds
       }
 
       uint64_t addressVal = std::stoull(address, nullptr, 16);
-      size_t byteSize = std::stoul(size); 
+      size_t byteSize = std::stoul(size);
 
       if (byteSize > 1024 * 1024)
       {
@@ -358,6 +348,6 @@ namespace cmds
 
       send_response("Freed memory successfully");
     }
-
+  
   }
 }

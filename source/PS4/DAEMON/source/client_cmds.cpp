@@ -6,6 +6,11 @@ namespace cmds
   {
     namespace connection
     {
+      void status()
+      {
+        send_response(std::string("Server is running."));
+      }
+
       void setup()
       {
         nlohmann::json config = {
@@ -15,11 +20,6 @@ namespace cmds
             {"OCAPI", std::to_string(VERSION).substr(0, 4)}};
 
         send_response(config);
-      }
-
-      void status()
-      {
-        send_response(std::string("Server is running."));
       }
 
       void version()
@@ -70,7 +70,7 @@ namespace cmds
         {
           std::string response = perform_http_request("attach_relay");
 
-          // if (response != "" && response == "done") /*prolly not needed*/
+          if (response != "" && response == "done") /*prolly not needed*/
           attached = true;
         }
 
@@ -436,83 +436,70 @@ namespace cmds
         send_response(perform_http_request(request.c_str()));
       }
 
-      void stop_plugin() {}
-
-      void start_plugin() {}
-
-      void unload_module() {}
-
       void load_module()
       {
-        std::string exec_path = extract_param("exec", data.buffer);
-        std::string prx_path = extract_param("path", data.buffer);
+        std::string processName = extract_param("process", data.buffer);
+        std::string prxPath = extract_param("path", data.buffer);
 
-        auto load_prx = [](const std::string &exec_path, const std::string &prx_path) -> bool
+        auto load_prx = [](const std::string &processName, const std::string &prxPath) -> bool
         {
-          int prx_handle =
-              sys_sdk_proc_prx_load(const_cast<char *>(exec_path.c_str()),
-                                    const_cast<char *>(prx_path.c_str()));
+          int prx_handle = sys_sdk_proc_prx_load(const_cast<char *>(processName.c_str()),
+                                                 const_cast<char *>(prxPath.c_str()));
           if (prx_handle >= 0)
           {
-            char notify_msg[1024];
-            snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s",
-                     prx_path.c_str());
+            char notify_msg[256];
+            snprintf(notify_msg, sizeof(notify_msg), "[OCAPI] PRX Loaded: %s", prxPath.c_str());
             text_notify(222, notify_msg);
 
-            nlohmann::json response = {
-                {prx_path, prx_handle}};
-            send_response(generate_json(response).c_str());
+            send_response(generate_json({{prxPath, prx_handle}}).c_str());
 
             return true;
           }
-          else
-          {
-            send_error_response(UNKNOWN_ERROR);
+          send_error_response(UNKNOWN_ERROR);
 
-            return false;
-          }
+          return false;
         };
+
+        if (processName.empty() && prxPath.empty())
+        {
+          send_error_response(INVALID_ARGS);
+
+          return;
+        }
 
         if (is_port_open(RELAYS_PORT))
         {
-          if (!exec_path.empty() || !prx_path.empty())
+          if (!prxPath.empty() && processName.empty())
           {
-            if (!exec_path.empty() && !prx_path.empty())
-            {
-              load_prx(exec_path, prx_path);
+            send_response(perform_http_request("load_module", RELAYS_PORT, true, "load_module?path=" + prxPath));
 
-              return;
-            }
-            else if (!prx_path.empty() && exec_path.empty())
-            {
-              std::string request = "load_module?path=" + prx_path;
-              send_response(perform_http_request("load_module", RELAYS_PORT, false, request));
-            }
-            else
-              send_error_response(INVALID_ARGS);
+            return;
           }
-          else
-            send_error_response(INVALID_ARGS);
         }
-        else
+        else if (processName.empty() && !prxPath.empty())
         {
-          if (exec_path.empty() && !prx_path.empty())
+          if (!attached)
           {
-            if (!attached)
-              send_error_response(NOT_ATTACHED);
-            else
-            {
-              std::string request = "load_module?path=" + prx_path;
-              send_response(perform_http_request("load_module", RELAYS_PORT, false, request));
-            }
+            send_error_response(NOT_ATTACHED);
+
+            return;
           }
-          else if (!exec_path.empty() && !prx_path.empty())
-            load_prx(exec_path, prx_path);
-          else
-            send_error_response(INVALID_ARGS);
+          send_response(perform_http_request("load_module", RELAYS_PORT, true, "load_module?path=" + prxPath));
+          return;
         }
+
+        if (!processName.empty() && !prxPath.empty())
+          load_prx(processName, prxPath);
+        else
+          send_error_response(INVALID_ARGS);
       }
 
+      void unload_module() {}
+
+      void stop_plugin() {}
+
+      void start_plugin() {}
+      
     }
 
   }

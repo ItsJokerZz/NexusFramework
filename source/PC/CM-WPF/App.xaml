@@ -25,7 +25,6 @@
             </ResourceDictionary.MergedDictionaries>
 
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-            <local:IndexToVisibilityConverter x:Key="IndexToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

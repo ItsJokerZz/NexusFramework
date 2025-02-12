@@ -47,10 +47,9 @@ struct serverData
   struct
   {
     int server = -1, client = -1;
-    OrbisNetSockaddr server_addr = {},
-                     client_addr = {};
-
-    socklen_t client_addr_len = {};
+    struct sockaddr_in server_addr = {},
+                      client_addr = {};
+    socklen_t client_addr_len = sizeof(struct sockaddr_in);
   } sockets;
 
   struct

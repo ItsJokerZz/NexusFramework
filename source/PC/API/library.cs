@@ -25,8 +25,6 @@ namespace OrbisControlAPI
         private readonly Dictionary<string, FoundConsole>
             FoundConsoles = new Dictionary<string, FoundConsole>();
 
-        private int NumberOfConsole => Consoles.Count;
-
         public enum ConsoleTypes { CEX, KIT, TEST }
 
         public enum BuzzerModes
@@ -126,7 +124,7 @@ namespace OrbisControlAPI
             public static string[] List { get; private set; }
 
             public static void SetList(string[] list) => List = list;
-        } // add abilitity to store pid and name for each process available
+        }
 
         public class FoundConsole
         {
@@ -215,7 +213,7 @@ namespace OrbisControlAPI
         public string Username => Target.Username;
         public bool Connected => Target.Connected;
         public bool Attached => Target.Attached;
-
+        private int NumberOfConsole => Consoles.Count;
         #endregion
 
         #region Console Management
@@ -362,12 +360,16 @@ namespace OrbisControlAPI
                 Target.Clear();
                 Target.SetIP(address);
             }
-            else if (string.IsNullOrEmpty(Target.IP)) return;
 
-            Target.SetConnected(true);
-            PerformRequest("connect");
-            GetTargetInfo();
-            GetProcessInfo();
+            string check = PerformRequest("connect");
+
+            if (!string.IsNullOrEmpty(check))
+            {
+                Target.SetConnected(true);
+                GetTargetInfo();
+                GetProcessInfo();
+            }
+            else throw new Exception("Failed to connect to the target. Please check connect and try again.");
         }
 
         public void Attach(string address = null)
@@ -405,57 +407,61 @@ namespace OrbisControlAPI
             Target.SetName(PerformRequest("get_console_name"));
 
             string sysTypeResponse = PerformRequest("get_sys_type");
-            using (JsonDocument doc = JsonDocument.Parse(sysTypeResponse))
-            {
-                string sysType = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE").GetString();
 
-                switch (sysType)
+            if (!string.IsNullOrEmpty(sysTypeResponse))
+            {
+                using (JsonDocument doc = JsonDocument.Parse(sysTypeResponse))
                 {
-                    case "CEX":
-                        Target.SetConsoleType(ConsoleTypes.CEX.ToString());
-                        break;
-                    case "KIT":
-                        Target.SetConsoleType(ConsoleTypes.KIT.ToString());
-                        break;
-                    case "TEST":
-                        Target.SetConsoleType(ConsoleTypes.TEST.ToString());
-                        break;
+                    string sysType = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE").GetString();
+
+                    switch (sysType)
+                    {
+                        case "CEX":
+                            Target.SetConsoleType(ConsoleTypes.CEX.ToString());
+                            break;
+                        case "KIT":
+                            Target.SetConsoleType(ConsoleTypes.KIT.ToString());
+                            break;
+                        case "TEST":
+                            Target.SetConsoleType(ConsoleTypes.TEST.ToString());
+                            break;
+                    }
                 }
-            }
 
-            string fwResponse = PerformRequest("get_fw_version");
-            using (JsonDocument doc = JsonDocument.Parse(fwResponse))
-            {
-                string fwVersionString = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE").GetString();
-                float fwVersion = float.TryParse(fwVersionString, out var fw) ? fw : 0f;
-                Target.SetFirmware(fwVersion);
-            }
+                string fwResponse = PerformRequest("get_fw_version");
+                using (JsonDocument doc = JsonDocument.Parse(fwResponse))
+                {
+                    string fwVersionString = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE").GetString();
+                    float fwVersion = float.TryParse(fwVersionString, out var fw) ? fw : 0f;
+                    Target.SetFirmware(fwVersion);
+                }
 
-            string diskInfo = PerformRequest("get_disk_info", "return=all");
-            using (JsonDocument doc = JsonDocument.Parse(diskInfo))
-            {
-                var data = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE");
+                string diskInfo = PerformRequest("get_disk_info", "return=all");
+                using (JsonDocument doc = JsonDocument.Parse(diskInfo))
+                {
+                    var data = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE");
 
-                string totalSpace = data.GetProperty("totalSpace").GetString();
-                string freeSpace = data.GetProperty("freeSpace").GetString();
-                string usedSpace = data.GetProperty("usedSpace").GetString();
-                string percentage = data.GetProperty("percentUsed").GetString();
+                    string totalSpace = data.GetProperty("totalSpace").GetString();
+                    string freeSpace = data.GetProperty("freeSpace").GetString();
+                    string usedSpace = data.GetProperty("usedSpace").GetString();
+                    string percentage = data.GetProperty("percentUsed").GetString();
 
-                TargetInfo.Storage.SetTotal(totalSpace);
-                TargetInfo.Storage.SetFree(freeSpace);
-                TargetInfo.Storage.SetUsed(usedSpace);
-                TargetInfo.Storage.SetPercentageUsed(percentage);
-            }
+                    TargetInfo.Storage.SetTotal(totalSpace);
+                    TargetInfo.Storage.SetFree(freeSpace);
+                    TargetInfo.Storage.SetUsed(usedSpace);
+                    TargetInfo.Storage.SetPercentageUsed(percentage);
+                }
 
-            Target.SetCPUTemp(int.TryParse(PerformRequest("get_temperature", "type=cpu"), out var cpuTemp) ? cpuTemp : 0);
-            Target.SetSoCTemp(int.TryParse(PerformRequest("get_temperature", "type=soc"), out var socTemp) ? socTemp : 0);
-            Target.SetConnected(PerformRequest("connect")?.Contains("true") == true);
+                Target.SetCPUTemp(int.TryParse(PerformRequest("get_temperature", "type=cpu"), out var cpuTemp) ? cpuTemp : 0);
+                Target.SetSoCTemp(int.TryParse(PerformRequest("get_temperature", "type=soc"), out var socTemp) ? socTemp : 0);
+                Target.SetConnected(PerformRequest("connect")?.Contains("true") == true);
 
-            string usernameResponse = PerformRequest("get_username");
-            using (JsonDocument doc = JsonDocument.Parse(usernameResponse))
-            {
-                string username = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE").GetString();
-                Target.SetUsername(username);
+                string usernameResponse = PerformRequest("get_username");
+                using (JsonDocument doc = JsonDocument.Parse(usernameResponse))
+                {
+                    string username = doc.RootElement.GetProperty("DATA").GetProperty("RESPONSE").GetString();
+                    Target.SetUsername(username);
+                }
             }
         }
 
@@ -472,8 +478,8 @@ namespace OrbisControlAPI
 
         public void AlarmBuzzer(BuzzerModes mode)
         {
-              if (!Target.Connected)
-                 throw new Exception("Please check the connection to the target before proceeding!");
+            if (!Target.Connected)
+                throw new Exception("Please check the connection to the target before proceeding!");
 
             PerformRequest("ring_buzzer", $"type={(int)mode}");
         }
@@ -497,6 +503,26 @@ namespace OrbisControlAPI
         #endregion
 
         #region Process Management
+        public void GetProcessList()
+        {
+            var json = PerformRequest("get_proc_list");
+
+            if (!string.IsNullOrEmpty(json))
+            {
+                using (JsonDocument doc = JsonDocument.Parse(json))
+                {
+                    var data = doc.RootElement.GetProperty("DATA");
+
+                    List<string> list = new List<string>();
+
+                    foreach (var item in data.EnumerateObject())
+                        list.Add(item.Value.GetString());
+
+                    ProcessInfo.SetList(list.ToArray());
+                }
+            }
+        }
+
         public void GetProcessInfo()
         {
             if (!Target.Connected)
@@ -534,27 +560,11 @@ namespace OrbisControlAPI
             GetProcessList();
         }
 
-        public void GetProcessList()
-        {
-            var json = PerformRequest("get_proc_list");
-
-            using (JsonDocument doc = JsonDocument.Parse(json))
-            {
-                var data = doc.RootElement.GetProperty("DATA");
-
-                List<string> list = new List<string>();
-
-                foreach (var item in data.EnumerateObject())
-                {
-                    list.Add(item.Value.GetString());
-                }
-
-                ProcessInfo.SetList(list.ToArray());
-            }
-        }
-
         public int GetProcessIdByName(string name)
         {
+            if (!Target.Connected)
+                throw new Exception("Please check the connection to the target before proceeding!");
+
             string jsonResponse = PerformRequest("get_pid_by_name", $"name={name}");
             JsonDocument doc = JsonDocument.Parse(jsonResponse);
             return doc.RootElement.GetProperty("DATA").GetProperty("PID").GetInt32();
@@ -562,6 +572,9 @@ namespace OrbisControlAPI
 
         public string GetNameOfProcessByID(int pid)
         {
+            if (!Target.Connected)
+                throw new Exception("Please check the connection to the target before proceeding!");
+
             string jsonResponse = PerformRequest("get_name_of_pid", $"pid={pid}");
             JsonDocument doc = JsonDocument.Parse(jsonResponse);
             return doc.RootElement.GetProperty("DATA").GetProperty("NAME").GetString();
@@ -703,13 +716,23 @@ namespace OrbisControlAPI
 
         }
 
-        #endregion
-
-        #region Module Management
-        public int LoadModule(string path)
+        public void CloseApplication()
         {
             if (!Target.Connected && !Target.Attached)
                 throw new Exception("Please check the connection/attachment to the target before proceeding!");
+
+        }
+
+        #endregion
+
+        #region Module Management
+        public int LoadModule(string processName, string modulePath)
+        {
+            if (!Target.Connected && !Target.Attached)
+                throw new Exception("Please check the connection/attachment to the target before proceeding!");
+
+            if (int.TryParse(PerformRequest("load_module", $"process={processName}&path={modulePath}"), out int result))
+                return result;
 
             return -1;
         }

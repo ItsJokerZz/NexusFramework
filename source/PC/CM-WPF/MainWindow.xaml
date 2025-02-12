@@ -234,36 +234,11 @@
                                         Margin="8,0,0,8">
                                     <DockPanel MinWidth="400" MinHeight="180">
                                         <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                                            <TextBlock Text="Quick Actions" 
+                                            <TextBlock Text="Process Info" 
                                                       Style="{StaticResource CardTitle}"
                                                       FontSize="18"/>
-                                            <Button Style="{StaticResource IconButton}" HorizontalAlignment="Right">
-                                                <Path Data="{StaticResource PowerIcon}" 
-                                                      Fill="{DynamicResource ColorText}"
-                                                      Width="14" Height="14"/>
-                                            </Button>
                                         </Grid>
-                                        <StackPanel VerticalAlignment="Stretch">
-                                            <Button Content="Restart System" 
-                                                    Style="{StaticResource ActionButtonStyle}"
-                                                    FontSize="13"
-                                                    Height="34"
-                                                    Margin="0,0,0,8"/>
-                                            <Button Content="Quick Boot" 
-                                                    Style="{StaticResource ActionButtonStyle}"
-                                                    FontSize="13"
-                                                    Height="34"
-                                                    Margin="0,0,0,8"/>
-                                            <Button Content="Shutdown" 
-                                                    Style="{StaticResource ActionButtonStyle}"
-                                                    FontSize="13"
-                                                    Height="34"
-                                                    Margin="0,0,0,8"/>
-                                            <Button Content="Hard Reset" 
-                                                    Style="{StaticResource ActionButtonStyle}"
-                                                    FontSize="13"
-                                                    Height="34"/>
-                                        </StackPanel>
+                                        <StackPanel VerticalAlignment="Stretch"/>
                                     </DockPanel>
                                 </Border>
 
@@ -361,7 +336,7 @@
                                         Grid.Row="1" Grid.Column="1" 
                                         Margin="8,8,0,0">
                                     <DockPanel>
-                                        <TextBlock Text="Versioning" 
+                                        <TextBlock Text="OrbisControl" 
                                                   Style="{StaticResource CardTitle}"
                                                   FontSize="18"
                                                   DockPanel.Dock="Top"
@@ -482,7 +457,7 @@
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
                                                             </Grid.RowDefinitions>
-                                                            
+
                                                             <Grid Grid.Row="0" Margin="0,0,0,8">
                                                                 <TextBlock Text="Fan Threshold" 
                                                                           Foreground="{DynamicResource ColorTextSecondary}"
@@ -493,7 +468,7 @@
                                                                           FontSize="14"
                                                                           HorizontalAlignment="Right"/>
                                                             </Grid>
-                                                            
+
                                                             <Grid Grid.Row="1" Height="28">
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="*"/>
@@ -523,36 +498,41 @@
                                                                 <RowDefinition Height="Auto"/>
                                                                 <RowDefinition Height="Auto"/>
                                                             </Grid.RowDefinitions>
-                                                            
+
                                                             <TextBlock Text="Console Buzzer" 
                                                                       Grid.Row="0"
                                                                       Foreground="{DynamicResource ColorTextSecondary}"
                                                                       FontSize="14"
                                                                       Margin="0,0,0,8"/>
-                                                            
+
                                                             <Grid Grid.Row="1">
                                                                 <Grid.ColumnDefinitions>
                                                                     <ColumnDefinition Width="*"/>
                                                                     <ColumnDefinition Width="8"/>
                                                                     <ColumnDefinition Width="120"/>
                                                                 </Grid.ColumnDefinitions>
-                                                                
+
                                                                 <StackPanel Grid.Column="0" 
                                                                             Orientation="Horizontal">
                                                                     <RadioButton Content="Single" 
                                                                                 IsChecked="True" 
-                                                                                Margin="0,0,16,0"/>
+                                                                                Margin="0,0,16,0"
+                                                                                Checked="BuzzerMode_Changed"/>
                                                                     <RadioButton Content="Double" 
-                                                                                Margin="0,0,16,0"/>
+                                                                                Margin="0,0,16,0"
+                                                                                Checked="BuzzerMode_Changed"/>
                                                                     <RadioButton Content="Triple" 
-                                                                                Margin="0,0,16,0"/>
-                                                                    <RadioButton Content="Continuous"/>
+                                                                                Margin="0,0,16,0"
+                                                                                Checked="BuzzerMode_Changed"/>
+                                                                    <RadioButton Content="Continuous"
+                                                                                Checked="BuzzerMode_Changed"/>
                                                                 </StackPanel>
-                                                                
+
                                                                 <Button Content="Activate Buzzer"
                                                                         Grid.Column="2"
                                                                         Style="{StaticResource PrimaryButtonStyle}"
-                                                                        Height="28"/>
+                                                                        Height="28"
+                                                                        Click="ActivateBuzzer_Click"/>
                                                             </Grid>
                                                         </Grid>
                                                     </StackPanel>
@@ -603,23 +583,50 @@
                                                     </Grid.RowDefinitions>
 
                                                     <StackPanel Grid.Row="0" Margin="0,0,0,16">
-                                                        <ComboBox Style="{StaticResource DarkComboBox}">
-                                                            <ComboBoxItem Content="Select Image Type" Style="{StaticResource DarkComboBoxItem}"/>
+                                                        <ComboBox x:Name="NotificationTypeComboBox"
+                                                                  Style="{StaticResource DarkComboBox}"
+                                                                  SelectionChanged="NotificationType_SelectionChanged"
+                                                                  SelectedIndex="1"
+                                                                  Margin="0,0,0,8">
                                                             <ComboBoxItem Content="System Image" Style="{StaticResource DarkComboBoxItem}"/>
                                                             <ComboBoxItem Content="Custom Image" Style="{StaticResource DarkComboBoxItem}"/>
                                                         </ComboBox>
+
+                                                        <!-- System Images ComboBox -->
+                                                        <ComboBox x:Name="SystemImagesComboBox"
+                                                                  Style="{StaticResource DarkComboBox}"
+                                                                  Visibility="Collapsed"
+                                                                  Margin="0,0,0,8">
+                                                            <ComboBoxItem Content="Success" Style="{StaticResource DarkComboBoxItem}"/>
+                                                            <ComboBoxItem Content="Info" Style="{StaticResource DarkComboBoxItem}"/>
+                                                            <ComboBoxItem Content="Warning" Style="{StaticResource DarkComboBoxItem}"/>
+                                                            <ComboBoxItem Content="Error" Style="{StaticResource DarkComboBoxItem}"/>
+                                                        </ComboBox>
+
+                                                        <!-- Custom Image URL TextBox -->
+                                                        <TextBox x:Name="CustomImageUrlTextBox"
+                                                                 Style="{StaticResource DarkTextBox}"
+                                                                 Tag="Enter image URL or local image path from the console..."
+                                                                 Visibility="Collapsed"
+                                                                 Margin="0,0,0,8"/>
+
                                                         <Grid>
                                                             <Grid.ColumnDefinitions>
                                                                 <ColumnDefinition Width="*"/>
-                                                                <ColumnDefinition Width="120"/>
+                                                                <ColumnDefinition Width="8"/>
+                                                                <ColumnDefinition Width="60"/>
                                                             </Grid.ColumnDefinitions>
-                                                            <TextBox Grid.Column="0"
-                                                                     Tag="Enter text here..."
+
+                                                            <TextBox x:Name="NotificationTextBox"
+                                                                     Grid.Column="0"
                                                                      Style="{StaticResource DarkTextBox}"
-                                                                     Margin="0,0,8,0"/>
+                                                                     Tag="Enter notification text..."/>
+
                                                             <Button Content="Send"
-                                                                    Grid.Column="1"
-                                                                    Style="{StaticResource PrimaryButtonStyle}"/>
+                                                                    Grid.Column="2"
+                                                                    Style="{StaticResource PrimaryButtonStyle}"
+                                                                    Height="28"
+                                                                    Click="SendNotification_Click"/>
                                                         </Grid>
                                                     </StackPanel>
 
@@ -694,7 +701,7 @@
                                                          Foreground="{DynamicResource ColorText}"
                                                          CaretBrush="{DynamicResource ColorText}"/>
                                             </StackPanel>
-                                            
+
                                             <Button Content="Load Plugin" 
                                                     Style="{StaticResource PrimaryButtonStyle}"/>
                                         </StackPanel>
@@ -703,7 +710,7 @@
                                     <Border Style="{StaticResource CardBorder}">
                                         <StackPanel>
                                             <TextBlock Text="Loaded PRX" Style="{StaticResource CardTitle}"/>
-                                            
+
                                             <!-- Loaded Modules Card -->
                                             <Border Style="{StaticResource CardBorder}" Margin="0,16,0,8">
                                                 <StackPanel>
@@ -789,7 +796,7 @@
                                                             Cursor="Hand"
                                                             MouseDown="ColorBox_MouseDown"/>
                                                     <TextBlock Grid.Column="1"
-                                                             Text="#0070D1" 
+                                                             Text="#0072CE" 
                                                              Foreground="{DynamicResource ColorText}"
                                                              VerticalAlignment="Center"
                                                              FontSize="13"

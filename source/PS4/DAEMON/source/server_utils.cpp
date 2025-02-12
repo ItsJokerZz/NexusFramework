@@ -2,29 +2,26 @@
 
 bool is_port_open(int port)
 {
-  int sock =
-      sceNetSocket("[OrbisControl] Ping Socket", ORBIS_NET_AF_INET, ORBIS_NET_SOCK_STREAM, 0);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0)
+        return false;
 
-  if (sock < 0)
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    int result = connect(sock, (struct sockaddr*)&server_addr, sizeof(server_addr));
+
+    if (result == 0)
+    {
+        close(sock);
+        return true;
+    }
+
+    close(sock);
     return false;
-
-  OrbisNetSockaddr server_addr;
-  memset(&server_addr, 0, sizeof(server_addr));
-  server_addr.len = sizeof(server_addr);
-  server_addr.sa_family = ORBIS_NET_AF_INET;
-  *(uint16_t *)server_addr.sa_data = sceNetHtons(port);
-  memset(server_addr.sa_data + 2, 0, 4);
-
-  int result = sceNetConnect(sock, &server_addr, sizeof(server_addr));
-
-  if (result == 0)
-  {
-    sceNetSocketClose(sock);
-    return true;
-  }
-
-  sceNetSocketClose(sock);
-  return false;
 }
 
 std::string decode_url(const std::string &url)

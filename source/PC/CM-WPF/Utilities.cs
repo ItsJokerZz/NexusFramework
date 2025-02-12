@@ -7,6 +7,7 @@ using System.Windows.Shapes;
 
 namespace ConsoleManager
 {
+    #region Visual Tree Helper Extension
     public static class VisualTreeHelperExtensions
     {
         public static IEnumerable<T> FindVisualChildren<T>(this DependencyObject depObj) where T : DependencyObject
@@ -25,17 +26,36 @@ namespace ConsoleManager
             }
         }
     }
+    #endregion
 
     public static class Utilities
     {
+        #region Global Fields
         public static ColorSettings colorSettings = new();
         public static bool darkMode = true;
+        public static Border currentConsoleToRename;
+        #endregion
 
+        #region UI Operation Delegates
         public delegate void ConsoleListOperation(UIElement element);
         public delegate void VisibilityOperation(Visibility visibility);
         public delegate void TextOperation(string text);
         public delegate void FocusOperation();
         public delegate int CountOperation();
+        public delegate object FindResourceOperation(string resourceKey);
+        public delegate void ConsoleItemClickOperation(Border clickedItem);
+        #endregion
+
+        #region Console Operation Delegates
+        public delegate void ConnectOperation(string ip);
+        public delegate void InjectOperation(string ip);
+        public delegate void RemoveConsoleOperation(string ip);
+        public delegate void AttachOperation(string ip);
+        public delegate void UnloadOperation(string ip);
+        public delegate void DisconnectOperation(string ip);
+        #endregion
+
+        #region UI Event Handlers
         public static MouseButtonEventHandler ColorBoxMouseDownHandler { get; set; }
         public static ConsoleListOperation RemoveFromConsoleList { get; set; }
         public static ConsoleListOperation AddToConsoleList { get; set; }
@@ -45,35 +65,20 @@ namespace ConsoleManager
         public static FocusOperation FocusRenameTextBox { get; set; }
         public static Action SelectAllRenameTextBox { get; set; }
         public static CountOperation GetConsoleListChildrenCount { get; set; }
-
-        public static Border currentConsoleToRename;
-
-        // Add new delegates for resource operations
-        public delegate object FindResourceOperation(string resourceKey);
-        public delegate void ConsoleItemClickOperation(Border clickedItem);
-        public delegate void ConnectOperation(string ip);
-        public delegate void InjectOperation(string ip);
-        public delegate void RemoveConsoleOperation(string ip);
-
-        // Add new delegate for attach operation
-        public delegate void AttachOperation(string ip);
-
-        // Add new delegate for unload operation
-        public delegate void UnloadOperation(string ip);
-
-        // Add new delegate for disconnect operation
-        public delegate void DisconnectOperation(string ip);
-
-        // Add new properties to hold the delegates
         public static FindResourceOperation FindResource { get; set; }
         public static ConsoleItemClickOperation HandleConsoleItemClick { get; set; }
+        #endregion
+
+        #region Console Operation Handlers
         public static ConnectOperation ConnectToConsole { get; set; }
         public static InjectOperation InjectPayload { get; set; }
         public static RemoveConsoleOperation RemoveConsole { get; set; }
         public static DisconnectOperation DisconnectFromConsole { get; set; }
         public static AttachOperation AttachToConsole { get; set; }
         public static UnloadOperation UnloadPayload { get; set; }
+        #endregion
 
+        #region Theme Management
         public static void UpdateResourceColor(string resourceKey, string colorHex)
         {
             var color = (Color)ColorConverter.ConvertFromString(colorHex);
@@ -146,7 +151,6 @@ namespace ConsoleManager
                     if (shouldUpdate)
                     {
                         box.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hexCode));
-
                         box.MouseDown -= ColorBoxMouseDownHandler;
                         box.MouseDown += ColorBoxMouseDownHandler;
 
@@ -162,6 +166,8 @@ namespace ConsoleManager
                 System.Diagnostics.Debug.WriteLine($"Error updating color preview: {ex.Message}");
             }
         }
+
+        public static string ColorToHex(Color color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
 
         public static void ApplyColorSettings()
         {
@@ -189,15 +195,12 @@ namespace ConsoleManager
             }
         }
 
-        public static string ColorToHex(Color color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
-
         public static void SaveColorSettings()
         {
             try
             {
                 var resources = Application.Current.Resources;
-
-                colorSettings.IsDarkMode = darkMode;
+                ColorSettings.IsDarkMode = darkMode;
                 colorSettings.PrimaryColor = ColorToHex((Color)resources["PrimaryColor"]);
                 colorSettings.GrayColor = ColorToHex((Color)resources["GrayColor"]);
                 colorSettings.TextColor = ColorToHex((Color)resources["TextColor"]);
@@ -205,15 +208,16 @@ namespace ConsoleManager
                 colorSettings.CardColor = ColorToHex((Color)resources["DarkerColor"]);
                 colorSettings.ShadowColor = ColorToHex((Color)resources["DarkestColor"]);
                 colorSettings.TextSecondaryColor = ColorToHex((Color)resources["TextSecondaryColor"]);
-
-                colorSettings.Save();
+                ColorSettings.Save();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error saving color settings: {ex.Message}");
             }
         }
+        #endregion
 
+        #region Console Management
         public static void DeleteConsole(Border consoleItem)
         {
             if (consoleItem != null)
@@ -245,7 +249,9 @@ namespace ConsoleManager
             var stackPanel = grid?.Children.OfType<StackPanel>().FirstOrDefault();
             return stackPanel?.Children.OfType<TextBlock>().LastOrDefault()?.Text;
         }
+        #endregion
 
+        #region UI Element Creation
         private static MenuItem CreateMenuItem(string header, string style, Action<Border> clickHandler)
         {
             var item = new MenuItem
@@ -304,7 +310,6 @@ namespace ConsoleManager
 
         public static Border CreateConsoleItem(string name, string ip)
         {
-            // Hide the "no consoles" text whenever a console is created
             SetEmptyStateVisibility?.Invoke(Visibility.Collapsed);
 
             var consoleItem = new Border { Style = (Style)FindResource?.Invoke("ConsoleItem") };
@@ -371,5 +376,6 @@ namespace ConsoleManager
 
             return consoleItem;
         }
+        #endregion
     }
 }
