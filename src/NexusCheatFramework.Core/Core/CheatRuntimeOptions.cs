@@ -22,6 +22,21 @@ namespace NexusCheatFramework.Core
         public AmbiguousMatchPolicy AmbiguousMatchPolicy { get; set; } = AmbiguousMatchPolicy.Reject;
     }
 
+    /// <summary>
+    /// How to handle restore bytes when disabling a cheat.
+    /// </summary>
+    public enum RestorePolicy
+    {
+        /// <summary>Use the original bytes captured before the first write. Fall back to explicit restore bytes if null.</summary>
+        CapturedOriginalFirst,
+        /// <summary>Use explicit restoreBytes from the cheat definition first. Fall back to captured original bytes.</summary>
+        ExplicitRestoreBytesFirst,
+        /// <summary>Only use explicit restoreBytes. If none provided and no captured original bytes, do nothing.</summary>
+        ExplicitOnly,
+        /// <summary>Only use captured original bytes. Ignore explicit restoreBytes.</summary>
+        CapturedOnly,
+    }
+
     public enum AmbiguousMatchPolicy
     {
         /// <summary>Reject the cheat with a clear error.</summary>
@@ -30,3 +45,5 @@ namespace NexusCheatFramework.Core
         FirstMatch,
     }
 }
+
+

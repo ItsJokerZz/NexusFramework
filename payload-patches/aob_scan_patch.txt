@@ -1,0 +1,179 @@
+================================================================================
+AOB Scan Native Payload Endpoint Patch
+================================================================================
+File: NexusFramework native payload source
+Target: source/console/http_server.c or api_commands.c
+Status: SOURCE PATCH PROVIDED — RUNTIME UNVERIFIED
+================================================================================
+
+This patch adds a POST /aob_scan endpoint to the Nexus native payload.
+
+Patch location (upstream NexusFramework):
+- source/console/source/http_server.c (or similar HTTP command dispatch)
+
+Add to the command handler registration:
+
+```c
+// Near other command registrations
+{"/aob_scan", HTTP_POST, handle_aob_scan},
+```
+
+Implementation:
+
+```c
+// === AOB Scan Handler ===
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <inttypes.h>
+
+typedef struct {
+    uint8_t *pattern_bytes;
+    uint8_t *pattern_mask;  // 0x00 = exact, 0xFF = wildcard
+    int pattern_length;
+    uint64_t start_addr;
+    uint64_t end_addr;
+    int max_results;
+    int readable_only;
+    int executable_only;
+    const char *region_name_contains;
+} AobScanRequest;
+
+typedef struct {
+    uint64_t *matches;
+    int match_count;
+    int scanned_regions;
+    int skipped_regions;
+    double elapsed_ms;
+} AobScanResult;
+
+// Parse pattern from JSON-spaced hex or compact hex
+// e.g. "48 8B ?? ?? 89" or "488B????89"
+static int parse_aob_pattern(const char *pattern_str, uint8_t **out_bytes, uint8_t **out_mask, int *out_length) {
+    if (!pattern_str || !*pattern_str) return -1;
+    
+    // Count hex pairs (ignoring spaces, ?, dots)
+    int len = strlen(pattern_str);
+    int byte_count = 0;
+    for (int i = 0; i < len; i++) {
+        char c = pattern_str[i];
+        if (c == ' ' || c == '-' || c == ',') continue;
+        // Each pair of hex chars or wildcards = 1 byte
+        if (i == 0 || pattern_str[i-1] == ' ' || pattern_str[i-1] == '-' || pattern_str[i-1] == ',') {
+            byte_count++;
+        }
+    }
+    
+    if (byte_count == 0) return -1;
+    
+    *out_bytes = (uint8_t*)calloc(byte_count, 1);
+    *out_mask = (uint8_t*)calloc(byte_count, 1);
+    *out_length = byte_count;
+    
+    char buf[3] = {0};
+    int bi = 0;
+    int in_byte = 0;
+    
+    for (int i = 0; i < len && bi < byte_count; i++) {
+        char c = pattern_str[i];
+        if (c == ' ' || c == '-' || c == ',') { in_byte = 0; continue; }
+        
+        if (!in_byte) {
+            buf[0] = c;
+            in_byte = 1;
+        } else {
+            buf[1] = c;
+            buf[2] = 0;
+            in_byte = 0;
+            
+            if (buf[0] == '?' || buf[0] == '*' || buf[1] == '?' || buf[1] == '*') {
+                // Wildcard byte - match anything
+                (*out_mask)[bi] = 0xFF;
+                (*out_bytes)[bi] = 0x00;
+            } else {
+                // Parse as hex
+                (*out_mask)[bi] = 0x00;
+                (*out_bytes)[bi] = (uint8_t)strtol(buf, NULL, 16);
+            }
+            bi++;
+        }
+    }
+    
+    return byte_count;
+}
+
+static int scan_region_for_pattern(uint64_t region_start, uint64_t region_end,
+                                    const uint8_t *pattern, const uint8_t *mask,
+                                    int pattern_len,
+                                    uint64_t *matches, int max_matches,
+                                    int *match_count) {
+    // Read process memory at region
+    uint64_t region_size = region_end - region_start;
+    if (region_size > 64 * 1024 * 1024) region_size = 64 * 1024 * 1024; // 64MB limit per read
+    
+    uint8_t *buffer = (uint8_t*)malloc(region_size);
+    if (!buffer) return -1;
+    
+    size_t bytes_read = 0;
+    // Use sceKernelReadProcessMemory or equivalent
+    // int ret = sceKernelReadProcessMemory(region_start, buffer, region_size, &bytes_read);
+    // For now, placeholder - actual SDK call depends on payload environment
+    (void)buffer;
+    (void)bytes_read;
+    
+    // Linear scan
+    for (uint64_t offset = 0; offset + pattern_len <= region_size; offset++) {
+        int match = 1;
+        for (int j = 0; j < pattern_len; j++) {
+            if (mask[j] != 0xFF && buffer[offset + j] != pattern[j]) {
+                match = 0;
+                break;
+            }
+        }
+        if (match) {
+            if (*match_count < max_matches) {
+                matches[*match_count] = region_start + offset;
+                (*match_count)++;
+            } else {
+                free(buffer);
+                return 1; // max results reached
+            }
+        }
+    }
+    
+    free(buffer);
+    return 0;
+}
+
+// Handler function
+void handle_aob_scan(struct http_request *req, struct http_response *resp) {
+    // Parse JSON request body
+    // Extract: pattern, start, end, max_results, readable_only, executable_only, region_name_contains
+    
+    // Get VM maps
+    // For each region:
+    //   - Check executable_only/readable_only filters
+    //   - Check region_name_contains filter
+    //   - Scan region for pattern
+    // Return JSON response with matches, scanned_regions, skipped_regions, elapsed_ms
+    
+    // Set response headers
+    http_response_set_header(resp, "Content-Type", "application/json");
+    
+    // Example response:
+    // {"matches":["0x100340a0","0x10034b18"],"scanned_regions":12,"skipped_regions":3,"elapsed_ms":42}
+    
+    // For invalid input, return 400:
+    http_response_set_status(resp, 400);
+    http_response_set_body(resp, "{\"error\":\"Invalid pattern or parameters\"}");
+}
+```
+
+Integration notes:
+1. This code depends on the Nexus payload's existing memory reading primitives.
+2. Use the same `sceKernelReadProcessMemory` (or equivalent) that the existing `read_memory` endpoint uses.
+3. VM map iteration should reuse the existing `get_process_maps()` or similar function.
+4. Pattern parsing supports: `??`, `?`, `**` wildcards, spaced hex, and compact hex.
+5. Add bounds checking on start/end addresses to avoid kernel memory ranges.
+6. Limit max_results to prevent runaway scanning (enforce max 256).

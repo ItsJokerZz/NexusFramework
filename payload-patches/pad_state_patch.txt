@@ -1,0 +1,95 @@
+================================================================================
+Controller Pad State Native Payload Endpoint Patch
+================================================================================
+File: NexusFramework native payload source
+Target: source/console/http_server.c or api_commands.c
+Status: SOURCE PATCH PROVIDED — RUNTIME UNVERIFIED
+================================================================================
+
+This patch adds a GET /pad_state endpoint to the Nexus native payload.
+
+Patch location (upstream NexusFramework):
+- source/console/source/http_server.c (or similar HTTP command dispatch)
+
+Add to the command handler registration:
+
+```c
+{"/pad_state", HTTP_GET, handle_pad_state},
+```
+
+Implementation:
+
+```c
+// === Pad State Handler ===
+#include <sce/libkernel.h>  // or appropriate SDK headers for scePad*
+
+// Cached pad handle
+static int g_pad_handle = -1;
+
+static int ensure_pad_open(void) {
+    if (g_pad_handle >= 0) return g_pad_handle;
+    
+    // scePadOpen for controller port 0 (first controller)
+    // Parameters may vary by SDK version
+    ScePadControllerInformation info;
+    int handle = scePadOpen(SCE_PAD_PORT_0, 0, &info);
+    if (handle < 0) {
+        // Could also try scePadOpenExt or similar
+        return -1;
+    }
+    g_pad_handle = handle;
+    return handle;
+}
+
+void handle_pad_state(struct http_request *req, struct http_response *resp) {
+    int handle = ensure_pad_open();
+    if (handle < 0) {
+        http_response_set_status(resp, 200);
+        http_response_set_body(resp, "{\"connected\":false,\"buttons\":0,\"lx\":0,\"ly\":0,\"rx\":0,\"ry\":0,\"l2\":0,\"r2\":0,\"timestamp\":0}");
+        return;
+    }
+    
+    ScePadData pad_data;
+    memset(&pad_data, 0, sizeof(pad_data));
+    
+    int ret = scePadReadState(handle, &pad_data);
+    if (ret < 0) {
+        // Controller disconnected or error
+        http_response_set_header(resp, "Content-Type", "application/json");
+        http_response_set_body(resp, "{\"connected\":false,\"buttons\":0,\"lx\":0,\"ly\":0,\"rx\":0,\"ry\":0,\"l2\":0,\"r2\":0,\"timestamp\":0}");
+        return;
+    }
+    
+    char resp_body[512];
+    snprintf(resp_body, sizeof(resp_body),
+        "{\"connected\":true,\"buttons\":%u,\"lx\":%u,\"ly\":%u,\"rx\":%u,\"ry\":%u,\"l2\":%u,\"r2\":%u,\"timestamp\":%" PRIu64 "}",
+        (unsigned int)pad_data.buttons,
+        (unsigned int)pad_data.leftStick.x,
+        (unsigned int)pad_data.leftStick.y,
+        (unsigned int)pad_data.rightStick.x,
+        (unsigned int)pad_data.rightStick.y,
+        (unsigned int)pad_data.analogButtons.l2,
+        (unsigned int)pad_data.analogButtons.r2,
+        (uint64_t)(pad_data.timestamp));
+    
+    http_response_set_header(resp, "Content-Type", "application/json");
+    http_response_set_body(resp, resp_body);
+}
+
+// On payload unload/cleanup:
+void close_pad_handle(void) {
+    if (g_pad_handle >= 0) {
+        scePadClose(g_pad_handle);
+        g_pad_handle = -1;
+    }
+}
+```
+
+Integration notes:
+1. This uses `scePadOpen` / `scePadReadState` from the SDK.
+2. The exact header and struct names depend on the SDK version used by the Nexus payload.
+3. On PS4: `ScePadData` structure has `buttons` (uint32), `leftStick`/`rightStick` (x,y uint8 each), `analogButtons` (l2,r2 uint8), `timestamp` (uint64).
+4. On PS5 (if supported): may use different enums (`SCE_PAD_PORT_0` etc.) but API is similar.
+5. Handle caching is used to avoid opening/closing on every poll - caller should close on unload.
+6. Connected=false is returned gracefully on error/disconnect.
+7. Share/Create button capture limitations should be documented as the system may intercept these buttons.

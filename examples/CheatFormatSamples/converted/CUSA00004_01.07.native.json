@@ -1,0 +1,122 @@
+{
+  "titleId": "CUSA00004",
+  "gameName": "inFAMOUS: Second Son",
+  "version": "01.07",
+  "cheats": [
+    {
+      "id": "godmode",
+      "name": "Godmode",
+      "codes": [
+        {
+          "type": "ModuleWriteBytes",
+          "moduleName": "eboot.bin",
+          "offset": "0x615C17",
+          "bytes": "90 90 90 90 90 90 90 90 90",
+          "expectedBytes": "C4 C1 7A 11 96 50 EE 01 00",
+          "restoreBytes": "C4 C1 7A 11 96 50 EE 01 00",
+          "activationType": "checkbox"
+        }
+      ]
+    },
+    {
+      "id": "infinite_energy",
+      "name": "Infinite Energy",
+      "codes": [
+        {
+          "type": "ModuleWriteBytes",
+          "moduleName": "eboot.bin",
+          "offset": "0x60C7F9",
+          "bytes": "90 90 90 90 90 90 90 90 90 90",
+          "expectedBytes": "C4 C1 7A 11 84 24 E8 A1 01 00",
+          "restoreBytes": "C4 C1 7A 11 84 24 E8 A1 01 00",
+          "activationType": "checkbox"
+        }
+      ]
+    },
+    {
+      "id": "infinite_bombs_rockets",
+      "name": "Infinite Bombs / Rockets",
+      "codes": [
+        {
+          "type": "ModuleWriteBytes",
+          "moduleName": "eboot.bin",
+          "offset": "0x5E35A8",
+          "bytes": "BE 05 00 00 00 89 B7 DC 00 00 00 90 90",
+          "expectedBytes": "89 B7 DC 00 00 00 80 BF C9 0A 02 00 00",
+          "restoreBytes": "89 B7 DC 00 00 00 80 BF C9 0A 02 00 00",
+          "activationType": "checkbox"
+        }
+      ]
+    },
+    {
+      "id": "infinite_skillpoints_shards",
+      "name": "Infinite Skillpoints / Shards",
+      "codes": [
+        {
+          "type": "ModuleWriteBytes",
+          "moduleName": "eboot.bin",
+          "offset": "0x5E22A4",
+          "bytes": "BB E7 03 00 00 89 9F E0 00 00 00 90 90",
+          "expectedBytes": "89 9F E0 00 00 00 80 BF C9 0A 02 00 00",
+          "restoreBytes": "89 9F E0 00 00 00 80 BF C9 0A 02 00 00",
+          "activationType": "checkbox"
+        }
+      ]
+    },
+    {
+      "id": "max_level_true_hero_turn_off_infamous",
+      "name": "Max Level True Hero (turn off Infamous)",
+      "codes": [
+        {
+          "type": "ModuleWriteBytes",
+          "moduleName": "eboot.bin",
+          "offset": "0x12FADB8",
+          "bytes": "A0 E6 87 45",
+          "expectedBytes": "A0 E6 87 45",
+          "restoreBytes": "A0 E6 87 45",
+          "activationType": "button"
+        }
+      ]
+    },
+    {
+      "id": "max_level_infamous_turn_off_true_hero",
+      "name": "Max Level Infamous (turn off True Hero)",
+      "codes": [
+        {
+          "type": "ModuleWriteBytes",
+          "moduleName": "eboot.bin",
+          "offset": "0x12FADB8",
+          "bytes": "00 CA E6 FD",
+          "expectedBytes": "00 CA E6 FD",
+          "restoreBytes": "00 CA E6 FD",
+          "activationType": "button"
+        }
+      ]
+    },
+    {
+      "id": "inf_finisher",
+      "name": "Inf finisher",
+      "codes": [
+        {
+          "type": "ModuleWriteBytes",
+          "moduleName": "eboot.bin",
+          "offset": "0xCC7800",
+          "bytes": "C7 43 28 07 00 00 00 E9 63 EB 59 FF",
+          "expectedBytes": "00 00 00 00 00 00 00 00 00 00 00 00",
+          "restoreBytes": "00 00 00 00 00 00 00 00 00 00 00 00",
+          "activationType": "button"
+        },
+        {
+          "type": "ModuleWriteBytes",
+          "moduleName": "eboot.bin",
+          "offset": "0x266368",
+          "bytes": "E9 93 14 A6 00 90 90",
+          "expectedBytes": "89 4B 28 48 8B 7B 18",
+          "restoreBytes": "89 4B 28 48 8B 7B 18",
+          "activationType": "button"
+        }
+      ]
+    }
+  ],
+  "credits": ["Weysincha, 2B"]
+}

@@ -1,0 +1,52 @@
+{
+  "titleId": "CUSA00009",
+  "gameName": "Assassins Creed - Black Flag",
+  "version": "01.04",
+  "cheats": [
+    {
+      "id": "infinite_money",
+      "name": "Infinite Money",
+      "codes": [
+        {
+          "type": "ModuleWriteBytes",
+          "moduleName": "eboot.bin",
+          "offset": "0x27693CA",
+          "bytes": "90 90 90",
+          "expectedBytes": "89 47 10",
+          "restoreBytes": "89 47 10",
+          "activationType": "checkbox"
+        }
+      ]
+    },
+    {
+      "id": "infinite_health",
+      "name": "Infinite Health",
+      "codes": [
+        {
+          "type": "ModuleWriteBytes",
+          "moduleName": "eboot.bin",
+          "offset": "0x1234567",
+          "bytes": "90 90 90 90 90",
+          "expectedBytes": "89 47 10 AB CD",
+          "restoreBytes": "89 47 10 AB CD",
+          "activationType": "checkbox"
+        }
+      ]
+    },
+    {
+      "id": "max_ammo",
+      "name": "Max Ammo",
+      "codes": [
+        {
+          "type": "ModuleWriteBytes",
+          "moduleName": "eboot.bin",
+          "offset": "0x7654321",
+          "bytes": "00 00 00 00",
+          "expectedBytes": "AA BB CC DD",
+          "restoreBytes": "AA BB CC DD",
+          "activationType": "checkbox"
+        }
+      ]
+    }
+  ]
+}

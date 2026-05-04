@@ -59,6 +59,9 @@ namespace NexusCheatFramework.Formats
         public byte[]? Bytes { get; set; }
         /// <summary>Expected current bytes at the target site, used for safety checks.</summary>
         public byte[]? ExpectedBytes { get; set; }
+        /// <summary>Explicit restore bytes to write when the cheat is disabled.
+        /// If set, used for disable restore. If null, captured original bytes are used.</summary>
+        public byte[]? RestoreBytes { get; set; }
         public string? ValueType { get; set; }
         public string? Value { get; set; }
         public string? ModuleName { get; set; }
@@ -74,5 +77,15 @@ namespace NexusCheatFramework.Formats
         // AOB pointer chain
         /// <summary>Offset from AOB match before starting pointer chain.</summary>
         public int AobOffset { get; set; }
+
+        /// <summary>Optional activation type for button/checkbox behavior.</summary>
+        public string? ActivationType { get; set; }
     }
+    /// <summary>Activation type for cheat codes.</summary>
+    public static class CheatActivationType
+    {
+        public const string Checkbox = "checkbox";
+        public const string Button = "button";
+    }
+
 }
