@@ -9,7 +9,7 @@ public class AobPatternTests
     [Fact] public void Parses_exact_bytes() {
         var p = AobPattern.Parse("48 8B 05");
         Assert.Equal(3, p.Length);
-        Assert.Equal(0x48, p.Bytes[0]); Assert.Equal(0x8B, p.Bytes[1]); Assert.Equal(0x05, p.Bytes[2]);
+        Assert.Equal((byte)0x48, p.Bytes[0]!.Value); Assert.Equal((byte)0x8B, p.Bytes[1]!.Value); Assert.Equal((byte)0x05, p.Bytes[2]!.Value);
         Assert.Equal(0, p.FirstSolidIndex);
     }
 
@@ -21,13 +21,13 @@ public class AobPatternTests
         var p = AobPattern.Parse(s);
         Assert.Equal(5, p.Length);
         Assert.Null(p.Bytes[2]); Assert.Null(p.Bytes[3]);
-        Assert.Equal(0x48, p.Bytes[0]); Assert.Equal(0x89, p.Bytes[4]);
+        Assert.Equal((byte)0x48, p.Bytes[0]!.Value); Assert.Equal((byte)0x89, p.Bytes[4]!.Value);
     }
 
     [Fact] public void Parses_run_together() {
         var p = AobPattern.Parse("488B????89");
         Assert.Equal(5, p.Length);
-        Assert.Equal(0x48, p.Bytes[0]); Assert.Null(p.Bytes[2]); Assert.Equal(0x89, p.Bytes[4]);
+        Assert.Equal((byte)0x48, p.Bytes[0]!.Value); Assert.Null(p.Bytes[2]); Assert.Equal((byte)0x89, p.Bytes[4]!.Value);
     }
 
     [Fact] public void Empty_pattern_throws() => Assert.Throws<ArgumentException>(() => AobPattern.Parse(""));

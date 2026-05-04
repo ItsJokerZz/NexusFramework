@@ -16,17 +16,16 @@ internal sealed class FakeNexusClient : INexusClient
     public ulong Base { get; }
     public List<(ulong addr, byte[] data)> Writes { get; } = new();
     public bool ReadShouldFail { get; set; }
+    public bool Connected { get; set; } = true;
+    public string? IpAddress => "fake";
 
     public FakeNexusClient(byte[] buffer, ulong baseAddress = 0x10000)
     {
         Buffer = buffer; Base = baseAddress;
     }
 
-    public bool Connected => true;
-    public string? IpAddress => "fake";
-
     public Task ConnectAsync(string ipAddress, CancellationToken ct = default) => Task.CompletedTask;
-    public Task DisconnectAsync(CancellationToken ct = default) => Task.CompletedTask;
+    public Task DisconnectAsync(CancellationToken ct = default) { Connected = false; return Task.CompletedTask; }
 
     public Task<TargetSnapshot> GetTargetInfoAsync(CancellationToken ct = default)
         => Task.FromResult(new TargetSnapshot { Name = "fake" });
@@ -73,4 +72,10 @@ internal sealed class FakeNexusClient : INexusClient
 
     public Task SetMemoryProtectionAsync(ulong address, uint length, MemoryProtection protection, CancellationToken ct = default)
         => Task.CompletedTask;
+
+    public Task<AobScanResult?> AobScanAsync(AobScanRequest request, CancellationToken ct = default)
+        => Task.FromResult<AobScanResult?>(null);
+
+    public Task<PadStateSnapshot?> GetPadStateAsync(CancellationToken ct = default)
+        => Task.FromResult<PadStateSnapshot?>(null);
 }

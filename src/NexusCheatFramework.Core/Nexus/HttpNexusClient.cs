@@ -197,6 +197,83 @@ namespace NexusCheatFramework.Nexus
         }
         private static double? GetDouble(JsonElement p, string n) => p.TryGetProperty(n, out var v) && v.ValueKind == JsonValueKind.Number ? v.GetDouble() : (double?)null;
 
+        // ----- Payload-side AOB scan (optional) -----
+        public async Task<AobScanResult?> AobScanAsync(AobScanRequest request, CancellationToken ct = default)
+        {
+            try
+            {
+                var body = JsonSerializer.Serialize(new
+                {
+                    pattern = request.Pattern,
+                    start = request.Start,
+                    end = request.End,
+                    max_results = request.MaxResults,
+                    readable_only = request.ReadableOnly,
+                    executable_only = request.ExecutableOnly,
+                    region_name_contains = request.RegionNameContains
+                });
+                using var content = new StringContent(body, Encoding.UTF8, "application/json");
+                using var resp = await _http.PostAsync(Url("aob_scan"), content, ct).ConfigureAwait(false);
+                if (!resp.IsSuccessStatusCode) return null;
+                using var s = await resp.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                var doc = await JsonDocument.ParseAsync(s, cancellationToken: ct).ConfigureAwait(false);
+                var r = doc.RootElement;
+                var matches = new List<string>();
+                if (r.TryGetProperty("matches", out var mArr) && mArr.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var m in mArr.EnumerateArray())
+                        matches.Add(m.GetString() ?? string.Empty);
+                }
+                return new AobScanResult(
+                    matches,
+                    GetInt(r, "scanned_regions") ?? 0,
+                    GetInt(r, "skipped_regions") ?? 0,
+                    GetLong(r, "elapsed_ms") ?? 0
+                );
+            }
+            catch { return null; }
+        }
+
+        // ----- Payload-side pad state (optional) -----
+        public async Task<PadStateSnapshot?> GetPadStateAsync(CancellationToken ct = default)
+        {
+            try
+            {
+                var doc = await GetJsonAsync("pad_state", ct).ConfigureAwait(false);
+                var r = doc.RootElement;
+                return new PadStateSnapshot(
+                    GetBool(r, "connected") ?? false,
+                    GetUint(r, "buttons") ?? 0,
+                    (byte)(GetInt(r, "lx") ?? 128),
+                    (byte)(GetInt(r, "ly") ?? 128),
+                    (byte)(GetInt(r, "rx") ?? 128),
+                    (byte)(GetInt(r, "ry") ?? 128),
+                    (byte)(GetInt(r, "l2") ?? 0),
+                    (byte)(GetInt(r, "r2") ?? 0),
+                    GetLong(r, "timestamp") ?? 0
+                );
+            }
+            catch { return null; }
+        }
+
+        private static long? GetLong(JsonElement p, string n)
+        {
+            if (!p.TryGetProperty(n, out var v)) return null;
+            if (v.ValueKind == JsonValueKind.Number) return v.GetInt64();
+            return null;
+        }
+
+        private static bool? GetBool(JsonElement p, string n)
+        {
+            if (!p.TryGetProperty(n, out var v)) return null;
+            return v.ValueKind switch
+            {
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                _ => null
+            };
+        }
+
         public void Dispose()
         {
             if (_ownsHttp) _http.Dispose();

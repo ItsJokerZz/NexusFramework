@@ -2,46 +2,109 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>NexusCheatFramework — Cheats</title>
+  <title>NexusCheatFramework v0.2 — Cheats</title>
   <style>
-    body { font-family: system-ui, sans-serif; background: #111; color: #eee; margin: 0; padding: 1rem; }
-    h1 { font-size: 1.2rem; margin: 0 0 1rem 0; }
-    .row { display: flex; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #333; }
-    .id { color: #888; font-family: monospace; margin-right: .8rem; min-width: 14ch; }
-    .name { flex: 1; }
-    button { background: #2a6; color: #fff; border: 0; padding: .3rem .7rem; border-radius: .25rem; cursor: pointer; }
-    button.off { background: #444; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #111; color: #eee; margin: 0; padding: 1rem; font-size: 14px; }
+    h1 { font-size: 1.2rem; margin: 0 0 .5rem 0; }
+    h2 { font-size: 1rem; margin: 1rem 0 .5rem 0; border-bottom: 1px solid #333; padding-bottom: .25rem; }
     .target { color: #6cf; margin-bottom: .8rem; }
-    .err { color: #f55; }
+    .row { display: flex; align-items: center; padding: .3rem 0; border-bottom: 1px solid #222; }
+    .id { color: #888; font-family: monospace; margin-right: .8rem; min-width: 14ch; font-size: .85em; }
+    .name { flex: 1; }
+    .desc { color: #aaa; font-size: .85em; margin-left: .5rem; }
+    button { background: #2a6; color: #fff; border: 0; padding: .25rem .6rem; border-radius: .25rem; cursor: pointer; font-size: .85em; }
+    button.off { background: #555; }
+    button.danger { background: #a33; }
+    button:hover { opacity: .85; }
+    .err { color: #f55; padding: .3rem 0; }
+    .inf { color: #6f6; padding: .3rem 0; }
+    .log { color: #888; font-family: monospace; font-size: .75em; max-height: 160px; overflow-y: auto; background: #0a0a0a; padding: .4rem; border-radius: .25rem; margin-top: .5rem; }
+    .log div { padding: 1px 0; }
+    .scan-form { background: #1a1a1a; padding: .6rem; border-radius: .25rem; margin: .5rem 0; }
+    .scan-form label { display: block; margin: .3rem 0; }
+    .scan-form input[type=text] { background: #222; color: #eee; border: 1px solid #444; padding: .2rem .4rem; border-radius: .2rem; width: 100%; font-family: monospace; }
+    .scan-form input[type=number] { background: #222; color: #eee; border: 1px solid #444; padding: .2rem .4rem; border-radius: .2rem; width: 100px; }
+    .scan-form label input[type=checkbox] { margin-right: .4rem; }
+    .scan-results { font-family: monospace; font-size: .85em; max-height: 200px; overflow-y: auto; background: #0a0a0a; padding: .4rem; border-radius: .25rem; }
+    .status-badge { display: inline-block; padding: .1rem .4rem; border-radius: .2rem; font-size: .75em; margin-left: .5rem; }
+    .status-on { background: #2a6; }
+    .status-off { background: #555; }
+    .header-row { display: flex; align-items: center; justify-content: space-between; }
   </style>
 </head>
 <body>
-  <h1>NexusCheatFramework — Cheats</h1>
+  <div class="header-row">
+    <h1>NexusCheatFramework v0.2</h1>
+    <span id="statusBadge" class="status-badge status-off">disconnected</span>
+  </div>
   <div class="target" id="target">connecting…</div>
-  <div id="list"></div>
-  <div class="err" id="err"></div>
+  <div id="err" class="err"></div>
+  <div id="inf" class="inf"></div>
+
+  <h2>Cheats</h2>
+  <div id="list">
+    <div style="color:#888">No cheats loaded. Connect to a console and load a cheat database.</div>
+  </div>
+
+  <h2>AOB Scanner</h2>
+  <div class="scan-form">
+    <label>Pattern: <input type="text" id="scanPattern" placeholder="48 8B 05 ?? ?? ?? 89" /></label>
+    <label><input type="checkbox" id="scanExecOnly" /> Executable only</label>
+    <label>Max results: <input type="number" id="scanMaxResults" value="8" min="1" max="100" /></label>
+    <button id="scanBtn" onclick="doScan()">Scan</button>
+  </div>
+  <div id="scanResults" class="scan-results"></div>
+
+  <h2>Log</h2>
+  <div class="log" id="log"></div>
+
   <script>
-    // The companion server is expected to expose:
-    //   GET  /api/state   -> { target, cheats: [{id,name,description,enabled}] }
-    //   POST /api/enable  body: {id}
-    //   POST /api/disable body: {id}
+    async function api(method, path, body) {
+      const opts = { method };
+      if (body) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }
+      const r = await fetch(path, opts);
+      return r.ok ? r.json() : { error: r.status + ' ' + r.statusText };
+    }
+
     async function refresh() {
       try {
-        const s = await (await fetch('/api/state')).json();
-        document.getElementById('target').textContent =
-          s.target ? `Active: ${s.target.name} [TID=${s.target.titleId} v=${s.target.version}]` : 'No active game.';
+        const s = await api('GET', '/api/state');
+        if (s.error) { document.getElementById('err').textContent = s.error; return; }
+
+        const badge = document.getElementById('statusBadge');
+        badge.textContent = s.connected ? 'connected' : 'disconnected';
+        badge.className = 'status-badge ' + (s.connected ? 'status-on' : 'status-off');
+
+        const target = document.getElementById('target');
+        if (s.process) {
+          target.textContent = `Active: ${s.process.name} [TID=${s.process.titleId} v=${s.process.version}${s.process.region ? ' ' + s.process.region : ''}]`;
+        } else {
+          target.textContent = 'No active game detected.';
+        }
+
+        if (s.logs) {
+          const logDiv = document.getElementById('log');
+          logDiv.innerHTML = s.logs.map(l => `<div>${escape(l)}</div>`).join('');
+          logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
         const list = document.getElementById('list');
+        if (!s.cheats || s.cheats.length === 0) {
+          list.innerHTML = '<div style="color:#888">No cheats loaded for the active game.</div>';
+          return;
+        }
         list.innerHTML = '';
-        for (const c of s.cheats || []) {
+        for (const c of s.cheats) {
           const row = document.createElement('div'); row.className = 'row';
-          row.innerHTML = `<span class="id">${c.id}</span><span class="name">${c.name}</span>`;
+          row.innerHTML = `<span class="id">${escape(c.id)}</span><span class="name">${escape(c.name)}${c.description ? ' <span class="desc">' + escape(c.description) + '</span>' : ''}</span>`;
           const btn = document.createElement('button');
           btn.textContent = c.enabled ? 'Disable' : 'Enable';
           btn.className = c.enabled ? '' : 'off';
           btn.onclick = async () => {
             const action = c.enabled ? 'disable' : 'enable';
-            const r = await fetch('/api/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id }) });
-            if (!r.ok) document.getElementById('err').textContent = await r.text();
+            const r = await api('POST', '/api/' + action, { id: c.id });
+            if (r.error) document.getElementById('err').textContent = r.error;
             refresh();
           };
           row.appendChild(btn);
@@ -49,8 +112,37 @@
         }
       } catch (e) { document.getElementById('err').textContent = e.message; }
     }
+
+    async function doScan() {
+      const pattern = document.getElementById('scanPattern').value.trim();
+      if (!pattern) { document.getElementById('scanResults').textContent = 'Enter a pattern.'; return; }
+      document.getElementById('scanResults').textContent = 'Scanning...';
+      const r = await api('POST', '/api/scan', {
+        pattern,
+        executableOnly: document.getElementById('scanExecOnly').checked,
+        maxResults: parseInt(document.getElementById('scanMaxResults').value) || 8
+      });
+      if (r.error) {
+        document.getElementById('scanResults').innerHTML = `<span class="err">${escape(r.error)}</span>`;
+      } else {
+        const s = document.getElementById('scanResults');
+        if (r.matches && r.matches.length > 0) {
+          s.innerHTML = `<div class="inf">Found ${r.count} match(es):</div>` + r.matches.map(m => `<div>${escape(m)}</div>`).join('');
+        } else {
+          s.innerHTML = '<div style="color:#888">No matches found.</div>';
+        }
+      }
+    }
+
+    function escape(s) {
+      if (!s) return '';
+      const d = document.createElement('div');
+      d.appendChild(document.createTextNode(s));
+      return d.innerHTML;
+    }
+
     refresh();
-    setInterval(refresh, 5000);
+    setInterval(refresh, 3000);
   </script>
 </body>
 </html>

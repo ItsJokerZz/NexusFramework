@@ -2,6 +2,10 @@ using System.Collections.Generic;
 
 namespace NexusCheatFramework.Formats
 {
+    /// <summary>
+    /// Supported cheat code types for v0.2.
+    /// Includes freeze, pointer chains, and module writes.
+    /// </summary>
     public enum CheatCodeType
     {
         /// <summary>Write raw bytes at an absolute address.</summary>
@@ -14,6 +18,18 @@ namespace NexusCheatFramework.Formats
         AobWriteValue,
         /// <summary>Module base + Offset write (raw bytes).</summary>
         ModuleWriteBytes,
+        /// <summary>Module base + Offset typed write.</summary>
+        ModuleWriteValue,
+        /// <summary>Repeatedly write a typed value at an interval (freeze).</summary>
+        FreezeValue,
+        /// <summary>Resolve pointer chain, write raw bytes at final address.</summary>
+        PointerWriteBytes,
+        /// <summary>Resolve pointer chain, write typed value at final address.</summary>
+        PointerWriteValue,
+        /// <summary>Resolve AOB, then pointer chain from AOB match, write raw bytes.</summary>
+        AobPointerWriteBytes,
+        /// <summary>Resolve AOB, then pointer chain from AOB match, write typed value.</summary>
+        AobPointerWriteValue,
     }
 
     public sealed class CheatFile
@@ -46,5 +62,17 @@ namespace NexusCheatFramework.Formats
         public string? ValueType { get; set; }
         public string? Value { get; set; }
         public string? ModuleName { get; set; }
+
+        // Freeze support
+        /// <summary>Interval in ms between freeze writes. Default 250.</summary>
+        public int FreezeIntervalMs { get; set; } = 250;
+
+        // Pointer-chain support
+        /// <summary>Offsets for pointer chain, from outermost to innermost.</summary>
+        public List<string>? PointerOffsets { get; set; }
+
+        // AOB pointer chain
+        /// <summary>Offset from AOB match before starting pointer chain.</summary>
+        public int AobOffset { get; set; }
     }
 }

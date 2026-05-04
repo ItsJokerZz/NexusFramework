@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  NexusCheatFramework — etaHEN Toolbox Integration Entry
+  
+  This XML inserts an entry into etaHEN's Toolbox menu that either:
+    (a) Directly opens the NexusCheatFramework WebUI in the PS4 browser
+        (if the console is on the same network), or
+    (b) Shows the console IP and port so the user can connect manually.
+  
+  Place this file in:
+    /data/etaHEN/toolbox/
+  
+  The file must be named with a .xml extension (e.g. nexus_cheats.xml).
+  
+  IMPORTANT SAFETY NOTES:
+  - Replace 192.168.1.100 with your console's actual IP address.
+  - Replace 9080 with your WebUI listen port if changed.
+  - This is for offline homebrew/research use only.
+  - Do not use for online/matchmaking abuse.
+  
+  Attribution: Derived from etaHEN toolbox XML format patterns.
+  See https://github.com/etaHEN/etaHEN for the official format.
+-->
+<toolbox version="1.0">
+  <category name="Homebrew">
+    <item name="NexusCheatFramework Cheats">
+      <!-- Opens the NCF WebUI in the PS4 browser -->
+      <action type="open_uri">http://192.168.1.100:9080</action>
+      <description>
+        Opens the NexusCheatFramework WebUI cheat menu.
+        Ensure NCF WebUI is running (dotnet run --project src/NexusCheatFramework.Web -- --ip &lt;console-ip&gt;).
+        Replace the IP in the URI above with your console's IP.
+      </description>
+    </item>
+    <item name="NCF Status">
+      <action type="notify">NexusCheatFramework v0.2 – see terminal/WebUI at http://192.168.1.100:9080</action>
+      <description>
+        Shows a notification with NCF version and WebUI URL.
+      </description>
+    </item>
+  </category>
+</toolbox>

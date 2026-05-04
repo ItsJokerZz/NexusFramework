@@ -28,6 +28,12 @@ namespace NexusCheatFramework.Nexus
         Task WriteMemoryAsync(ulong address, byte[] data, CancellationToken ct = default);
 
         Task SetMemoryProtectionAsync(ulong address, uint length, MemoryProtection protection, CancellationToken ct = default);
+
+        /// <summary>Optional payload-side AOB scan. Returns null if not supported.</summary>
+        Task<AobScanResult?> AobScanAsync(AobScanRequest request, CancellationToken ct = default);
+
+        /// <summary>Optional payload-side pad state read. Returns null if not supported.</summary>
+        Task<PadStateSnapshot?> GetPadStateAsync(CancellationToken ct = default);
     }
 
     [Flags]
@@ -85,4 +91,36 @@ namespace NexusCheatFramework.Nexus
         public bool IsWritable => (Protection & MemoryProtection.Write) != 0;
         public bool IsExecutable => (Protection & MemoryProtection.Execute) != 0;
     }
+
+    /// <summary>Request for payload-side AOB scan.</summary>
+    public sealed record AobScanRequest(
+        string Pattern,
+        string? Start = null,
+        string? End = null,
+        int MaxResults = 1,
+        bool ReadableOnly = true,
+        bool ExecutableOnly = false,
+        string? RegionNameContains = null
+    );
+
+    /// <summary>Result from payload-side AOB scan.</summary>
+    public sealed record AobScanResult(
+        IReadOnlyList<string> Matches,
+        int ScannedRegions,
+        int SkippedRegions,
+        long ElapsedMs
+    );
+
+    /// <summary>Snapshot of pad state from the console.</summary>
+    public sealed record PadStateSnapshot(
+        bool Connected,
+        uint Buttons,
+        byte Lx,
+        byte Ly,
+        byte Rx,
+        byte Ry,
+        byte L2,
+        byte R2,
+        long Timestamp
+    );
 }

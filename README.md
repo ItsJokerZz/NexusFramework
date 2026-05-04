@@ -1,144 +1,245 @@
-# NexusCheatFramework
+# NexusCheatFramework v0.2
 
-A NexusFramework-based cheat framework for **PS4 / PS5 homebrew, research,
-and accessibility** scenarios. It combines:
+A **build-verified, runnable** cheat engine framework for PlayStation 4/5 homebrew,
+built on top of **NexusFramework** and informed by **etaHEN**.
 
-- **NexusFramework** (MIT, ItsJokerZz) — remote management payload + C# client
-  for memory read/write, process listing, VM maps, ELF/module loading, RPC,
-  and shellcode detours.
-- **etaHEN** patterns and ideas (GPLv3, etaHEN team) — the toolbox menu/XML
-  layout, the controller-shortcut UX (`Hold R3+L3`, `Hold L2+△`, long/short
-  Share/Options taps), and the cheat-menu entry point.
-
-> **Repo location note.** The hosted repo this branch lives in is
-> `thatboialex/nexusframework`; my MCP tools are scoped to that single repo,
-> so this project ships as the `NexusCheatFramework/` directory at repo root
-> on the `claude/merge-reverse-engineering-frameworks-mpqPb` branch instead
-> of as a freshly created top-level repository. Move it to its own repo when
-> ready — it has no hard-coded path assumptions.
+> **Legal / Ethical Scope**  
+> This project is for **user-owned consoles, user-owned games, offline homebrew,
+> research, debugging, and accessibility** use only.  
+> **Do not** use for: online cheating, matchmaking abuse, anti-cheat bypasses,
+> piracy automation, credential theft, or service abuse.  
+> See [SECURITY_AND_ETHICS.md](docs/SECURITY_AND_ETHICS.md).
 
 ---
 
 ## What this is
 
-- A cheat engine layer on top of NexusFramework's HTTP payload API.
-- A **finished, tested AOB/pattern scanner** (the upstream's `ArrayOfBytesScan`
-  was marked `// Not yet implemented on the API/payload (backend)` — see
-  `NexusFramework/source/libraries/C#/commands/process.cs:363`).
-- A native JSON cheat format with a sample database.
-- An `INexusClient` abstraction so memory/process operations are mockable;
-  HTTP-backed implementation is included.
-- A controller-shortcut state machine modeled on etaHEN's UX.
-- An etaHEN-toolbox XML drop-in plus a small WebUI for an actual menu.
-- A CLI (`ncf`) for connect / scan / cheats list / enable / disable.
-- xUnit tests for pattern parsing, scanner correctness (incl. chunk
-  boundaries), JSON parsing, patch apply/restore, and shortcut detection.
+- A real cheat engine framework that connects to a PlayStation 4/5 console running
+  a NexusFramework payload.
+- Cheat database loading from JSON files.
+- Pattern/AOB scanning (client-side over HTTP; optional payload-side acceleration).
+- Cheat application with freeze loops, pointer chains, and AOB resolution.
+- A **WebUI** backend (ASP.NET Core Minimal API) serving a browser-based cheat toggler.
+- A **CLI** front-end for automation/scripts.
+- Controller shortcut detection (state machine + optional payload polling).
+- etaHEN Toolbox XML integration.
 
-## What this is **not**
+## What this is NOT
 
-- Not an online-cheating tool. Don't use it in matchmaking or competitive
-  play. See [docs/SECURITY_AND_ETHICS.md](docs/SECURITY_AND_ETHICS.md).
-- Not a full in-game overlay. Console-side rendering would require either a
-  Mono/shellui hook (etaHEN's territory, GPLv3) or a graphics-API detour
-  (heavy and game-specific). The cheat menu is delivered via a WebUI/CLI
-  companion plus an etaHEN toolbox XML link.
-- Not an etaHEN replacement; it depends on having `etaHEN` (or any other
-  jailbreak) available to load the Nexus payload in the first place.
+- Not a turnkey “generate cheats” tool.
+- Not a PS4/5 jailbreak.
+- Not a piracy tool.
+- Not a matchmaking or anti-cheat bypass.
 
-## Supported platforms / requirements
+## Supported Platforms
 
-| | |
-|---|---|
-| Console | PS4 (jailbroken, GoldHEN ≥ v2.4b18.8 with ELF support, or `elfldr`) |
-|         | PS5 (jailbroken, etaHEN toolbox payload loader or `elfldr` socket) |
-| Build PC | .NET SDK 8.0+ (Core lib targets `netstandard2.1`) |
-| Network | Console and PC on the same LAN; Nexus HTTP on port 9090 by default |
+| Platform | Status |
+|----------|--------|
+| **PC (hosting WebUI)** | Windows, Linux, macOS |
+| **Console (payload)** | PS4 / PS5 with NexusFramework payload loaded |
 
-## Quick start
+## Requirements
 
-```sh
-# 1. Build
-./scripts/build.sh         # or scripts/build.ps1 on Windows
+| Dependency | Version | Purpose |
+|------------|---------|---------|
+| [.NET SDK](https://dotnet.microsoft.com/download) | 8.0.x | Build and run all projects |
+| Console | any | Must have NexusFramework payload running (port 9090 by default) |
 
-# 2. Send the Nexus payload to your console (use NexusFramework's loader,
-#    etaHEN toolbox, GoldHEN, or elfldr).
-#    Once it's running, the HTTP API is reachable at :9090.
+## Quick Start
 
-# 3. Sanity-check the connection
-dotnet run --project src/NexusCheatFramework.Cli -- info --ip 192.168.1.50
+```bash
+# 1. Clone
+git clone https://github.com/thatboialex/NexusFramework.git
+cd NexusFramework
 
-# 4. Scan
-dotnet run --project src/NexusCheatFramework.Cli -- \
-    scan --ip 192.168.1.50 --pattern "48 8B ?? ?? 89" --all --exec
+# 2. Build
+dotnet build -c Release
 
-# 5. List cheats for the active TID using the included sample DB
-dotnet run --project src/NexusCheatFramework.Cli -- \
-    cheats list --ip 192.168.1.50 --db ./examples/CheatFormatSamples
+# 3. Run tests
+dotnet test -c Release
 
-# 6. Enable / disable
-dotnet run --project src/NexusCheatFramework.Cli -- \
-    cheats enable  --ip 192.168.1.50 --db ./examples/CheatFormatSamples --cheat infinite_health
-dotnet run --project src/NexusCheatFramework.Cli -- \
-    cheats disable --ip 192.168.1.50 --db ./examples/CheatFormatSamples --cheat infinite_health
+# 4. Launch WebUI (replace <console-ip> with your PS4/PS5 IP)
+dotnet run --project src/NexusCheatFramework.Web -- --ip 192.168.1.100 --port 9080
+
+# 5. Open http://localhost:9080 in a browser
 ```
 
-## Cheat files
+### CLI Quick Start
 
-Native JSON format — see [docs/CHEAT_FORMATS.md](docs/CHEAT_FORMATS.md) and
-[`examples/CheatFormatSamples/CUSA00000-example.json`](examples/CheatFormatSamples/CUSA00000-example.json).
+```bash
+# Scan memory for an AOB pattern
+dotnet run --project src/NexusCheatFramework.Cli -- scan --ip 192.168.1.100 "48 8B 05 ?? ?? ?? 89"
 
-Code types currently supported:
+# List game info
+dotnet run --project src/NexusCheatFramework.Cli -- info --ip 192.168.1.100
+```
 
-| Type | Resolves to | Notes |
-|---|---|---|
-| `write_bytes` | `address + offset` | static absolute |
-| `write_value` | `address + offset` | typed (`i32`, `f32`, `u64`, `utf8`, …) |
-| `aob_write_bytes` | `aob_match + offset` | uses the AOB scanner |
-| `aob_write_value` | `aob_match + offset` | typed write at AOB hit |
-| `module_write_bytes` | `module.start + offset` | resolves via `get_vm_maps` |
+## Repository Structure
 
-Each code may set `expectedBytes`; the engine refuses to apply if live
-bytes don't match (override with `--force` / `ForceApply`).
+```
+NexusCheatFramework/
+  .github/workflows/ci.yml     — GitHub Actions CI
+  src/
+    NexusCheatFramework.Core/   — Shared core library (netstandard2.1)
+      Core/                     — CheatEngine, CheatManager, CheatResult, etc.
+      Formats/                  — CheatModel, JSON/etaHEN/.shn/.mc4 parsers
+      Input/                    — PadButton, ShortcutDetector, ShortcutConfig
+      Logging/                  — ILogger interface + NullLogger + ConsoleLogger
+      Memory/                   — AobPattern, AobScanner, MemoryPatch
+      Nexus/                    — INexusClient + HttpNexusClient
+      Services/                 — CheatDatabaseService, PadStatePollingService
+      UI/                       — CheatMenuModel, ConsoleMenuRenderer
+    NexusCheatFramework.Cli/    — CLI frontend (net8.0)
+    NexusCheatFramework.Web/    — WebUI backend (ASP.NET Core, net8.0)
+  tests/
+    NexusCheatFramework.Tests/  — xUnit test suite
+  menu/
+    webui/index.html            — Browser-based cheat menu
+    etaHEN_xml/                 — etaHEN Toolbox integration XML
+  docs/                         — Full documentation
+  examples/                     — Sample cheat databases
+  scripts/                      — Build/test helper scripts
+```
 
-## AOB scanning
+## Cheat Format Example
 
-- Streams memory in chunks (default 256 KiB) with `pattern.Length-1` overlap so
-  matches that straddle a chunk boundary are not missed.
-- Filters regions by `readable` / `executable` / `name contains` / address
-  range.
-- `FindFirstAsync` and `FindAllAsync`, with `CancellationToken` support.
-- Pattern syntax accepts `48 8B ?? ?? 89`, `48 8B ? ? 89`, `48 8B ** ** 89`
-  and run-together forms like `488B????89`.
+```json
+{
+  "titleId": "CUSA00001",
+  "gameName": "Example Game",
+  "version": "1.00",
+  "region": "US",
+  "cheats": [
+    {
+      "id": "inf_health",
+      "name": "Infinite Health",
+      "description": "Health always stays at 999",
+      "enabledByDefault": false,
+      "codes": [
+        {
+          "type": "freeze_value",
+          "address": "0x12345678",
+          "valueType": "float",
+          "value": "100.0",
+          "freezeIntervalMs": 250
+        }
+      ]
+    },
+    {
+      "id": "inf_ammo",
+      "name": "Infinite Ammo",
+      "codes": [
+        {
+          "type": "pointer_write_value",
+          "address": "0x100000000",
+          "pointerOffsets": ["0x20", "0x18", "0x40"],
+          "valueType": "int",
+          "value": "99"
+        }
+      ]
+    }
+  ]
+}
+```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the layer diagram.
+## Implemented Cheat Types (v0.2)
 
-## Menu integration
+| Type | Description |
+|------|-------------|
+| `write_bytes` | Write raw bytes at absolute address |
+| `write_value` | Write typed value at absolute address |
+| `aob_write_bytes` | Resolve AOB pattern, write bytes at match |
+| `aob_write_value` | Resolve AOB pattern, write typed value |
+| `module_write_bytes` | Module base + offset, write bytes |
+| `module_write_value` | Module base + offset, write typed value |
+| `freeze_value` | Continuously write a value at interval |
+| `pointer_write_bytes` | Resolve pointer chain, write bytes |
+| `pointer_write_value` | Resolve pointer chain, write typed value |
+| `aob_pointer_write_bytes` | AOB match → pointer chain → write bytes |
+| `aob_pointer_write_value` | AOB match → pointer chain → write typed value |
 
-- `menu/etaHEN_xml/nexus_cheats.xml` — drop-in shellui page for the etaHEN
-  toolbox. Adds an "★ Nexus Cheats" entry that explains how to reach the
-  WebUI and CLI companion.
-- `menu/etaHEN_xml/toolbox_link.snippet.xml` — the single-line edit you
-  paste into etaHEN's `etaHEN_toolbox.xml` next to `id_cheats`.
-- `menu/webui/index.html` — small browser UI consuming a future companion
-  HTTP endpoint (`/api/state`, `/api/enable`, `/api/disable`). The endpoints
-  are documented in [docs/MENU_INTEGRATION.md](docs/MENU_INTEGRATION.md);
-  hosting the API is left to consumers (the CLI shows the underlying
-  `CheatManager` calls).
+## WebUI Endpoints
 
-## Controller shortcuts
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/state` | Full connection/process/cheat/logs state |
+| GET | `/api/process` | Current game process info |
+| GET | `/api/cheats` | List loaded cheats with enabled status |
+| POST | `/api/enable` | Enable a cheat `{ "id": "cheat_id" }` |
+| POST | `/api/disable` | Disable a cheat `{ "id": "cheat_id" }` |
+| POST | `/api/scan` | AOB scan `{ "pattern": "...", "maxResults": 8 }` |
+| POST | `/api/reload-cheats` | Reload cheat database from disk |
+| GET | `/api/config` | Current server configuration |
+| POST | `/api/config` | Config update (requires restart) |
 
-[docs/CONTROLLER_SHORTCUTS.md](docs/CONTROLLER_SHORTCUTS.md). The
-`ShortcutDetector` is a pure state machine that takes pad samples and a
-clock and raises an event when the configured combo fires. Hooking the
-detector to live `scePadReadState` requires payload-side support (see
-[docs/LIMITATIONS.md](docs/LIMITATIONS.md)).
+## Menu Integration
+
+- **WebUI**: `http://localhost:9080` — full browser-based cheat menu
+- **etaHEN Toolbox**: See [menu/etaHEN_xml/](menu/etaHEN_xml/) for XML entries
+  that can open NCF WebUI in the PS4 browser
+
+## Controller Shortcuts
+
+| Mode | Description | Status |
+|------|-------------|--------|
+| HoldR3L3 | Hold R3+L3 together | Implemented (state machine) |
+| HoldL2Triangle | Hold L2+Triangle | Implemented (state machine) |
+| LongHoldOptions | Hold Options for 2s | Implemented (state machine) |
+| LongHoldShare | Hold Share for 2s | Implemented (state machine) |
+| SingleTapShare | Single-tap Share | Implemented (state machine) |
+| Live polling | `/pad_state` payload endpoint | Documented — requires payload-side build |
+
+> **Note:** Share/Create button may be intercepted by system UI.  
+> HoldR3L3 and HoldL2Triangle are the most reliably supported modes.
+
+## API Status (Payload Integration)
+
+| Endpoint | Client-Side | Payload-Side (optional) |
+|----------|-------------|------------------------|
+| `/read_memory` | ✅ Via `HttpNexusClient` | Native Nexus payload |
+| `/write_memory` | ✅ Via `HttpNexusClient` | Native Nexus payload |
+| `/aob_scan` | ✅ Client-side fallback via read_memory | 📄 Contract defined, payload implementation pending native build |
+| `/pad_state` | 📄 Contract defined, returns null when unavailable | 📄 Contract defined, implementation pending native build |
+
+## Current Limitations
+
+See [docs/LIMITATIONS.md](docs/LIMITATIONS.md) for the full list.
+
+Key limitations:
+- No native PS4/PS5 payload build toolchain in this repo — payload endpoints
+  depend on NexusFramework's payload SDK.
+- Controller shortcut live polling requires payload-side `/pad_state` endpoint.
+- Shellcode/detour actions are documented future work (disabled by default).
+- etaHEN (.shn, .mc4) format parsers are stubs (no public spec found).
+- On Windows, the WebUI path auto-detection uses upward directory traversal.
+
+## Build Commands
+
+```bash
+# Full build
+dotnet build -c Release
+
+# Full test
+dotnet test -c Release
+
+# Format check
+dotnet format --verify-no-changes
+
+# Build scripts (cross-platform)
+./scripts/build.sh        # Linux/macOS
+./scripts/build.ps1       # Windows PowerShell
+```
+
+## Credits / Attribution
+
+- **NexusFramework** (MIT) — primary foundation, payload protocol, memory primitives.
+  See [ATTRIBUTION.md](ATTRIBUTION.md).
+- **etaHEN** (GPLv3) — concepts referenced for shortcut detection behavior,
+  toolbox XML format. No code copied. See [ATTRIBUTION.md](ATTRIBUTION.md).
+- This project: MIT for original code. Any etaHEN-derived portions are GPLv3-compatible.
 
 ## License
 
-GPL-3.0-or-later. See [LICENSE](LICENSE) and [ATTRIBUTION.md](ATTRIBUTION.md)
-for why GPL was chosen and what was reused from each upstream.
-
-## Safety / legal
-
-Read [docs/SECURITY_AND_ETHICS.md](docs/SECURITY_AND_ETHICS.md). One-line
-version: own the console, own the game, stay offline. You assume all risk.
+- Original NexusCheatFramework code: **MIT**
+- Adaptation of any etaHEN-derived work (if applicable): **GPLv3**
+- See [LICENSE](LICENSE) and [ATTRIBUTION.md](ATTRIBUTION.md).

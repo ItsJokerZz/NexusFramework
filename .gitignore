@@ -1,8 +1,45 @@
-/source/.vscode
-/source/console/build
-source/console/wiiu.mk
-/source/libraries/C\#/.vs
-/source/libraries/C\#/bin
-/source/libraries/C\#/obj
-/source/libraries/NF_Debug_NET
-/source/test_hook
+# .NET
+bin/
+obj/
+**.user
+*.suo
+*.sln.docstate
+*.userprefs
+*.DotSettings.user
+.vs/
+*.nupkg
+
+# Build output
+**/bin/**
+**/obj/**
+*.exe
+*.dll
+*.pdb
+*.so
+*.dylib
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Secrets / local config
+*.env
+*.local.*
+appsettings.local.json
+appsettings.Development.json
+
+# NPM / node
+node_modules/
+package-lock.json
+
+# Test results
+TestResults/
+
+# Internal tracking
+task_progress.md
+
+# OS
+.DS_Store
+Thumbs.db

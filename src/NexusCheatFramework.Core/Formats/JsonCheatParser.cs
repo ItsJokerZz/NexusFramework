@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -68,7 +69,7 @@ namespace NexusCheatFramework.Formats
         private static CheatCode ParseCode(JsonElement co)
         {
             var typeStr = GetString(co, "type") ?? throw new FormatException("Code missing 'type'.");
-            if (!Enum.TryParse<CheatCodeType>(MapTypeName(typeStr), true, out var type))
+            if (!TryParseCheatCodeType(typeStr, out var type))
                 throw new FormatException($"Unknown cheat code type '{typeStr}'.");
 
             return new CheatCode
@@ -82,13 +83,34 @@ namespace NexusCheatFramework.Formats
                 ValueType = GetString(co, "valueType"),
                 Value = GetString(co, "value"),
                 ModuleName = GetString(co, "moduleName"),
+                FreezeIntervalMs = GetInt(co, "freezeIntervalMs") ?? 250,
+                PointerOffsets = ParseStringList(co, "pointerOffsets"),
+                AobOffset = GetInt(co, "aobOffset") ?? 0,
             };
         }
 
-        private static string MapTypeName(string s)
+        private static bool TryParseCheatCodeType(string s, out CheatCodeType type)
         {
             // Accept snake_case and camelCase forms
-            return s.Replace("_", "");
+            var normalized = s.Replace("_", "");
+            // Handle the v0.2 types
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "writebytes", "WriteBytes" },
+                { "writevalue", "WriteValue" },
+                { "aobwritebytes", "AobWriteBytes" },
+                { "aobwritevalue", "AobWriteValue" },
+                { "modulewritebytes", "ModuleWriteBytes" },
+                { "modulewritevalue", "ModuleWriteValue" },
+                { "freezevalue", "FreezeValue" },
+                { "pointerwritebytes", "PointerWriteBytes" },
+                { "pointerwritevalue", "PointerWriteValue" },
+                { "aobpointerwritebytes", "AobPointerWriteBytes" },
+                { "aobpointerwritevalue", "AobPointerWriteValue" },
+            };
+            if (map.TryGetValue(normalized, out var mapped))
+                return Enum.TryParse<CheatCodeType>(mapped, true, out type);
+            return Enum.TryParse<CheatCodeType>(normalized, true, out type);
         }
 
         private static string? GetString(JsonElement parent, string name)
@@ -115,6 +137,27 @@ namespace NexusCheatFramework.Formats
                 JsonValueKind.String => bool.TryParse(v.GetString(), out var b) ? b : (bool?)null,
                 _ => null,
             };
+        }
+
+        private static int? GetInt(JsonElement parent, string name)
+        {
+            if (!parent.TryGetProperty(name, out var v)) return null;
+            if (v.ValueKind == JsonValueKind.Number) return v.GetInt32();
+            if (v.ValueKind == JsonValueKind.String && int.TryParse(v.GetString(), out var i)) return i;
+            return null;
+        }
+
+        private static List<string>? ParseStringList(JsonElement parent, string name)
+        {
+            if (!parent.TryGetProperty(name, out var v)) return null;
+            if (v.ValueKind != JsonValueKind.Array) return null;
+            var list = new List<string>();
+            foreach (var e in v.EnumerateArray())
+            {
+                if (e.ValueKind == JsonValueKind.String)
+                    list.Add(e.GetString() ?? string.Empty);
+            }
+            return list.Count > 0 ? list : null;
         }
 
         private static ulong? ParseHexUlongOrNull(string? s)
