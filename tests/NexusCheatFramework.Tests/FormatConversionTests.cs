@@ -297,7 +297,7 @@ public class FormatConversionTests
             var parser = new Mc4CheatParser();
             var result = parser.Parse(path);
             Assert.NotNull(result);
-            Assert.Equal(0, result.Cheats.Count);
+            Assert.Empty(result.Cheats);
         }
         finally { File.Delete(path); }
     }

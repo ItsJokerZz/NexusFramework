@@ -119,12 +119,14 @@ public class CheatEngineTests
 
         var cheat1 = new CheatDefinition
         {
-            Id = "c1", Name = "C1",
+            Id = "c1",
+            Name = "C1",
             Codes = { new CheatCode { Type = CheatCodeType.WriteBytes, Address = 0x10000, Bytes = new byte[] { 0xAA } } }
         };
         var cheat2 = new CheatDefinition
         {
-            Id = "c2", Name = "C2",
+            Id = "c2",
+            Name = "C2",
             Codes = { new CheatCode { Type = CheatCodeType.WriteBytes, Address = 0x10010, Bytes = new byte[] { 0xBB } } }
         };
 
@@ -147,7 +149,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "bad", Name = "Bad",
+            Id = "bad",
+            Name = "Bad",
             Codes = { new CheatCode { Type = (CheatCodeType)999 } }
         };
 
@@ -248,7 +251,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "ptr1", Name = "Pointer Chain Value",
+            Id = "ptr1",
+            Name = "Pointer Chain Value",
             Codes =
             {
                 new CheatCode
@@ -279,7 +283,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "ptr2", Name = "Pointer Chain Bytes",
+            Id = "ptr2",
+            Name = "Pointer Chain Bytes",
             Codes =
             {
                 new CheatCode
@@ -310,7 +315,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "ptr_null", Name = "Null Pointer",
+            Id = "ptr_null",
+            Name = "Null Pointer",
             Codes =
             {
                 new CheatCode
@@ -339,7 +345,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "ptr_bad_addr", Name = "Bad Final Address",
+            Id = "ptr_bad_addr",
+            Name = "Bad Final Address",
             Codes =
             {
                 new CheatCode
@@ -367,7 +374,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "ptr_neg", Name = "Negative Offset",
+            Id = "ptr_neg",
+            Name = "Negative Offset",
             Codes =
             {
                 new CheatCode
@@ -398,7 +406,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "aob_ptr1", Name = "AOB Ptr Value",
+            Id = "aob_ptr1",
+            Name = "AOB Ptr Value",
             Codes =
             {
                 new CheatCode
@@ -431,7 +440,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "aob_ptr2", Name = "AOB Ptr Bytes",
+            Id = "aob_ptr2",
+            Name = "AOB Ptr Bytes",
             Codes =
             {
                 new CheatCode
@@ -465,7 +475,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "freeze_mod", Name = "Freeze via Module",
+            Id = "freeze_mod",
+            Name = "Freeze via Module",
             Codes =
             {
                 new CheatCode
@@ -502,7 +513,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "freeze_aob", Name = "Freeze via AOB",
+            Id = "freeze_aob",
+            Name = "Freeze via AOB",
             Codes =
             {
                 new CheatCode
@@ -540,7 +552,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "freeze_ptr", Name = "Freeze via Pointer",
+            Id = "freeze_ptr",
+            Name = "Freeze via Pointer",
             Codes =
             {
                 new CheatCode
@@ -579,7 +592,8 @@ public class CheatEngineTests
         var engine = new CheatEngine(client);
         var cheat = new CheatDefinition
         {
-            Id = "freeze_aob_ptr", Name = "Freeze via AOB+Ptr",
+            Id = "freeze_aob_ptr",
+            Name = "Freeze via AOB+Ptr",
             Codes =
             {
                 new CheatCode
