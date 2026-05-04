@@ -1,0 +1,8 @@
+/source/.vscode
+/source/console/build
+source/console/wiiu.mk
+/source/libraries/C\#/.vs
+/source/libraries/C\#/bin
+/source/libraries/C\#/obj
+/source/libraries/NF_Debug_NET
+/source/test_hook

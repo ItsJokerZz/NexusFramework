@@ -1,0 +1,81 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>NexusFramework</RootNamespace>
+    <AssemblyName>NexusFramework</AssemblyName>
+    <AssemblyTitle>NexusFramework</AssemblyTitle>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Title>NexusFramework</Title>
+    <Product>NexusFramework</Product>
+    <Description>A C#/.NET library to interact with a PS4 and 5 running NexusFramework.</Description>
+    <Authors>ItsJokerZz</Authors>
+    <Company>ItsJokerZz</Company>
+    <Copyright>MIT License | Copyright © 2024 - ItsJokerZz</Copyright>
+    <PackageProjectUrl>https://www.GitHub.com/ItsJokerZz/NexusFramework</PackageProjectUrl>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Version>0.91</Version>
+    <PreviousVersion>0.91</PreviousVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>922</FileVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <BuildDate>$([System.DateTime]::UtcNow.ToString("MMMM dd yyyy"))</BuildDate>
+    <PackageId>NexusFramework</PackageId>
+    <RepositoryUrl>https://www.GitHub.com/ItsJokerZz/NexusFramework</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+  <Target Name="BumpBuildNumber" BeforeTargets="BeforeBuild">
+    <XmlPeek XmlInputPath="$(MSBuildProjectFullPath)" Query="/Project/PropertyGroup/Version/text()">
+      <Output TaskParameter="Result" PropertyName="CurrentVersion" />
+    </XmlPeek>
+    <XmlPeek XmlInputPath="$(MSBuildProjectFullPath)" Query="/Project/PropertyGroup/FileVersion/text()">
+      <Output TaskParameter="Result" PropertyName="PrevBuildNumber" />
+    </XmlPeek>
+    <XmlPeek XmlInputPath="$(MSBuildProjectFullPath)" Query="/Project/PropertyGroup/PreviousVersion/text()">
+      <Output TaskParameter="Result" PropertyName="StoredPreviousVersion" />
+    </XmlPeek>
+    <PropertyGroup>
+      <VersionChanged Condition="'$(CurrentVersion)' != '$(StoredPreviousVersion)'">true</VersionChanged>
+      <PrevBuildNumber Condition="'$(PrevBuildNumber)'==''">0</PrevBuildNumber>
+      <NewBuild Condition="'$(VersionChanged)' == 'true'">1</NewBuild>
+      <NewBuild Condition="'$(VersionChanged)' != 'true'">$([MSBuild]::Add($(PrevBuildNumber), 1))</NewBuild>
+      <AssemblyInformationalVersion>$(Version)b$(NewBuild)</AssemblyInformationalVersion>
+      <BuildDate>$([System.DateTime]::UtcNow.ToString("MMMM dd yyyy"))</BuildDate>
+    </PropertyGroup>
+    <XmlPoke XmlInputPath="$(MSBuildProjectFullPath)" Query="/Project/PropertyGroup/FileVersion" Value="$(NewBuild)" />
+    <XmlPoke XmlInputPath="$(MSBuildProjectFullPath)" Query="/Project/PropertyGroup/PreviousVersion" Value="$(CurrentVersion)" />
+  </Target>
+  <ItemGroup>
+    <None Remove="payloads\elfldr-ps4.elf" />
+    <None Remove="payloads\elfldr-ps5.elf" />
+    <None Remove="payloads\nexus-ps4.elf" />
+    <None Remove="payloads\nexus-ps5.elf" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="payloads\elfldr-ps4.elf" />
+    <EmbeddedResource Include="payloads\elfldr-ps5.elf" />
+    <EmbeddedResource Include="payloads\nexus-ps4.elf" />
+    <EmbeddedResource Include="payloads\nexus-ps5.elf" />
+  </ItemGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="BuildDate" Value="$(BuildDate)" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="10.0.7" />
+  </ItemGroup>
+</Project>
