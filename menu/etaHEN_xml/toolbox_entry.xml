@@ -1,41 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   NexusCheatFramework — etaHEN Toolbox Integration Entry
-  
-  This XML inserts an entry into etaHEN's Toolbox menu that either:
-    (a) Directly opens the NexusCheatFramework WebUI in the PS4 browser
-        (if the console is on the same network), or
-    (b) Shows the console IP and port so the user can connect manually.
-  
+
+  This XML inserts an entry into etaHEN's Toolbox menu that opens the
+  NexusCheatFramework WebUI in the PS4/PS5 browser.
+
   Place this file in:
     /data/etaHEN/toolbox/
-  
+
   The file must be named with a .xml extension (e.g. nexus_cheats.xml).
-  
+
   IMPORTANT SAFETY NOTES:
-  - Replace 192.168.1.100 with your console's actual IP address.
+  - Replace 192.168.1.100 with your HOST PC's actual IP address (not the console IP).
   - Replace 9080 with your WebUI listen port if changed.
   - This is for offline homebrew/research use only.
   - Do not use for online/matchmaking abuse.
-  
+
+  HOW THIS WORKS:
+  1. Load NexusFramework payload on the PS4/PS5 (via etaHEN, GoldHEN, etc.)
+  2. Run NexusCheatFramework.Web on a PC on the same network:
+       dotnet run --project src/NexusCheatFramework.Web -- --ip <console-ip> --port 9080
+  3. Open this Toolbox entry to access the WebUI from the PS4/PS5 browser.
+  4. The WebUI communicates with the NexusFramework payload over HTTP.
+
+  This is NOT a native cheat engine. It is a browser-based remote control flow.
+  See docs/ELF_PS5SDK_ETAHEN_INTEGRATION.md for details.
+
   Attribution: Derived from etaHEN toolbox XML format patterns.
   See https://github.com/etaHEN/etaHEN for the official format.
 -->
 <toolbox version="1.0">
   <category name="Homebrew">
     <item name="NexusCheatFramework Cheats">
-      <!-- Opens the NCF WebUI in the PS4 browser -->
+      <!--
+        Opens the NCF WebUI in the PS4/PS5 browser.
+        IMPORTANT: Replace 192.168.1.100 with your HOST PC's IP address.
+        The WebUI must be running on your PC before clicking this entry.
+      -->
       <action type="open_uri">http://192.168.1.100:9080</action>
       <description>
-        Opens the NexusCheatFramework WebUI cheat menu.
-        Ensure NCF WebUI is running (dotnet run --project src/NexusCheatFramework.Web -- --ip &lt;console-ip&gt;).
-        Replace the IP in the URI above with your console's IP.
+        Opens the NexusCheatFramework WebUI cheat menu in the browser.
+        Prerequisites:
+        1. NexusFramework payload loaded on this console
+        2. NCF WebUI running on a PC on the same network:
+           dotnet run --project src/NexusCheatFramework.Web -- --ip &lt;console-ip&gt; --port 9080
+        3. Replace the IP in the URI above with your HOST PC's IP address
       </description>
     </item>
     <item name="NCF Status">
-      <action type="notify">NexusCheatFramework v0.2 – see terminal/WebUI at http://192.168.1.100:9080</action>
+      <action type="notify">NexusCheatFramework v0.2 – WebUI at http://192.168.1.100:9080</action>
       <description>
         Shows a notification with NCF version and WebUI URL.
+        Replace 192.168.1.100 with your HOST PC's IP address.
       </description>
     </item>
   </category>

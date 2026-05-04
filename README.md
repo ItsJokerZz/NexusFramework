@@ -201,6 +201,57 @@ NexusCheatFramework/
 | `/aob_scan` | ✅ Client-side fallback via read_memory | 📄 Contract defined, payload implementation pending native build |
 | `/pad_state` | 📄 Contract defined, returns null when unavailable | 📄 Contract defined, implementation pending native build |
 
+## Can I Build This as a PS5 ELF?
+
+**No, not as-is.** This repository builds .NET projects (WebUI/CLI/Core) that run on a host PC. They communicate with a NexusFramework payload already running on the PS5 over HTTP.
+
+### What this repo builds
+
+```
+dotnet build -c Release
+  └─► NexusCheatFramework.Core.dll   (shared library, netstandard2.1)
+  └─► NexusCheatFramework.Web.dll    (ASP.NET Core WebUI, net10.0)
+  └─► ncf.dll                        (CLI frontend, net10.0)
+```
+
+These are **host-side tools** — they run on your PC, not on the PS5.
+
+### What a PS5 ELF requires
+
+A native PS5 ELF cheat payload would need:
+
+1. **PS5SDK** (https://github.com/PS5Dev/PS5SDK) — the native C/C++ toolchain
+2. A separate **native C/C++ payload project** (e.g., under `payload/ps5/`)
+3. PS5SDK does **not** compile .NET projects into an ELF
+
+### Current etaHEN-style flow
+
+```
+etaHEN Toolbox entry
+  └─► opens WebUI URL in PS4/PS5 browser
+       └─► http://<host-pc-ip>:9080
+            └─► WebUI controls NexusFramework payload
+                 └─► payload reads/writes game memory
+```
+
+This is a **browser-based remote control flow**, not a native cheat engine.
+
+### Future native ELF path
+
+An experimental scaffold exists at `payload/ps5/` for a future native PS5 ELF:
+
+```
+PS5SDK + payload/ps5/ native C/C++ code
+  └─► make (with PS5_PAYLOAD_SDK set)
+       └─► output/nexus-cheat-ps5.elf
+            └─► load via compatible PS5 payload loader
+                 └─► expose safe endpoints consumed by WebUI/CLI
+```
+
+**Status:** Experimental / Not buildable without PS5SDK installed.
+
+See [docs/ELF_PS5SDK_ETAHEN_INTEGRATION.md](docs/ELF_PS5SDK_ETAHEN_INTEGRATION.md) for full details.
+
 ## Current Limitations
 
 See [docs/LIMITATIONS.md](docs/LIMITATIONS.md) for the full list.
@@ -212,6 +263,8 @@ Key limitations:
 - Shellcode/detour actions are documented future work (disabled by default).
 - etaHEN (.shn, .mc4) format parsers are stubs (no public spec found).
 - On Windows, the WebUI path auto-detection uses upward directory traversal.
+- **Cannot build a standalone PS5 ELF** from this repo as-is — requires PS5SDK
+  and a separate native C/C++ payload project.
 
 ## Build Commands
 
