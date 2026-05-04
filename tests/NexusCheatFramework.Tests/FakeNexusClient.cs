@@ -18,10 +18,22 @@ internal sealed class FakeNexusClient : INexusClient
     public bool ReadShouldFail { get; set; }
     public bool Connected { get; set; } = true;
     public string? IpAddress => "fake";
+    private readonly List<MemoryRegion> _extraRegions = new();
 
     public FakeNexusClient(byte[] buffer, ulong baseAddress = 0x10000)
     {
         Buffer = buffer; Base = baseAddress;
+    }
+
+    public void SetExtraRegion(string name, ulong start, ulong end, MemoryProtection prot)
+    {
+        _extraRegions.Add(new MemoryRegion
+        {
+            Name = name,
+            Start = start,
+            End = end,
+            Protection = prot,
+        });
     }
 
     public Task ConnectAsync(string ipAddress, CancellationToken ct = default) => Task.CompletedTask;
@@ -38,14 +50,18 @@ internal sealed class FakeNexusClient : INexusClient
 
     public Task<IReadOnlyList<MemoryRegion>> GetVirtualMemoryMapsAsync(CancellationToken ct = default)
     {
-        var region = new MemoryRegion
+        var list = new List<MemoryRegion>
         {
-            Name = "fake.eboot",
-            Start = Base,
-            End = Base + (ulong)Buffer.Length,
-            Protection = MemoryProtection.ReadWrite,
+            new()
+            {
+                Name = "fake.eboot",
+                Start = Base,
+                End = Base + (ulong)Buffer.Length,
+                Protection = MemoryProtection.ReadWrite,
+            }
         };
-        return Task.FromResult<IReadOnlyList<MemoryRegion>>(new[] { region });
+        list.AddRange(_extraRegions);
+        return Task.FromResult<IReadOnlyList<MemoryRegion>>(list);
     }
 
     public Task<byte[]> ReadMemoryAsync(ulong address, uint length, CancellationToken ct = default)

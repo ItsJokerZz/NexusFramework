@@ -236,9 +236,29 @@ namespace NexusCheatFramework.Core
             switch (code.Type)
             {
                 case CheatCodeType.FreezeValue:
-                    // Freeze uses the same resolve as write_value
-                    baseAddr = code.Address ?? throw new FormatException("FreezeValue requires 'address'.");
+                    // Freeze supports dynamic resolution: module, AOB, pointer chain
                     patchBytes = TypedValueEncoder.Encode(code.ValueType, code.Value);
+                    if (code.PointerOffsets is { Count: > 0 })
+                    {
+                        if (!string.IsNullOrWhiteSpace(code.AobPattern))
+                            baseAddr = await ResolveAobPointerChainAsync(code.AobPattern, code.AobOffset, code.PointerOffsets, ct).ConfigureAwait(false);
+                        else if (code.Address.HasValue)
+                            baseAddr = await ResolvePointerChainAsync(code.Address, code.PointerOffsets, ct).ConfigureAwait(false);
+                        else
+                            throw new FormatException("FreezeValue with pointerOffsets requires 'address' or 'aobPattern'.");
+                    }
+                    else if (!string.IsNullOrWhiteSpace(code.AobPattern))
+                    {
+                        baseAddr = await ResolveAobAsync(code.AobPattern, ct).ConfigureAwait(false);
+                    }
+                    else if (!string.IsNullOrWhiteSpace(code.ModuleName))
+                    {
+                        baseAddr = await ResolveModuleBaseAsync(code.ModuleName).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        baseAddr = code.Address ?? throw new FormatException("FreezeValue requires 'address', 'moduleName', 'aobPattern', or 'pointerOffsets'.");
+                    }
                     break;
 
                 case CheatCodeType.WriteBytes:
