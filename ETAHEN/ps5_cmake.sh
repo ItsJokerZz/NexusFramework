@@ -1,1 +1,0 @@
-$PS5_PAYLOAD_SDK/bin/prospero-cmake
