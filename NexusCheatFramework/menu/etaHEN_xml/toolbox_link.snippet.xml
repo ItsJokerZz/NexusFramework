@@ -1,0 +1,13 @@
+<!--
+  Snippet to insert into etaHEN's existing etaHEN_toolbox.xml, alongside the
+  built-in "Cheats (WIP)" link (around line 15 in the upstream file).
+
+  Place the <link/> below directly after the existing
+      <link id="id_cheats" title="Cheats (WIP)" file="cheats.xml"/>
+  inside the <setting_list id="id_debug_settings" ...> block.
+
+  Marker comments around the line are recommended so future merges can find
+  it; e.g. "BEGIN NexusCheatFramework" / "END NexusCheatFramework" comments
+  on their own lines (not nested inside this file's outer comment).
+-->
+<link id="id_nexus_cheats" title="★ Nexus Cheats" file="nexus_cheats.xml"/>

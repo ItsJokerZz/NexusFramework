@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>NexusCheatFramework — Cheats</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #111; color: #eee; margin: 0; padding: 1rem; }
+    h1 { font-size: 1.2rem; margin: 0 0 1rem 0; }
+    .row { display: flex; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid #333; }
+    .id { color: #888; font-family: monospace; margin-right: .8rem; min-width: 14ch; }
+    .name { flex: 1; }
+    button { background: #2a6; color: #fff; border: 0; padding: .3rem .7rem; border-radius: .25rem; cursor: pointer; }
+    button.off { background: #444; }
+    .target { color: #6cf; margin-bottom: .8rem; }
+    .err { color: #f55; }
+  </style>
+</head>
+<body>
+  <h1>NexusCheatFramework — Cheats</h1>
+  <div class="target" id="target">connecting…</div>
+  <div id="list"></div>
+  <div class="err" id="err"></div>
+  <script>
+    // The companion server is expected to expose:
+    //   GET  /api/state   -> { target, cheats: [{id,name,description,enabled}] }
+    //   POST /api/enable  body: {id}
+    //   POST /api/disable body: {id}
+    async function refresh() {
+      try {
+        const s = await (await fetch('/api/state')).json();
+        document.getElementById('target').textContent =
+          s.target ? `Active: ${s.target.name} [TID=${s.target.titleId} v=${s.target.version}]` : 'No active game.';
+        const list = document.getElementById('list');
+        list.innerHTML = '';
+        for (const c of s.cheats || []) {
+          const row = document.createElement('div'); row.className = 'row';
+          row.innerHTML = `<span class="id">${c.id}</span><span class="name">${c.name}</span>`;
+          const btn = document.createElement('button');
+          btn.textContent = c.enabled ? 'Disable' : 'Enable';
+          btn.className = c.enabled ? '' : 'off';
+          btn.onclick = async () => {
+            const action = c.enabled ? 'disable' : 'enable';
+            const r = await fetch('/api/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id }) });
+            if (!r.ok) document.getElementById('err').textContent = await r.text();
+            refresh();
+          };
+          row.appendChild(btn);
+          list.appendChild(row);
+        }
+      } catch (e) { document.getElementById('err').textContent = e.message; }
+    }
+    refresh();
+    setInterval(refresh, 5000);
+  </script>
+</body>
+</html>

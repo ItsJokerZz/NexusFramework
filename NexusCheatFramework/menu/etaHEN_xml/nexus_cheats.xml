@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  Drop-in etaHEN toolbox menu page for NexusCheatFramework.
+
+  Place this file alongside etaHEN's other shellui assets (i.e. next to
+  cheats.xml / etaHEN_toolbox.xml on the console). Then add a link entry to
+  etaHEN_toolbox.xml — see menu/etaHEN_xml/toolbox_link.snippet.xml.
+
+  This page does not implement an in-game overlay. It surfaces the cheats
+  that the NexusCheatFramework companion (CLI / WebUI) is currently exposing
+  so users have a discoverable entry point from the console UI. Real apply/
+  disable still routes through the companion that owns the Nexus connection.
+-->
+<system_settings version="1.0" plugin="debug_settings_plugin">
+  <setting_list id="id_nexus_cheats_root" title="★ Nexus Cheats" second_title="NexusCheatFramework — JSON cheat database" initial_focus_to="id_ncf_open_companion">
+    <button id="id_ncf_open_companion" title="Open NCF Companion (WebUI)"
+            second_title="Opens http://&lt;console-ip&gt;:9080 — the NCF WebUI shows the active game and its cheats."/>
+
+    <label id="id_ncf_status" title="Status" second_title="See companion log for live status"/>
+
+    <setting_list id="id_ncf_help" title="How to use" second_title="Quick start">
+      <label id="id_ncf_help_1" title="1. Send the Nexus payload to this console (etaHEN toolbox payload loader)."/>
+      <label id="id_ncf_help_2" title="2. Run 'ncf cheats list --ip &lt;console-ip&gt; --db ./cheats' on your PC."/>
+      <label id="id_ncf_help_3" title="3. Enable cheats with 'ncf cheats enable --cheat &lt;id&gt;'."/>
+      <label id="id_ncf_help_4" title="See docs/MENU_INTEGRATION.md for full setup."/>
+    </setting_list>
+  </setting_list>
+</system_settings>
