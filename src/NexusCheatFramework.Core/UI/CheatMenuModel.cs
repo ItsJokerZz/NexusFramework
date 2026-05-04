@@ -20,7 +20,10 @@ namespace NexusCheatFramework.UI
             foreach (var c in mgr.ActiveCheats)
                 m.Rows.Add(new CheatRow
                 {
-                    Id = c.Id, Name = c.Name, Description = c.Description, Enabled = mgr.IsEnabled(c.Id),
+                    Id = c.Id,
+                    Name = c.Name,
+                    Description = c.Description,
+                    Enabled = mgr.IsEnabled(c.Id),
                 });
             return m;
         }

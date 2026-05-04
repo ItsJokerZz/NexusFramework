@@ -46,17 +46,94 @@ TID are allowed; they are concatenated at load time.
 | `id` | **yes** | Stable identifier. CLI uses this. |
 | `name` | **yes** | Display name. |
 | `description` | no | |
-| `enabledByDefault` | no | Reserved; the engine does not auto-enable yet. |
+| `enabledByDefault` | no | Parsed but not auto-applied on connect. Planned feature. |
 | `codes[]` | **yes** | Must have at least one entry. |
 
-### `codes[]` entries
-| Type | Required fields | Optional fields |
-|---|---|---|
-| `write_bytes`        | `address`, `bytes` | `offset`, `expectedBytes` |
-| `write_value`        | `address`, `valueType`, `value` | `offset`, `expectedBytes` |
-| `aob_write_bytes`    | `aobPattern`, `bytes` | `offset`, `expectedBytes` |
-| `aob_write_value`    | `aobPattern`, `valueType`, `value` | `offset`, `expectedBytes` |
-| `module_write_bytes` | `moduleName`, `bytes` | `offset`, `expectedBytes` |
+### `codes[]` entries — supported types
+
+| Type | Description | Required fields | Optional fields |
+|---|---|---|---|
+| `write_bytes` | Write raw bytes to an absolute address | `address`, `bytes` | `offset`, `expectedBytes` |
+| `write_value` | Write a typed value to an absolute address | `address`, `valueType`, `value` | `offset`, `expectedBytes` |
+| `aob_write_bytes` | Find AOB pattern, write bytes at match+offset | `aobPattern`, `bytes` | `offset`, `expectedBytes` |
+| `aob_write_value` | Find AOB pattern, write value at match+offset | `aobPattern`, `valueType`, `value` | `offset`, `expectedBytes` |
+| `module_write_bytes` | Find executable module base, write bytes at base+offset | `moduleName`, `bytes` | `offset`, `expectedBytes` |
+| `module_write_value` | Find executable module base, write value at base+offset | `moduleName`, `valueType`, `value` | `offset`, `expectedBytes` |
+| `freeze_value` | Write a typed value in a loop at an absolute address | `address`, `valueType`, `value` | `offset`, `expectedBytes`, `freezeIntervalMs` |
+| `pointer_write_bytes` | Resolve pointer chain from base address, write bytes | `address`, `pointerOffsets[]`, `bytes` | `offset`, `expectedBytes` |
+| `pointer_write_value` | Resolve pointer chain from base address, write value | `address`, `pointerOffsets[]`, `valueType`, `value` | `offset`, `expectedBytes` |
+| `aob_pointer_write_bytes` | Find AOB pattern, resolve pointer chain from match, write bytes | `aobPattern`, `aobOffset`, `pointerOffsets[]`, `bytes` | `offset`, `expectedBytes` |
+| `aob_pointer_write_value` | Find AOB pattern, resolve pointer chain from match, write value | `aobPattern`, `aobOffset`, `pointerOffsets[]`, `valueType`, `value` | `offset`, `expectedBytes` |
+
+### Example: freeze_value with pointer chain (workaround)
+
+`freeze_value` currently only supports absolute addresses. To freeze a value
+at a dynamically resolved address, combine a `pointer_write_value` code with
+a scheduler loop on the host side. Alternatively, define the cheat with
+two codes: one `pointer_write_value` for initial application, and a
+`freeze_value` code at the resolved address if it is stable across runs.
+
+```json
+{
+  "id": "freeze_ammo",
+  "name": "Freeze Ammo",
+  "codes": [
+    {
+      "type": "freeze_value",
+      "address": "0x12345678",
+      "valueType": "int",
+      "value": "99",
+      "freezeIntervalMs": 250
+    }
+  ]
+}
+```
+
+```json
+{
+  "id": "pointer_freeze_ammo",
+  "name": "Pointer-Freeze Ammo",
+  "codes": [
+    {
+      "type": "pointer_write_value",
+      "address": "0x100000000",
+      "pointerOffsets": ["0x20", "0x18", "0x40"],
+      "valueType": "int",
+      "value": "999"
+    }
+  ]
+}
+```
+
+### Freeze loop behavior
+
+- Each `freeze_value` code starts a background loop that writes the value
+  at `intervalMilliseconds` cadence (default 250ms).
+- The loop stops when the cheat is disabled, the process disconnects, or
+  the `CheatEngine` is disposed.
+- Only one freeze loop runs per cheat ID; duplicate calls are ignored.
+- Freeze writes that fail (e.g. process crashed) log a warning and break
+  the loop.
+
+### Pointer chain resolution
+
+- `pointerOffsets` is an ordered list of signed or hex offsets.
+- Every offset except the last is a *pointer read*: the engine reads 8 bytes
+  at `(current + offset[i])` and sets `current` to the resulting ulong.
+- The last offset is an *addition*: `current += offset[last]` yields the
+  final address.
+- If a pointer resolves to `0x0`, the chain throws an error.
+
+### `freezeIntervalMs`
+
+Used only for `freeze_value` type. Default 250ms. Valid range: 1–60000.
+
+### `aobOffset`
+
+Used only with `aob_pointer_write_*` types. Signed offset from the AOB
+match address where the pointer chain starts.
+
+### Type names
 
 Type names are case-insensitive; both snake_case (`aob_write_bytes`) and
 PascalCase (`AobWriteBytes`) are accepted.

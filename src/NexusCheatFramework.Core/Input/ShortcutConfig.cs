@@ -8,12 +8,12 @@ namespace NexusCheatFramework.Input
     /// </summary>
     public enum CheatsShortcutMode
     {
-        Off                = 0,
-        HoldR3L3           = 1,
-        HoldL2Triangle     = 2,
-        LongHoldOptions    = 3,
-        LongHoldShare      = 4,
-        SingleTapShare     = 5,
+        Off = 0,
+        HoldR3L3 = 1,
+        HoldL2Triangle = 2,
+        LongHoldOptions = 3,
+        LongHoldShare = 4,
+        SingleTapShare = 5,
     }
 
     public sealed class ShortcutConfig

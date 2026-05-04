@@ -58,13 +58,29 @@ driven by:
 - a future Nexus payload endpoint that exposes `scePadReadState`,
 - a recorded log replayed in tests.
 
+## `PadStatePollingService`
+
+`PadStatePollingService` is a host-side polling loop that drives
+`ShortcutDetector`. It is configured with an interval and cancellation
+token support.
+
+**Status:** host-side only. The service calls `INexusClient.GetPadStateAsync()`,
+which is a **contract-only** method — the native payload does not expose
+`scePadReadState`. Until the payload implements `GET /pad_state`, the
+service creates the polling infrastructure but receives no pad data.
+
+When `GetPadStateAsync` returns real data, it feeds the buttons into
+`ShortcutDetector.Update()`, and when a shortcut triggers:
+- A log event is emitted (visible in WebUI)
+- The `OnTrigger` callback is invoked
+
 ## Limitations
 
-- **Console-side polling is not implemented yet.** NexusFramework does not
+- **Console-side polling is not implemented.** NexusFramework does not
   currently expose `scePadOpen` / `scePadReadState`. Wiring the detector
-  to the real pad on the console requires a payload-side change (tracked
-  in `docs/NEXUS_API_ENDPOINTS.md`). Until then you can still feed the
-  detector from a host program that has access to the pad.
+  to the real pad on the console requires a payload-side change. The
+  `INexusClient.GetPadStateAsync()` contract exists for when that endpoint
+  is added.
 - **The Share / Create button is special.** On retail consoles it is
   intercepted by the system before games see it; etaHEN handles this with
   shellui hooks. From outside shellui you generally cannot read the
@@ -72,6 +88,15 @@ driven by:
   on shellui-side cooperation in production.
 - **Pad disconnects** are handled by the caller; if no samples arrive,
   in-flight hold state never advances and never triggers spuriously.
+
+## Recommended primary modes (v0.2)
+
+Given the payload polling limitation, the recommended shortcut modes are:
+- `HoldR3L3` — most reliable, no system interception
+- `HoldL2Triangle` — also reliable, no system interception
+
+`LongHoldShare` and `SingleTapShare` are documented but depend on
+shellui-side hooks that are not part of this project.
 
 ## License note
 

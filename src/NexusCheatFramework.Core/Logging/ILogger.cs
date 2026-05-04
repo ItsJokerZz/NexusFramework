@@ -24,8 +24,8 @@ namespace NexusCheatFramework.Logging
         private readonly bool _verbose;
         public ConsoleLogger(bool verbose = false) { _verbose = verbose; }
         public void Debug(string message) { if (_verbose) Console.WriteLine($"[DBG] {message}"); }
-        public void Info(string message)  => Console.WriteLine($"[INF] {message}");
-        public void Warn(string message)  => Console.WriteLine($"[WRN] {message}");
+        public void Info(string message) => Console.WriteLine($"[INF] {message}");
+        public void Warn(string message) => Console.WriteLine($"[WRN] {message}");
         public void Error(string message, Exception? ex = null)
             => Console.Error.WriteLine($"[ERR] {message}{(ex != null ? " :: " + ex.Message : "")}");
     }

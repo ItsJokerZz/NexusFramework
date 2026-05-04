@@ -21,7 +21,7 @@ namespace NexusCheatFramework.Formats
             if (string.IsNullOrEmpty(path)) return false;
             // etaHEN itself doesn't define a unique extension; treat .etahen / .ehc as hints.
             return path.EndsWith(".etahen", StringComparison.OrdinalIgnoreCase)
-                || path.EndsWith(".ehc",    StringComparison.OrdinalIgnoreCase);
+                || path.EndsWith(".ehc", StringComparison.OrdinalIgnoreCase);
         }
 
         public CheatFile Parse(string path) => throw Unsupported();

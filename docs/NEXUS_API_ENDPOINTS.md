@@ -4,8 +4,7 @@ NexusFramework exposes an HTTP server on port **9090** by default. The
 endpoints below are everything the cheat framework currently needs. They
 are reverse-engineered from the upstream C# client at
 `NexusFramework/source/libraries/C#/commands/{connection,process}.cs` and
-verified against the payload sources in
-`NexusFramework/source/console/source/api_commands.cpp`.
+verified against the payload sources.
 
 > If the payload spec changes upstream, both `HttpNexusClient` and
 > `NexusClientAdapter` need to be updated.
@@ -41,52 +40,92 @@ verified against the payload sources in
 | GET | `/allocate_memory` | `?length=N` | `"0xADDR"` |
 | GET | `/free_memory` | `?address=0xADDR&length=N` | acknowledgement |
 
-## Modules / shellcode (not used by v0.1)
+## Modules / shellcode (not used by v0.2)
 | `/load_elf`, `/unload_elf`, `/load_module`, `/unload_module`,
 | `/get_module_handle`, `/resolve_symbol`, `/install_shellcode`,
 | `/detour_method`, `/rpc_call`, `/suspend_process`, `/resume_process`.
 
-## Endpoints we'd like to add
+Shellcode/detour integration is documented future work (disabled by default
+behind `allowAdvancedCodeExecution`).
 
-### `aob_scan` (proposed)
-Payload-side AOB matching to amortize the network round-trip cost.
+## C# contract endpoints (optional, not payload-side)
 
+### `AobScanAsync` — optional payload-side AOB scan
+
+```csharp
+Task<AobScanResult?> AobScanAsync(AobScanRequest request, CancellationToken ct);
 ```
-POST /aob_scan
+
+**Status:** contract-only. `HttpNexusClient` implements this method but
+returns `null` because the native payload does not expose a `/aob_scan`
+endpoint. The C# `AobScanner` (client-side over `read_memory`) is the
+functional fallback.
+
+Request model:
+```json
 {
   "pattern": "48 8B ?? ?? 89",
   "start": "0x100000000",
-  "end":   "0x110000000",
-  "max_results": 8,
-  "executable_only": true
+  "end": "0x110000000",
+  "maxResults": 8,
+  "executableOnly": true
 }
-
-200 OK
-{ "matches": ["0x100340a0","0x10034b18"] }
 ```
 
-Until that exists, `AobScanner` does the same work over `read_memory`.
-
-### `pad_state` (proposed)
-Read the active controller state for shortcut handling.
-
+Response model:
+```json
+{
+  "matches": ["0x100340a0", "0x10034b18"],
+  "scannedRegions": 12,
+  "skippedRegions": 3,
+  "elapsedMs": 42
+}
 ```
-GET /pad_state
-200 OK
-{ "buttons": 0x101, "lx": 128, "ly": 128, "rx": 128, "ry": 128, "l2": 0, "r2": 0 }
+
+### `GetPadStateAsync` — optional payload-side pad polling
+
+```csharp
+Task<PadState?> GetPadStateAsync(int controllerIndex = 0, CancellationToken ct = default);
 ```
 
-Until that exists, `ShortcutDetector` runs against any pad source the host
-has access to.
+**Status:** contract-only. `HttpNexusClient` implements this method but
+returns `null` because the native payload does not expose a `/pad_state`
+endpoint. The `PadStatePollingService` is a host-side polling loop that
+drives `ShortcutDetector`; without a payload endpoint it cannot read pad
+state.
 
-### `notify` (proposed)
-Pop a system toast / open a URI from the payload, mirroring etaHEN's
-`GoToURI("etaHEN?Cheats")` so a shortcut can open the menu in-game
-without a shellui hook.
+Response model:
+```json
+{
+  "connected": true,
+  "buttons": 257,
+  "lx": 128,
+  "ly": 128,
+  "rx": 128,
+  "ry": 128,
+  "l2": 0,
+  "r2": 0,
+  "timestamp": 123456789
+}
+```
+
+## Endpoints we'd like to add
+
+| Endpoint | Purpose | Priority |
+|---|---|---|
+| `POST /aob_scan` | Payload-side AOB scanning (amortizes round-trip cost) | Medium |
+| `GET /pad_state` | Read `scePadReadState` from payload | Medium |
+| `POST /notify` | Pop a system toast / open URI from payload | Low |
+
+Until these exist:
+- `AobScanner` does AOB work over `read_memory` (slower but functional).
+- `ShortcutDetector` runs against any pad source the host has access to
+  (requires external pad input).
+- Menu notifications are handled via the WebUI.
 
 ## Error format
 
 Errors are returned as `{ ... }` JSON bodies. Both `HttpNexusClient` and
 the upstream client treat any response starting with `{` after a
-non-JSON-expected request as an error. Failure surface up as exceptions
+non-JSON-expected request as an error. Failures surface as exceptions
 unless the caller used a strict-off code path.

@@ -91,10 +91,13 @@ namespace NexusCheatFramework.Core
 
                 _enabled[cheat.Id] = applied;
 
-                // Start any freeze loops
-                foreach (var code in cheat.Codes.Where(c => c.Type == CheatCodeType.FreezeValue))
+                // Start any freeze loops with the resolved address and patch bytes
+                foreach (var item in cheat.Codes.Zip(applied, (code, patch) => new { code, patch }))
                 {
-                    StartFreeze(cheat.Id, code);
+                    if (item.code.Type == CheatCodeType.FreezeValue)
+                    {
+                        StartFreeze(cheat.Id, item.patch.Address, item.patch.PatchBytes, item.code.FreezeIntervalMs);
+                    }
                 }
 
                 return new CheatResult { CheatId = cheat.Id, Success = true, Status = CheatStatus.Enabled, AppliedCodes = report };
@@ -169,7 +172,7 @@ namespace NexusCheatFramework.Core
             _freezes.Clear();
         }
 
-        private void StartFreeze(string cheatId, CheatCode code)
+        private void StartFreeze(string cheatId, ulong address, byte[] patchBytes, int freezeIntervalMs)
         {
             if (_freezeCts.ContainsKey(cheatId))
             {
@@ -180,13 +183,9 @@ namespace NexusCheatFramework.Core
             var cts = new CancellationTokenSource();
             _freezeCts[cheatId] = cts;
 
-            var addr = code.Address ?? 0;
-            var value = code.Value;
-            var valueType = code.ValueType;
-            var interval = code.FreezeIntervalMs > 0 ? code.FreezeIntervalMs : 250;
-            var patchBytes = TypedValueEncoder.Encode(valueType, value);
+            var interval = freezeIntervalMs > 0 ? freezeIntervalMs : 250;
 
-            _freezes[cheatId] = new FreezeState { Address = addr, PatchBytes = patchBytes };
+            _freezes[cheatId] = new FreezeState { Address = address, PatchBytes = patchBytes };
 
             _ = Task.Run(async () =>
             {
@@ -196,7 +195,7 @@ namespace NexusCheatFramework.Core
                     {
                         try
                         {
-                            await _client.WriteMemoryAsync(addr, patchBytes, cts.Token).ConfigureAwait(false);
+                            await _client.WriteMemoryAsync(address, patchBytes, cts.Token).ConfigureAwait(false);
                         }
                         catch (OperationCanceledException) { break; }
                         catch (Exception ex)

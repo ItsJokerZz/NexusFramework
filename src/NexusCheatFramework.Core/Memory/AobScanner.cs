@@ -49,7 +49,7 @@ namespace NexusCheatFramework.Memory
             {
                 ct.ThrowIfCancellationRequested();
                 var regionStart = options.Start.HasValue ? Math.Max(region.Start, options.Start.Value) : region.Start;
-                var regionEnd   = options.End.HasValue   ? Math.Min(region.End,   options.End.Value)   : region.End;
+                var regionEnd = options.End.HasValue ? Math.Min(region.End, options.End.Value) : region.End;
                 if (regionEnd <= regionStart) continue;
 
                 _log.Debug($"[AOB] Scanning {region.Name} 0x{regionStart:X}-0x{regionEnd:X} ({regionEnd - regionStart} bytes)");

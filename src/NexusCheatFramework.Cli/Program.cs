@@ -115,19 +115,19 @@ internal static class Program
                 ConsoleMenuRenderer.Render(CheatMenuModel.Build(mgr));
                 return 0;
             case "enable":
-            {
-                var id = opts.Get("cheat") ?? throw new ArgumentException("--cheat required");
-                var r = await mgr.EnableAsync(id);
-                Console.WriteLine(r.Success ? $"enabled: {id}" : $"failed: {r.Error}");
-                return r.Success ? 0 : 1;
-            }
+                {
+                    var id = opts.Get("cheat") ?? throw new ArgumentException("--cheat required");
+                    var r = await mgr.EnableAsync(id);
+                    Console.WriteLine(r.Success ? $"enabled: {id}" : $"failed: {r.Error}");
+                    return r.Success ? 0 : 1;
+                }
             case "disable":
-            {
-                var id = opts.Get("cheat") ?? throw new ArgumentException("--cheat required");
-                var r = await mgr.DisableAsync(id);
-                Console.WriteLine(r.Success ? $"disabled: {id}" : $"failed: {r.Error}");
-                return r.Success ? 0 : 1;
-            }
+                {
+                    var id = opts.Get("cheat") ?? throw new ArgumentException("--cheat required");
+                    var r = await mgr.DisableAsync(id);
+                    Console.WriteLine(r.Success ? $"disabled: {id}" : $"failed: {r.Error}");
+                    return r.Success ? 0 : 1;
+                }
             default:
                 Console.Error.WriteLine($"unknown cheats subcommand: {sub}");
                 return 2;

@@ -20,11 +20,15 @@
 +──────────────────────────────────────┼────────────────────────────────────+
                                        │  HTTP (NexusFramework payload :9090)
                                        ▼
-+──────── PS4 / PS5 (Nexus payload) ────────+
-|  read_memory / write_memory / get_vm_maps |
-|  get_proc_info / memory_protection / …    |
-+───────────────────────────────────────────+
++─────── PS4 / PS5 (Nexus payload) ──────────+
+|  read_memory / write_memory / get_vm_maps   |
+|  get_proc_info / memory_protection / …      |
+|  (optional: aob_scan*, pad_state* — planned)|
++────────────────────────────────────────────-+
 ```
+
+\* `aob_scan` and `pad_state` are contract-only on the C# client. The native
+payload endpoints are not implemented.
 
 ## Layers
 
@@ -50,7 +54,8 @@
 
 ### `Formats` — cheat file model + parsers
 - `CheatFile` / `CheatDefinition` / `CheatCode` are pure DTOs.
-- `JsonCheatParser` is the supported, documented parser.
+- `JsonCheatParser` is the supported, documented parser (v0.2: freeze_value,
+  pointer chains, AOB pointer chains, module writes).
 - `EtaHenCheatParser`, `ShnCheatParser`, `Mc4CheatParser` are stubs that
   throw with helpful messages until those formats are documented.
 
@@ -58,43 +63,49 @@
 - `CheatEngine` owns enable/disable for a single connection. It resolves
   each `CheatCode` to `(address, patchBytes)`, reads originals, optionally
   validates against `expectedBytes`, and tracks applied patches per cheat
-  ID. Disable restores originals (configurable).
+  ID. Disable restores originals (configurable). Freeze loops run in
+  background tasks with cancellation support.
 - `CheatManager` couples the engine to a database and an active process.
   It loads cheat files, filters by Title ID, and exposes the list to the
   UI layer.
 - `CheatRuntimeOptions` controls safety / dry-run / ambiguous-match
   policy.
 
+### `Services` — host-side polling
+- `PadStatePollingService` — configurable polling loop that feeds
+  controller state into `ShortcutDetector`. Driven by cancellation token.
+  Returns no data until the payload exposes `scePadReadState`.
+
 ### `Input` — controller shortcuts
 - `PadButton` is a flag enum mirroring Sony / OpenOrbis pad bits.
 - `ShortcutConfig` is the persisted config (mode, hold, debounce, poll).
 - `ShortcutDetector` is a deterministic state machine. It does **not**
   poll the pad itself; the caller feeds it `(buttons, now)` from any pad
-  source. This makes detection fully unit-testable and lets the same code
-  run from a host overlay app or a future payload-side polling loop.
+  source.
 
 ### `UI`
 - `CheatMenuModel` is a presentation-agnostic view-model.
 - `ConsoleMenuRenderer` writes the model to any `TextWriter`.
-- `menu/webui/index.html` is a starting-point browser UI consuming a
-  companion HTTP server (your code) that fronts `CheatManager`.
+- `menu/webui/index.html` — browser UI consuming the Web API.
+- `src/NexusCheatFramework.Web/` — ASP.NET Core Minimal API host.
 
 ### `Logging`
-- `ILogger` with `NullLogger` and `ConsoleLogger` implementations.
+- `ILogger` with `NullLogger`, `ConsoleLogger`, and `WebUILogger`
+  implementations.
 
 ## Threading
 
 All public APIs are async and accept `CancellationToken`. The engine and
 manager keep a `ConcurrentDictionary` of enabled cheats but otherwise have
-no shared mutable state across instances.
+no shared mutable state across instances. Freeze loops run on background
+tasks; each loop has its own `CancellationTokenSource`.
 
 ## Extending
 
 - **New cheat code type**: add a value to `CheatCodeType`, extend
   `CheatEngine.ResolveAsync`, document in `docs/CHEAT_FORMATS.md`,
-  test in `PatchApplyTests`.
+  test in `CheatEngineTests`.
 - **New format**: implement `ICheatFormatParser`; register with
   `CheatDatabaseService`.
-- **Payload-side AOB**: keep the `INexusClient.ReadMemoryAsync` path as
-  the fallback, add a new `IFastAobScan` capability interface, and let
-  `AobScanner` prefer it when the implementation supports it.
+- **Payload-side AOB**: keep the `AobScanner.ReadMemoryAsync` path as
+  the fallback; `INexusClient.AobScanAsync` defines the optional fast path.

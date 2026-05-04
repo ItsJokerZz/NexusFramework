@@ -8,8 +8,10 @@ public class ShortcutDetectorTests
 {
     private static (ShortcutDetector det, Counter c) Build(CheatsShortcutMode mode, TimeSpan? hold = null, TimeSpan? debounce = null)
     {
-        var cfg = new ShortcutConfig {
-            Mode = mode, Enabled = true,
+        var cfg = new ShortcutConfig
+        {
+            Mode = mode,
+            Enabled = true,
             HoldDuration = hold ?? TimeSpan.FromMilliseconds(500),
             Debounce = debounce ?? TimeSpan.FromMilliseconds(1000),
             TapMaxDuration = TimeSpan.FromMilliseconds(300),

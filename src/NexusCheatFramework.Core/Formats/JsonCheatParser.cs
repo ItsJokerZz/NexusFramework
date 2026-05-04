@@ -31,8 +31,8 @@ namespace NexusCheatFramework.Formats
             {
                 TitleId = GetString(root, "titleId") ?? throw new FormatException("Missing required 'titleId'."),
                 GameName = GetString(root, "gameName"),
-                Version  = GetString(root, "version"),
-                Region   = GetString(root, "region"),
+                Version = GetString(root, "version"),
+                Region = GetString(root, "region"),
             };
 
             if (string.IsNullOrWhiteSpace(file.TitleId))

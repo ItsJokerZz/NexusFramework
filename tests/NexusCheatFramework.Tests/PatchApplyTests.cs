@@ -15,7 +15,8 @@ public class PatchApplyTests
         var engine = new CheatEngine(fake);
         var def = new CheatDefinition
         {
-            Id = "test", Name = "test",
+            Id = "test",
+            Name = "test",
             Codes = { new CheatCode {
                 Type = CheatCodeType.WriteBytes,
                 Address = fake.Base + 1,
@@ -38,7 +39,8 @@ public class PatchApplyTests
         var engine = new CheatEngine(fake);
         var def = new CheatDefinition
         {
-            Id = "t", Name = "t",
+            Id = "t",
+            Name = "t",
             Codes = { new CheatCode { Type = CheatCodeType.WriteBytes, Address = fake.Base, Bytes = new byte[] { 0xAA } } },
         };
         await engine.EnableAsync(def);
@@ -56,7 +58,8 @@ public class PatchApplyTests
         var engine = new CheatEngine(fake);
         var def = new CheatDefinition
         {
-            Id = "t", Name = "t",
+            Id = "t",
+            Name = "t",
             Codes = { new CheatCode {
                 Type = CheatCodeType.WriteBytes,
                 Address = fake.Base,
@@ -77,7 +80,8 @@ public class PatchApplyTests
         var engine = new CheatEngine(fake, new CheatRuntimeOptions { ForceApply = true });
         var def = new CheatDefinition
         {
-            Id = "t", Name = "t",
+            Id = "t",
+            Name = "t",
             Codes = { new CheatCode {
                 Type = CheatCodeType.WriteBytes,
                 Address = fake.Base,

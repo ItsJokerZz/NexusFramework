@@ -1,12 +1,12 @@
 # NexusCheatFramework CI
-# Builds and tests on every push and pull request to main/develop branches.
+# Builds and tests on every push and pull request to main/develop/active branches.
 name: CI
 
 on:
   push:
-    branches: [ main, develop, claude/* ]
+    branches: [ main, develop, active, claude/* ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, active ]
 
 jobs:
   build-and-test:
@@ -17,17 +17,21 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            8.0.x
-            # netstandard2.1 is included; SDK >= 8.0 can build it
+          dotnet-version: 8.0.x
 
       - name: Restore
         run: dotnet restore NexusCheatFramework.sln
 
-      - name: Build
+      - name: Build Debug
+        run: dotnet build NexusCheatFramework.sln -c Debug --nologo
+
+      - name: Test Debug
+        run: dotnet test NexusCheatFramework.sln -c Debug --nologo --no-build
+
+      - name: Build Release
         run: dotnet build NexusCheatFramework.sln -c Release --nologo
 
-      - name: Test
+      - name: Test Release
         run: dotnet test NexusCheatFramework.sln -c Release --nologo --no-build
 
   lint-format:
