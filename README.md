@@ -26,7 +26,7 @@ built on top of **NexusFramework** and informed by **etaHEN**.
 
 ## What this is NOT
 
-- Not a turnkey “generate cheats” tool.
+- Not a turnkey "generate cheats" tool.
 - Not a PS4/5 jailbreak.
 - Not a piracy tool.
 - Not a matchmaking or anti-cheat bypass.
@@ -171,6 +171,12 @@ NexusCheatFramework/
 | POST | `/api/reload-cheats` | Reload cheat database from disk |
 | GET | `/api/config` | Current server configuration |
 | POST | `/api/config` | Config update (requires restart) |
+| POST | `/api/cheat-manager/open` | Open cheat manager session |
+| POST | `/api/cheat-manager/close` | Close cheat manager session |
+| GET | `/api/cheat-manager/state` | Get cheat manager session state |
+| GET | `/api/shortcut-config` | Get shortcut configuration |
+| POST | `/api/shortcut-config` | Update shortcut configuration |
+| POST | `/api/shortcut-config/record` | Record a custom controller chord |
 
 ## Menu Integration
 
@@ -191,6 +197,42 @@ NexusCheatFramework/
 
 > **Note:** Share/Create button may be intercepted by system UI.  
 > HoldR3L3 and HoldL2Triangle are the most reliably supported modes.
+
+## Cheat Manager Shortcut
+
+The cheat manager shortcut provides an etaHEN-style in-game cheat management
+experience. When configured, you can press a controller button combo (or a
+keyboard shortcut) to open an overlay that lets you browse and toggle cheats
+for the currently running game.
+
+### Trigger Options
+
+| Trigger | Enum Value | Description |
+|---------|-----------|-------------|
+| Off | `Off` | No controller trigger. Use WebUI hotkey or HTTP only. |
+| L1+R1+Square | `HoldL1R1Square` | Hold all three buttons simultaneously (default). |
+| L1+R1+Triangle | `HoldL1R1Triangle` | Hold all three buttons simultaneously. |
+| R3+L3 | `HoldR3L3` | Hold both thumbsticks. |
+| L2+Triangle | `HoldL2Triangle` | Hold L2 and Triangle. |
+| Long Hold Options | `LongHoldOptions` | Hold Options button for 2 seconds. |
+| Long Hold Share | `LongHoldShare` | Hold Share button for 2 seconds. |
+| Custom | `Custom` | User-defined chord (see docs). |
+
+### Three Fallback Open Paths
+
+Because the payload's `/pad_state` endpoint returns `null` on stock payloads,
+controller-only opening will not work out of the box. Three reliable fallbacks
+are provided:
+
+1. **WebUI Keyboard Shortcut (default Ctrl+Shift+C)** — configurable in the
+   overlay and persisted in localStorage.
+2. **HTTP Trigger** — `POST /api/cheat-manager/open` and
+   `POST /api/cheat-manager/close` for external macro tools.
+3. **etaHEN Toolbox XML Entry** — `menu/etaHEN_xml/cheat_manager.xml` opens
+   the WebUI with `?autoOpen=1` in the PS4/PS5 browser.
+
+See [docs/CHEAT_MANAGER_SHORTCUT.md](docs/CHEAT_MANAGER_SHORTCUT.md) for the
+full walkthrough.
 
 ## API Status (Payload Integration)
 

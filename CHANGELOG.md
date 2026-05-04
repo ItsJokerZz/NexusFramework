@@ -1,5 +1,30 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- `POST /api/cheat-manager/open` — Open cheat manager session
+- `POST /api/cheat-manager/close` — Close cheat manager session
+- `GET /api/cheat-manager/state` — Get cheat manager session state
+- `GET /api/shortcut-config` — Get shortcut configuration
+- `POST /api/shortcut-config` — Update shortcut configuration
+- `POST /api/shortcut-config/record` — Record a custom controller chord
+- `ncf manager open/close/status` — CLI subcommands for cheat manager session
+- `ncf shortcut show/set/record` — CLI subcommands for shortcut configuration
+- `CheatManagerShortcut` enum with 8 trigger modes (Off, HoldL1R1Square, HoldL1R1Triangle, HoldR3L3, HoldL2Triangle, LongHoldOptions, LongHoldShare, Custom)
+- `ShortcutConfigStore` — JSON persistence for shortcut config with schema versioning
+- `CheatManagerSession` — Thread-safe session service with open/close events
+- `ShortcutConfig.CheatManagerTrigger` — Config property for manager open trigger
+- `ShortcutConfig.CloseTrigger` — Config property for manager close trigger
+- `ShortcutConfig.CustomOpenChord` — Custom chord definition (IReadOnlyList<PadButton>)
+- `ShortcutConfig.CustomChordHoldMs` — Custom chord hold duration
+- `ShortcutConfig.GetEffectiveHoldDuration()` — Returns correct hold time per trigger
+- `menu/etaHEN_xml/cheat_manager.xml` — etaHEN Toolbox entry for cheat manager
+- WebUI cheat manager overlay with keyboard navigation, toggle switches, status indicators
+- WebUI keyboard shortcut Ctrl+Shift+C to open cheat manager (configurable)
+- WebUI `?autoOpen=1` query parameter support
+- `docs/CHEAT_MANAGER_SHORTCUT.md` — Full walkthrough documentation
+
 ## v0.2 — Build-verified, runnable release
 
 ### Build & CI

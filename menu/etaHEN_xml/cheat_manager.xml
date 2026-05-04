@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  NexusCheatFramework — Cheat Manager Shortcut Toolbox Entry
+
+  This XML inserts an entry into etaHEN's Toolbox that opens the
+  NexusCheatFramework cheat manager overlay in the PS4/PS5 browser
+  with autoOpen=1, so the cheat manager view appears immediately.
+
+  Place this file in:
+    /data/etaHEN/toolbox/
+
+  The file must be named with a .xml extension (e.g. cheat_manager.xml).
+
+  IMPORTANT: EDIT THIS FILE BEFORE USE
+  - Replace <host-pc-ip> with your HOST PC's actual IP address (not the console IP).
+  - Replace <port> with your WebUI listen port (default 9080).
+  - Example: http://192.168.1.100:9080/?autoOpen=1
+
+  PREREQUISITES:
+  1. NexusFramework payload loaded on the PS4/PS5 (via etaHEN, GoldHEN, etc.)
+  2. NCF WebUI running on a PC on the same network:
+       dotnet run --project src/NexusCheatFramework.Web -- --ip <console-ip> --port 9080
+  3. This file placed in /data/etaHEN/toolbox/ on the console
+
+  HOW IT WORKS:
+  - Clicking this entry opens the PS4/PS5 browser to the NCF WebUI.
+  - The ?autoOpen=1 query parameter tells the WebUI to immediately show
+    the cheat manager overlay (no need to press the keyboard shortcut).
+  - From the overlay you can browse cheats, toggle them on/off, and
+    close the overlay to return to the game.
+
+  This is NOT a native cheat engine. It is a browser-based remote control flow.
+  See docs/CHEAT_MANAGER_SHORTCUT.md for full walkthrough.
+
+  Attribution: Derived from etaHEN toolbox XML format patterns.
+  See https://github.com/etaHEN/etaHEN for the official format.
+-->
+<toolbox version="1.0">
+  <category name="Homebrew">
+    <item name="NCF Cheat Manager">
+      <!--
+        IMPORTANT: Replace <host-pc-ip> and <port> below with your actual values.
+        Example: http://192.168.1.100:9080/?autoOpen=1
+      -->
+      <action type="open_uri">http://<host-pc-ip>:<port>/?autoOpen=1</action>
+      <description>
+        Opens the NexusCheatFramework cheat manager overlay in the browser.
+        The overlay appears immediately (autoOpen mode).
+        Prerequisites:
+        1. NexusFramework payload loaded on this console
+        2. NCF WebUI running on a PC on the same network:
+           dotnet run --project src/NexusCheatFramework.Web -- --ip &lt;console-ip&gt; --port 9080
+        3. Edit this XML file to replace &lt;host-pc-ip&gt; and &lt;port&gt; with your PC's IP and port
+      </description>
+    </item>
+  </category>
+</toolbox>

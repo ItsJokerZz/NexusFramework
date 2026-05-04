@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
 using NexusCheatFramework.Core;
+using NexusCheatFramework.Input;
 using NexusCheatFramework.Logging;
 using NexusCheatFramework.Memory;
 using NexusCheatFramework.Nexus;
@@ -44,6 +45,8 @@ internal static class Program
         var logger = new WebUILogger(verbose);
         INexusClient? client = null;
         CheatManager? manager = null;
+        CheatManagerSession? session = null;
+        ShortcutConfigStore? shortcutStore = null;
         var cts = new CancellationTokenSource();
 
         var builder = WebApplication.CreateBuilder();
@@ -91,12 +94,15 @@ internal static class Program
         // Helper: structured error response
         ErrorResponse Err(string msg) => new(msg);
 
+        // Helper: check payload availability
+        bool PayloadAvailable() => client != null && client.Connected;
+
         // API: connection state
         app.MapGet("/api/state", async (HttpContext ctx) =>
         {
             try
             {
-                if (client == null || !client.Connected)
+                if (!PayloadAvailable())
                 {
                     await ctx.Response.WriteAsJsonAsync(new ApiState(false, null,
                         Array.Empty<CheatRowData>(), logger.GetLogs(), "Not connected"));
@@ -106,7 +112,7 @@ internal static class Program
                 ProcessSnapshot? process = null;
                 try
                 {
-                    process = await client.GetActiveProcessAsync(cts.Token);
+                    process = await client!.GetActiveProcessAsync(cts.Token);
                 }
                 catch { /* not connected */ }
 
@@ -114,7 +120,7 @@ internal static class Program
                     c.Id, c.Name, c.Description, manager?.IsEnabled(c.Id) ?? false
                 )).ToList() ?? new List<CheatRowData>();
 
-                var result = new ApiState(client.Connected,
+                var result = new ApiState(client!.Connected,
                     process != null ? new ProcessInfoData(
                         process.TitleId, process.Name, process.Version, process.Region) : null,
                     rows, logger.GetLogs(), null);
@@ -132,13 +138,13 @@ internal static class Program
         {
             try
             {
-                if (client == null || !client.Connected)
+                if (!PayloadAvailable())
                 {
                     ctx.Response.StatusCode = 503;
                     await ctx.Response.WriteAsJsonAsync(Err("Not connected"));
                     return;
                 }
-                var process = await client.GetActiveProcessAsync(cts.Token);
+                var process = await client!.GetActiveProcessAsync(cts.Token);
                 await ctx.Response.WriteAsJsonAsync(new
                 {
                     titleId = process.TitleId,
@@ -226,7 +232,7 @@ internal static class Program
             {
                 var body = await JsonSerializer.DeserializeAsync<ScanRequestData>(
                     ctx.Request.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (body == null || client == null || !client.Connected)
+                if (body == null || !PayloadAvailable())
                 {
                     ctx.Response.StatusCode = 400;
                     await ctx.Response.WriteAsJsonAsync(Err("Invalid request or not connected"));
@@ -247,7 +253,7 @@ internal static class Program
                     ScanExecutableOnly = body.ExecutableOnly,
                     MaxResults = body.MaxResults > 0 ? body.MaxResults : 1,
                 };
-                var localScanner = new AobScanner(client, logger);
+                var localScanner = new AobScanner(client!, logger);
                 var matches = await localScanner.FindAllAsync(pattern, opts, cts.Token);
                 await ctx.Response.WriteAsJsonAsync(new
                 {
@@ -300,6 +306,265 @@ internal static class Program
             });
         });
 
+        // ===== Cheat Manager Endpoints =====
+
+        // POST /api/cheat-manager/open
+        app.MapPost("/api/cheat-manager/open", async (HttpContext ctx) =>
+        {
+            if (session == null)
+            {
+                ctx.Response.StatusCode = 503;
+                await ctx.Response.WriteAsJsonAsync(new { error = "Cheat manager session not initialized" });
+                return;
+            }
+
+            try
+            {
+                var state = await session.OpenAsync(cts.Token);
+                var cheatCount = manager?.ActiveCheats.Count ?? 0;
+                await ctx.Response.WriteAsJsonAsync(new
+                {
+                    open = state.IsOpen,
+                    titleId = state.TitleId,
+                    cheatCount
+                });
+            }
+            catch (Exception ex)
+            {
+                ctx.Response.StatusCode = 500;
+                await ctx.Response.WriteAsJsonAsync(new { error = ex.Message });
+            }
+        });
+
+        // POST /api/cheat-manager/close
+        app.MapPost("/api/cheat-manager/close", async (HttpContext ctx) =>
+        {
+            if (session == null)
+            {
+                ctx.Response.StatusCode = 503;
+                await ctx.Response.WriteAsJsonAsync(new { error = "Cheat manager session not initialized" });
+                return;
+            }
+
+            try
+            {
+                var state = await session.CloseAsync(cts.Token);
+                await ctx.Response.WriteAsJsonAsync(new { open = state.IsOpen });
+            }
+            catch (Exception ex)
+            {
+                ctx.Response.StatusCode = 500;
+                await ctx.Response.WriteAsJsonAsync(new { error = ex.Message });
+            }
+        });
+
+        // GET /api/cheat-manager/state
+        app.MapGet("/api/cheat-manager/state", async (HttpContext ctx) =>
+        {
+            if (session == null)
+            {
+                ctx.Response.StatusCode = 503;
+                await ctx.Response.WriteAsJsonAsync(new { error = "Cheat manager session not initialized" });
+                return;
+            }
+
+            var state = session.GetState();
+            await ctx.Response.WriteAsJsonAsync(new
+            {
+                open = state.IsOpen,
+                titleId = state.TitleId,
+                lastError = state.LastError
+            });
+        });
+
+        // ===== Shortcut Config Endpoints =====
+
+        // GET /api/shortcut-config
+        app.MapGet("/api/shortcut-config", async (HttpContext ctx) =>
+        {
+            if (shortcutStore == null)
+            {
+                ctx.Response.StatusCode = 503;
+                await ctx.Response.WriteAsJsonAsync(new { error = "Shortcut config store not initialized" });
+                return;
+            }
+
+            var config = shortcutStore.Load();
+            await ctx.Response.WriteAsJsonAsync(new
+            {
+                schemaVersion = config.SchemaVersion,
+                enabled = config.Enabled,
+                mode = config.Mode.ToString(),
+                holdDurationMs = (int)config.HoldDuration.TotalMilliseconds,
+                debounceMs = (int)config.Debounce.TotalMilliseconds,
+                cheatManagerTrigger = config.CheatManagerTrigger.ToString(),
+                closeTrigger = config.CloseTrigger.ToString(),
+                customOpenChord = config.CustomOpenChord.Select(b => b.ToString()).ToList(),
+                customChordHoldMs = config.CustomChordHoldMs
+            });
+        });
+
+        // POST /api/shortcut-config
+        app.MapPost("/api/shortcut-config", async (HttpContext ctx) =>
+        {
+            if (shortcutStore == null)
+            {
+                ctx.Response.StatusCode = 503;
+                await ctx.Response.WriteAsJsonAsync(new { error = "Shortcut config store not initialized" });
+                return;
+            }
+
+            try
+            {
+                var body = await JsonSerializer.DeserializeAsync<ShortcutConfigUpdateBody>(
+                    ctx.Request.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (body == null)
+                {
+                    ctx.Response.StatusCode = 400;
+                    await ctx.Response.WriteAsJsonAsync(new { error = "Invalid request body" });
+                    return;
+                }
+
+                var update = new ShortcutConfigUpdate
+                {
+                    Enabled = body.Enabled,
+                    CheatManagerTrigger = ParseEnum<CheatManagerShortcut>(body.CheatManagerTrigger),
+                    CloseTrigger = ParseEnum<CheatManagerShortcut>(body.CloseTrigger),
+                    CustomChordHoldMs = body.CustomChordHoldMs,
+                };
+
+                if (body.CustomOpenChord != null)
+                {
+                    update.CustomOpenChord = body.CustomOpenChord
+                        .Select(s => Enum.TryParse<PadButton>(s, ignoreCase: true, out var b) ? b : PadButton.None)
+                        .Where(b => b != PadButton.None)
+                        .ToList()
+                        .AsReadOnly();
+                }
+
+                var config = shortcutStore.MergeAndSave(update);
+                await ctx.Response.WriteAsJsonAsync(new
+                {
+                    schemaVersion = config.SchemaVersion,
+                    enabled = config.Enabled,
+                    mode = config.Mode.ToString(),
+                    cheatManagerTrigger = config.CheatManagerTrigger.ToString(),
+                    closeTrigger = config.CloseTrigger.ToString(),
+                    customOpenChord = config.CustomOpenChord.Select(b => b.ToString()).ToList(),
+                    customChordHoldMs = config.CustomChordHoldMs
+                });
+            }
+            catch (JsonException ex)
+            {
+                ctx.Response.StatusCode = 400;
+                await ctx.Response.WriteAsJsonAsync(new { error = $"Invalid JSON: {ex.Message}" });
+            }
+        });
+
+        // POST /api/shortcut-config/record
+        app.MapPost("/api/shortcut-config/record", async (HttpContext ctx) =>
+        {
+            if (shortcutStore == null)
+            {
+                ctx.Response.StatusCode = 503;
+                await ctx.Response.WriteAsJsonAsync(new { error = "Shortcut config store not initialized" });
+                return;
+            }
+
+            if (!PayloadAvailable())
+            {
+                ctx.Response.StatusCode = 503;
+                await ctx.Response.WriteAsJsonAsync(new { error = "Payload unavailable" });
+                return;
+            }
+
+            try
+            {
+                var body = await JsonSerializer.DeserializeAsync<RecordShortcutBody>(
+                    ctx.Request.Body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                int windowMs = body?.WindowMs ?? 5000;
+                if (windowMs < 1000) windowMs = 1000;
+                if (windowMs > 30000) windowMs = 30000;
+
+                // Check if pad_state is available
+                var testPad = await client!.GetPadStateAsync(cts.Token);
+                if (testPad == null)
+                {
+                    await ctx.Response.WriteAsJsonAsync(new
+                    {
+                        success = false,
+                        error = "Live pad polling not supported by the connected payload — pick a preset trigger instead."
+                    });
+                    return;
+                }
+
+                // Poll for the window duration to capture the chord
+                var capturedButtons = PadButton.None;
+                var startTime = DateTime.UtcNow;
+                int samples = 0;
+
+                while ((DateTime.UtcNow - startTime).TotalMilliseconds < windowMs)
+                {
+                    var pad = await client!.GetPadStateAsync(cts.Token);
+                    if (pad != null)
+                    {
+                        var btns = (PadButton)pad.Buttons;
+                        if (btns != PadButton.None)
+                        {
+                            capturedButtons |= btns;
+                            samples++;
+                        }
+                    }
+                    await Task.Delay(50, cts.Token);
+                }
+
+                if (capturedButtons == PadButton.None || samples == 0)
+                {
+                    await ctx.Response.WriteAsJsonAsync(new
+                    {
+                        success = false,
+                        error = "No buttons were pressed during the recording window. Try again."
+                    });
+                    return;
+                }
+
+                // Decompose the captured buttons into individual buttons
+                var chord = new List<PadButton>();
+                foreach (PadButton b in Enum.GetValues(typeof(PadButton)))
+                {
+                    if (b != PadButton.None && (capturedButtons & b) == b)
+                        chord.Add(b);
+                }
+
+                var config = shortcutStore.MergeAndSave(new ShortcutConfigUpdate
+                {
+                    CheatManagerTrigger = CheatManagerShortcut.Custom,
+                    CustomOpenChord = chord.AsReadOnly(),
+                    CustomChordHoldMs = 200,
+                });
+
+                await ctx.Response.WriteAsJsonAsync(new
+                {
+                    success = true,
+                    chord = chord.Select(b => b.ToString()).ToList(),
+                    samples,
+                    message = $"Recorded chord: {string.Join(" + ", chord.Select(b => b.ToString()))}"
+                });
+            }
+            catch (JsonException ex)
+            {
+                ctx.Response.StatusCode = 400;
+                await ctx.Response.WriteAsJsonAsync(new { error = $"Invalid JSON: {ex.Message}" });
+            }
+            catch (Exception ex)
+            {
+                ctx.Response.StatusCode = 500;
+                await ctx.Response.WriteAsJsonAsync(new { error = ex.Message });
+            }
+        });
+
         // Connect to console on startup
         logger.Info("Connecting to console...");
         try
@@ -314,6 +579,13 @@ internal static class Program
             manager.LoadDatabase(cheatDb);
             await manager.RefreshActiveProcessAsync(cts.Token);
             logger.Info($"Active game: {manager.ActiveProcess?.Name} ({manager.ActiveProcess?.TitleId})");
+
+            // Initialize shortcut config store and cheat manager session
+            shortcutStore = new ShortcutConfigStore(cheatDb, logger);
+            var shortcutConfig = shortcutStore.Load();
+            session = new CheatManagerSession(client, shortcutConfig, logger);
+            session.StartPolling();
+            logger.Info("Cheat manager session initialized");
         }
         catch (Exception ex)
         {
@@ -323,6 +595,14 @@ internal static class Program
 
         logger.Info($"WebUI starting on http://0.0.0.0:{webPort}");
         await app.RunAsync($"http://0.0.0.0:{webPort}");
+    }
+
+    private static TEnum? ParseEnum<TEnum>(string? value) where TEnum : struct, Enum
+    {
+        if (string.IsNullOrEmpty(value)) return null;
+        if (Enum.TryParse<TEnum>(value, ignoreCase: true, out var result))
+            return result;
+        return null;
     }
 
     private static string? FindWebuiPath()
@@ -355,6 +635,21 @@ public sealed record CheatRowData(string Id, string Name, string? Description, b
 public sealed record CheatActionRequest(string Id, bool Force = false);
 public sealed record ScanRequestData(string Pattern, bool ExecutableOnly = false, int MaxResults = 1);
 public sealed record ErrorResponse(string Error);
+
+// Cheat manager request/response types
+public sealed record ShortcutConfigUpdateBody
+{
+    public bool? Enabled { get; init; }
+    public string? CheatManagerTrigger { get; init; }
+    public string? CloseTrigger { get; init; }
+    public List<string>? CustomOpenChord { get; init; }
+    public int? CustomChordHoldMs { get; init; }
+}
+
+public sealed record RecordShortcutBody
+{
+    public int WindowMs { get; init; } = 5000;
+}
 
 // ----- WebUI logger -----
 

@@ -1,38 +1,376 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NexusCheatFramework v0.2 — Cheats</title>
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: system-ui, sans-serif; background: #111; color: #eee; margin: 0; padding: 1rem; font-size: 14px; }
-    h1 { font-size: 1.2rem; margin: 0 0 .5rem 0; }
-    h2 { font-size: 1rem; margin: 1rem 0 .5rem 0; border-bottom: 1px solid #333; padding-bottom: .25rem; }
-    .target { color: #6cf; margin-bottom: .8rem; }
-    .row { display: flex; align-items: center; padding: .3rem 0; border-bottom: 1px solid #222; }
-    .id { color: #888; font-family: monospace; margin-right: .8rem; min-width: 14ch; font-size: .85em; }
-    .name { flex: 1; }
-    .desc { color: #aaa; font-size: .85em; margin-left: .5rem; }
-    button { background: #2a6; color: #fff; border: 0; padding: .25rem .6rem; border-radius: .25rem; cursor: pointer; font-size: .85em; }
-    button.off { background: #555; }
-    button.danger { background: #a33; }
-    button:hover { opacity: .85; }
-    .err { color: #f55; padding: .3rem 0; }
-    .inf { color: #6f6; padding: .3rem 0; }
-    .log { color: #888; font-family: monospace; font-size: .75em; max-height: 160px; overflow-y: auto; background: #0a0a0a; padding: .4rem; border-radius: .25rem; margin-top: .5rem; }
-    .log div { padding: 1px 0; }
-    .scan-form { background: #1a1a1a; padding: .6rem; border-radius: .25rem; margin: .5rem 0; }
-    .scan-form label { display: block; margin: .3rem 0; }
-    .scan-form input[type=text] { background: #222; color: #eee; border: 1px solid #444; padding: .2rem .4rem; border-radius: .2rem; width: 100%; font-family: monospace; }
-    .scan-form input[type=number] { background: #222; color: #eee; border: 1px solid #444; padding: .2rem .4rem; border-radius: .2rem; width: 100px; }
-    .scan-form label input[type=checkbox] { margin-right: .4rem; }
-    .scan-results { font-family: monospace; font-size: .85em; max-height: 200px; overflow-y: auto; background: #0a0a0a; padding: .4rem; border-radius: .25rem; }
-    .status-badge { display: inline-block; padding: .1rem .4rem; border-radius: .2rem; font-size: .75em; margin-left: .5rem; }
-    .status-on { background: #2a6; }
-    .status-off { background: #555; }
-    .header-row { display: flex; align-items: center; justify-content: space-between; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: #eee;
+      margin: 0;
+      padding: 1rem;
+      font-size: 14px;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      margin: 0 0 .5rem 0;
+    }
+
+    h2 {
+      font-size: 1rem;
+      margin: 1rem 0 .5rem 0;
+      border-bottom: 1px solid #333;
+      padding-bottom: .25rem;
+    }
+
+    .target {
+      color: #6cf;
+      margin-bottom: .8rem;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      padding: .3rem 0;
+      border-bottom: 1px solid #222;
+    }
+
+    .id {
+      color: #888;
+      font-family: monospace;
+      margin-right: .8rem;
+      min-width: 14ch;
+      font-size: .85em;
+    }
+
+    .name {
+      flex: 1;
+    }
+
+    .desc {
+      color: #aaa;
+      font-size: .85em;
+      margin-left: .5rem;
+    }
+
+    button {
+      background: #2a6;
+      color: #fff;
+      border: 0;
+      padding: .25rem .6rem;
+      border-radius: .25rem;
+      cursor: pointer;
+      font-size: .85em;
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    button.off {
+      background: #555;
+    }
+
+    button.danger {
+      background: #a33;
+    }
+
+    button:hover {
+      opacity: .85;
+    }
+
+    .err {
+      color: #f55;
+      padding: .3rem 0;
+    }
+
+    .inf {
+      color: #6f6;
+      padding: .3rem 0;
+    }
+
+    .log {
+      color: #888;
+      font-family: monospace;
+      font-size: .75em;
+      max-height: 160px;
+      overflow-y: auto;
+      background: #0a0a0a;
+      padding: .4rem;
+      border-radius: .25rem;
+      margin-top: .5rem;
+    }
+
+    .log div {
+      padding: 1px 0;
+    }
+
+    .scan-form {
+      background: #1a1a1a;
+      padding: .6rem;
+      border-radius: .25rem;
+      margin: .5rem 0;
+    }
+
+    .scan-form label {
+      display: block;
+      margin: .3rem 0;
+    }
+
+    .scan-form input[type=text] {
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
+      padding: .2rem .4rem;
+      border-radius: .2rem;
+      width: 100%;
+      font-family: monospace;
+    }
+
+    .scan-form input[type=number] {
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
+      padding: .2rem .4rem;
+      border-radius: .2rem;
+      width: 100px;
+    }
+
+    .scan-form label input[type=checkbox] {
+      margin-right: .4rem;
+    }
+
+    .scan-results {
+      font-family: monospace;
+      font-size: .85em;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #0a0a0a;
+      padding: .4rem;
+      border-radius: .25rem;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: .1rem .4rem;
+      border-radius: .2rem;
+      font-size: .75em;
+      margin-left: .5rem;
+    }
+
+    .status-on {
+      background: #2a6;
+    }
+
+    .status-off {
+      background: #555;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+
+    /* Cheat Manager Overlay */
+    .cm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .cm-overlay.open {
+      display: flex;
+    }
+
+    .cm-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: .75rem;
+      border-bottom: 1px solid #444;
+      margin-bottom: .75rem;
+    }
+
+    .cm-header h2 {
+      margin: 0;
+      border: none;
+      font-size: 1.1rem;
+    }
+
+    .cm-header .cm-game-info {
+      color: #6cf;
+      font-size: .85em;
+    }
+
+    .cm-cheat-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .cm-cheat-row {
+      display: flex;
+      align-items: center;
+      padding: .5rem 0;
+      border-bottom: 1px solid #2a2a2a;
+      min-height: 44px;
+    }
+
+    .cm-cheat-row.focused {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: .25rem;
+      padding: .5rem;
+    }
+
+    .cm-cheat-info {
+      flex: 1;
+    }
+
+    .cm-cheat-name {
+      font-size: 1em;
+      font-weight: 600;
+    }
+
+    .cm-cheat-desc {
+      color: #888;
+      font-size: .8em;
+      margin-top: .15rem;
+    }
+
+    .cm-cheat-status {
+      margin-left: .5rem;
+      font-size: .85em;
+      min-width: 2em;
+      text-align: center;
+    }
+
+    .cm-status-pending {
+      color: #fa0;
+    }
+
+    .cm-status-on {
+      color: #2a6;
+    }
+
+    .cm-status-off {
+      color: #888;
+    }
+
+    .cm-status-error {
+      color: #f55;
+      cursor: help;
+    }
+
+    .cm-toggle {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      background: #555;
+      border-radius: 14px;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+      margin-left: .75rem;
+      flex-shrink: 0;
+      min-width: 48px;
+      min-height: 28px;
+    }
+
+    .cm-toggle.on {
+      background: #2a6;
+    }
+
+    .cm-toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .15s;
+    }
+
+    .cm-toggle.on::after {
+      transform: translateX(20px);
+    }
+
+    .cm-footer {
+      display: flex;
+      gap: .5rem;
+      padding-top: .75rem;
+      border-top: 1px solid #444;
+      margin-top: .75rem;
+      flex-wrap: wrap;
+    }
+
+    .cm-footer button {
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .cm-reconnect-banner {
+      background: #a33;
+      color: #fff;
+      text-align: center;
+      padding: .5rem;
+      border-radius: .25rem;
+      margin-bottom: .5rem;
+      display: none;
+    }
+
+    .cm-reconnect-banner.visible {
+      display: block;
+    }
+
+    .cm-hotkey-hint {
+      color: #666;
+      font-size: .75em;
+      text-align: center;
+      margin-top: .5rem;
+    }
+
+    .cm-hotkey-config {
+      background: #1a1a1a;
+      padding: .5rem;
+      border-radius: .25rem;
+      margin-top: .5rem;
+    }
+
+    .cm-hotkey-config label {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .cm-hotkey-config input {
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
+      padding: .2rem .4rem;
+      border-radius: .2rem;
+      font-family: monospace;
+      width: 200px;
+    }
   </style>
 </head>
+
 <body>
   <div class="header-row">
     <h1>NexusCheatFramework v0.2</h1>
@@ -59,7 +397,45 @@
   <h2>Log</h2>
   <div class="log" id="log"></div>
 
+  <!-- Cheat Manager Overlay -->
+  <div id="cmOverlay" class="cm-overlay">
+    <div id="cmReconnectBanner" class="cm-reconnect-banner">Reconnecting…</div>
+    <div class="cm-header">
+      <div>
+        <h2>Cheat Manager</h2>
+        <div id="cmGameInfo" class="cm-game-info">No game detected</div>
+      </div>
+      <button class="danger" onclick="closeCheatManager()" style="min-width:44px;min-height:44px;">✕</button>
+    </div>
+    <div id="cmCheatList" class="cm-cheat-list">
+      <div style="color:#888;text-align:center;padding:2rem;">No cheats loaded.</div>
+    </div>
+    <div class="cm-footer">
+      <button onclick="reloadCheats()">Reload Cheats</button>
+      <button class="danger" onclick="closeCheatManager()">Close</button>
+    </div>
+    <div class="cm-hotkey-hint">
+      <kbd>Esc</kbd> close · <kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>Enter</kbd>/<kbd>Space</kbd> toggle
+    </div>
+    <div class="cm-hotkey-config">
+      <label>Keyboard shortcut:
+        <input type="text" id="cmHotkeyInput" value="Ctrl+Shift+C" onchange="saveHotkey()" />
+      </label>
+    </div>
+  </div>
+
   <script>
+    // Cheat manager state
+    let cmOpen = false;
+    let cmFocusedIndex = -1;
+    let cmCheats = [];
+    let cmReconnectTimer = null;
+    let cmToggleQueue = [];
+    let cmReconnecting = false;
+
+    // Hotkey config
+    let cmHotkey = localStorage.getItem('ncf_cm_hotkey') || 'Ctrl+Shift+C';
+
     async function api(method, path, body) {
       const opts = { method };
       if (body) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }
@@ -67,6 +443,238 @@
       return r.ok ? r.json() : { error: r.status + ' ' + r.statusText };
     }
 
+    // Check for autoOpen=1 query param
+    (function checkAutoOpen() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('autoOpen') === '1') {
+        setTimeout(() => openCheatManager(), 500);
+      }
+    })();
+
+    // Keyboard shortcut listener
+    document.addEventListener('keydown', function (e) {
+      // Check cheat manager hotkey
+      const parts = cmHotkey.split('+').map(s => s.trim().toLowerCase());
+      const ctrl = parts.includes('ctrl');
+      const shift = parts.includes('shift');
+      const alt = parts.includes('alt');
+      const key = parts[parts.length - 1];
+
+      if (e.ctrlKey === ctrl && e.shiftKey === shift && e.altKey === alt &&
+        e.key.toLowerCase() === key) {
+        e.preventDefault();
+        toggleCheatManager();
+        return;
+      }
+
+      // Overlay keyboard navigation
+      if (!cmOpen) return;
+
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeCheatManager();
+        return;
+      }
+
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const list = document.getElementById('cmCheatList');
+        const rows = list.querySelectorAll('.cm-cheat-row');
+        if (rows.length === 0) return;
+
+        // Remove focus from all
+        rows.forEach(r => r.classList.remove('focused'));
+
+        if (e.key === 'ArrowDown') {
+          cmFocusedIndex = Math.min(cmFocusedIndex + 1, rows.length - 1);
+        } else {
+          cmFocusedIndex = Math.max(cmFocusedIndex - 1, 0);
+        }
+
+        rows[cmFocusedIndex].classList.add('focused');
+        rows[cmFocusedIndex].scrollIntoView({ block: 'nearest' });
+        return;
+      }
+
+      if (e.key === 'Enter' || e.key === ' ') {
+        if (cmFocusedIndex >= 0 && cmFocusedIndex < cmCheats.length) {
+          e.preventDefault();
+          toggleCheat(cmCheats[cmFocusedIndex].id);
+        }
+        return;
+      }
+    });
+
+    function toggleCheatManager() {
+      if (cmOpen) closeCheatManager();
+      else openCheatManager();
+    }
+
+    async function openCheatManager() {
+      const r = await api('POST', '/api/cheat-manager/open');
+      if (r.error) { document.getElementById('err').textContent = r.error; return; }
+      cmOpen = true;
+      document.getElementById('cmOverlay').classList.add('open');
+      cmFocusedIndex = -1;
+      await refreshCheatManager();
+    }
+
+    async function closeCheatManager() {
+      await api('POST', '/api/cheat-manager/close');
+      cmOpen = false;
+      document.getElementById('cmOverlay').classList.remove('open');
+      if (cmReconnectTimer) { clearInterval(cmReconnectTimer); cmReconnectTimer = null; }
+      cmReconnecting = false;
+      document.getElementById('cmReconnectBanner').classList.remove('visible');
+    }
+
+    async function refreshCheatManager() {
+      if (!cmOpen) return;
+
+      // Get game info
+      const state = await api('GET', '/api/cheat-manager/state');
+      const process = await api('GET', '/api/process');
+
+      const gameInfo = document.getElementById('cmGameInfo');
+      if (process.titleId) {
+        gameInfo.textContent = `${process.name} [TID=${process.titleId} v=${process.version}]`;
+      } else {
+        gameInfo.textContent = 'No game detected';
+      }
+
+      // Get cheats
+      const cheats = await api('GET', '/api/cheats');
+      if (cheats.error) {
+        // Check if payload disconnected
+        if (!cmReconnecting) {
+          cmReconnecting = true;
+          document.getElementById('cmReconnectBanner').classList.add('visible');
+          cmReconnectTimer = setInterval(async () => {
+            const s = await api('GET', '/api/state');
+            if (s.connected) {
+              cmReconnecting = false;
+              document.getElementById('cmReconnectBanner').classList.remove('visible');
+              clearInterval(cmReconnectTimer);
+              cmReconnectTimer = null;
+              // Replay queued toggles
+              const queue = [...cmToggleQueue];
+              cmToggleQueue = [];
+              for (const id of queue) {
+                await api('POST', '/api/enable', { id });
+              }
+              await refreshCheatManager();
+            }
+          }, 2000);
+        }
+        return;
+      }
+
+      if (cmReconnecting) {
+        cmReconnecting = false;
+        document.getElementById('cmReconnectBanner').classList.remove('visible');
+        if (cmReconnectTimer) { clearInterval(cmReconnectTimer); cmReconnectTimer = null; }
+      }
+
+      cmCheats = Array.isArray(cheats) ? cheats : [];
+      renderCheatList();
+    }
+
+    function renderCheatList() {
+      const list = document.getElementById('cmCheatList');
+      if (cmCheats.length === 0) {
+        list.innerHTML = '<div style="color:#888;text-align:center;padding:2rem;">No cheats loaded for the active game.</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      cmCheats.forEach((c, idx) => {
+        const row = document.createElement('div');
+        row.className = 'cm-cheat-row';
+        if (idx === cmFocusedIndex) row.classList.add('focused');
+        row.dataset.index = idx;
+
+        const info = document.createElement('div');
+        info.className = 'cm-cheat-info';
+
+        const name = document.createElement('div');
+        name.className = 'cm-cheat-name';
+        name.textContent = c.name || c.id;
+        info.appendChild(name);
+
+        if (c.description) {
+          const desc = document.createElement('div');
+          desc.className = 'cm-cheat-desc';
+          desc.textContent = c.description;
+          info.appendChild(desc);
+        }
+
+        const status = document.createElement('span');
+        status.className = 'cm-cheat-status';
+        status.id = 'cm-status-' + c.id;
+        status.textContent = c.enabled ? '✅' : '⭕';
+        if (c.enabled) status.className = 'cm-cheat-status cm-status-on';
+        else status.className = 'cm-cheat-status cm-status-off';
+
+        const toggle = document.createElement('button');
+        toggle.className = 'cm-toggle' + (c.enabled ? ' on' : '');
+        toggle.setAttribute('aria-label', 'Toggle ' + (c.name || c.id));
+        toggle.onclick = () => toggleCheat(c.id);
+
+        row.appendChild(info);
+        row.appendChild(status);
+        row.appendChild(toggle);
+        row.onclick = () => {
+          cmFocusedIndex = idx;
+          document.querySelectorAll('.cm-cheat-row').forEach(r => r.classList.remove('focused'));
+          row.classList.add('focused');
+        };
+        list.appendChild(row);
+      });
+    }
+
+    async function toggleCheat(id) {
+      const statusEl = document.getElementById('cm-status-' + id);
+      if (statusEl) {
+        statusEl.textContent = '⏳';
+        statusEl.className = 'cm-cheat-status cm-status-pending';
+      }
+
+      const cheat = cmCheats.find(c => c.id === id);
+      const action = cheat && cheat.enabled ? 'disable' : 'enable';
+
+      const r = await api('POST', '/api/' + action, { id });
+
+      if (statusEl) {
+        if (r.success) {
+          statusEl.textContent = action === 'enable' ? '✅' : '⭕';
+          statusEl.className = 'cm-cheat-status ' + (action === 'enable' ? 'cm-status-on' : 'cm-status-off');
+          if (cheat) cheat.enabled = action === 'enable';
+          // Update toggle visual
+          const row = statusEl.parentElement;
+          const toggle = row.querySelector('.cm-toggle');
+          if (toggle) {
+            toggle.className = 'cm-toggle' + (action === 'enable' ? ' on' : '');
+          }
+        } else {
+          statusEl.textContent = '❌';
+          statusEl.className = 'cm-cheat-status cm-status-error';
+          statusEl.title = r.error || 'Unknown error';
+        }
+      }
+    }
+
+    async function reloadCheats() {
+      await api('POST', '/api/reload-cheats');
+      await refreshCheatManager();
+    }
+
+    function saveHotkey() {
+      const input = document.getElementById('cmHotkeyInput');
+      cmHotkey = input.value.trim() || 'Ctrl+Shift+C';
+      localStorage.setItem('ncf_cm_hotkey', cmHotkey);
+    }
+
+    // Main refresh loop
     async function refresh() {
       try {
         const s = await api('GET', '/api/state');
@@ -141,8 +749,14 @@
       return d.innerHTML;
     }
 
+    // Initialize hotkey input
+    document.addEventListener('DOMContentLoaded', function () {
+      document.getElementById('cmHotkeyInput').value = cmHotkey;
+    });
+
     refresh();
     setInterval(refresh, 3000);
   </script>
 </body>
+
 </html>

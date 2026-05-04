@@ -55,6 +55,11 @@
     `Input/ShortcutDetector.cs`, `Input/ShortcutConfig.cs`, and the menu
     XML files first.
 
+## Cheat Manager Shortcut
+- The cheat-manager-shortcut UX is behaviorally inspired by etaHEN's
+  `Cheats_shortcut_opt` toolbox flow. No etaHEN source code was used; only
+  the user-facing behavior was referenced.
+
 ## Other upstreams referenced for context
 - PS5 Payload Dev SDK — used by both NexusFramework and etaHEN payloads;
   not consumed at the C# layer of this project.
