@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>NexusCheatFramework</RootNamespace>
+    <AssemblyName>NexusCheatFramework.Core</AssemblyName>
+    <Version>0.1.0</Version>
+    <Description>Cheat framework built on NexusFramework for PS4/PS5 homebrew/research environments.</Description>
+    <Authors>NexusCheatFramework Contributors</Authors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+</Project>

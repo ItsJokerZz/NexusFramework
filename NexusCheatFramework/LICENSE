@@ -1,0 +1,17 @@
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 3, 29 June 2007
+
+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+NexusCheatFramework is distributed under the GNU General Public License,
+version 3 or later, in order to remain compatible with etaHEN (GPLv3) from
+which it draws design ideas, the menu/XML layout, and the controller-
+shortcut UX.
+
+The full text of the GPLv3 license is available at:
+    https://www.gnu.org/licenses/gpl-3.0.txt
+
+This file points at the canonical text rather than embedding it; see
+ATTRIBUTION.md for upstream-specific license notices.

@@ -1,0 +1,36 @@
+{
+  "titleId": "CUSA00000",
+  "gameName": "Example Game",
+  "version": "1.00",
+  "region": "US",
+  "cheats": [
+    {
+      "id": "infinite_health",
+      "name": "Infinite Health (illustrative)",
+      "description": "Pattern-based NOP slide. Demo data, not a real cheat for any real game.",
+      "enabledByDefault": false,
+      "codes": [
+        {
+          "type": "aob_write_bytes",
+          "aobPattern": "F3 0F 11 83 ?? ?? ?? ??",
+          "offset": 0,
+          "expectedBytes": "F3 0F 11 83 00 00 00 00",
+          "bytes": "90 90 90 90 90 90 90 90"
+        }
+      ]
+    },
+    {
+      "id": "max_score",
+      "name": "Set score = 99999 (typed write)",
+      "codes": [
+        {
+          "type": "write_value",
+          "address": "0x40010000",
+          "valueType": "i32",
+          "value": "99999",
+          "expectedBytes": "00 00 00 00"
+        }
+      ]
+    }
+  ]
+}

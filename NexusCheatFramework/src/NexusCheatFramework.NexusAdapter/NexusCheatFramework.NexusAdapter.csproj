@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Optional adapter that wires INexusClient onto the upstream NexusFramework
+    C# library. Excluded from the default solution build because the upstream
+    project embeds payload .elf files as EmbeddedResources which may not be
+    present on every developer machine. Build explicitly with:
+
+        dotnet build src/NexusCheatFramework.NexusAdapter/NexusCheatFramework.NexusAdapter.csproj
+
+    after ensuring the four payload binaries exist next to NexusFramework.csproj.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>NexusCheatFramework.Nexus.Adapter</RootNamespace>
+    <AssemblyName>NexusCheatFramework.NexusAdapter</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NexusCheatFramework.Core\NexusCheatFramework.Core.csproj" />
+    <ProjectReference Include="..\..\..\NexusFramework\source\libraries\C#\NexusFramework.csproj" />
+  </ItemGroup>
+</Project>

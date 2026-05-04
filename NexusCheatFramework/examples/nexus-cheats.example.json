@@ -1,0 +1,23 @@
+{
+  "consoleIp": "192.168.1.50",
+  "cheatDatabasePath": "./cheats",
+  "autoDetectGame": true,
+  "autoApplyEnabledCheats": false,
+  "shortcut": {
+    "enabled": true,
+    "mode": "HoldR3L3",
+    "holdMilliseconds": 750,
+    "debounceMilliseconds": 1000
+  },
+  "scan": {
+    "chunkSize": 262144,
+    "readableOnly": true,
+    "executableOnly": false,
+    "strict": false
+  },
+  "safety": {
+    "requireExpectedBytes": true,
+    "restoreOriginalBytesOnDisable": true,
+    "allowOnlineUse": false
+  }
+}
