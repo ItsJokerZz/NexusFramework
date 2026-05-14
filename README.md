@@ -45,3 +45,8 @@ Before using the framework, the payload must be injected into the target system.
 *Contributions and feedback are welcome during this early build phase.*
 
 ---
+
+## License
+This project is licensed under the GNU General Public License v2.0 - see the [LICENSE](https://github.com/ItsJokerZz/uob-testing/blob/main/LICENSE) file for details.
+
+---
